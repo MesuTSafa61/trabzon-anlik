@@ -3,16 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>İşletmeni Ekle | Trabzon Anlık</title>
-
-    <meta
-        name="description"
-        content="İşletmeni Trabzon Anlık'a ekle."
-    >
-
+    <meta name="description" content="İşletmeni Trabzon Anlık'a ekle.">
     <link rel="stylesheet" href="style.css">
-
     <style>
         .form-page {
             padding: 60px 0 90px;
@@ -96,6 +89,7 @@
             font-size: 15px;
             outline: none;
             box-sizing: border-box;
+            background: white;
         }
 
         .form-group textarea {
@@ -126,6 +120,15 @@
             padding: 10px;
         }
 
+        .preview-img {
+            max-width: 100%;
+            max-height: 200px;
+            margin: 15px auto 0;
+            border-radius: 8px;
+            display: none;
+            object-fit: cover;
+        }
+
         .form-note {
             color: #777;
             font-size: 13px;
@@ -143,6 +146,7 @@
             font-size: 16px;
             font-weight: 700;
             cursor: pointer;
+            transition: opacity 0.2s;
         }
 
         .submit-button:hover {
@@ -206,7 +210,6 @@
 
 <header class="header">
     <div class="container header-content">
-
         <a href="index.html" class="logo">
             <span>TRABZON</span>
             <strong>ANLIK</strong>
@@ -216,7 +219,6 @@
             <a href="index.html">Keşfet</a>
             <a href="index.html#isletmeler">İşletmeler</a>
             <a href="index.html#etkinlikler">Etkinlikler</a>
-            <a href="index.html#ilanlar">İlanlar</a>
             <a href="index.html#bugun">Bugün Trabzon</a>
             <a href="index.html#trabzon-kesfet">Trabzon'u Keşfet</a>
         </nav>
@@ -225,364 +227,183 @@
             İşletmeni Ekle
         </a>
 
-        <button class="menu-button" aria-label="Menüyü aç">
+        <button class="menu-button" id="menuButton" aria-label="Menüyü aç">
             ☰
         </button>
-
     </div>
+
+    <!-- Mobil Menü -->
+    <nav class="mobile-nav" id="mobileNav">
+        <a href="index.html">Keşfet</a>
+        <a href="index.html#isletmeler">İşletmeler</a>
+        <a href="index.html#etkinlikler">Etkinlikler</a>
+        <a href="index.html#bugun">Bugün Trabzon</a>
+        <a href="index.html#trabzon-kesfet">Trabzon'u Keşfet</a>
+        <a href="isletme-ekle.html" class="mobile-business-btn">İşletmeni Ekle</a>
+    </nav>
 </header>
 
-
 <main class="form-page">
-
     <div class="container">
-
         <div class="form-header">
-
             <a href="index.html" class="back-link">
                 ← Ana sayfaya dön
             </a>
 
-            <span>
-                İŞLETMELERE ÖZEL
-            </span>
-
-            <h1>
-                İşletmeni Trabzon Anlık'a ekle.
-            </h1>
-
+            <span>İŞLETMELERE ÖZEL</span>
+            <h1>İşletmeni Trabzon Anlık'a ekle.</h1>
             <p>
                 İşletmeni Trabzon'daki müşterilerle buluştur.
                 Bilgilerini gönder, ekibimiz inceleyip onayladıktan
                 sonra işletmen Trabzon Anlık'ta yayınlansın.
             </p>
-
         </div>
 
-
-        <form
-            id="businessForm"
-            class="business-form"
-        >
-
+        <form id="businessForm" class="business-form">
             <!-- İŞLETME BİLGİLERİ -->
-
             <div class="form-section">
-
-                <h2>
-                    🏪 İşletme Bilgileri
-                </h2>
+                <h2>🏪 İşletme Bilgileri</h2>
 
                 <div class="form-grid">
-
                     <div class="form-group full">
-
-                        <label>
-                            İşletme adı
-                            <span class="required">*</span>
-                        </label>
-
-                        <input
-                            type="text"
-                            id="businessName"
-                            required
-                            placeholder="Örn. Trabzon Kahve"
-                        >
-
+                        <label>İşletme adı <span class="required">*</span></label>
+                        <input type="text" id="businessName" required placeholder="Örn. Trabzon Kahve">
                     </div>
 
-
                     <div class="form-group">
-
-                        <label>
-                            Kategori
-                            <span class="required">*</span>
-                        </label>
-
-                        <select
-                            id="categoryId"
-                            required
-                        >
-                            <option value="">
-                                Kategori seçin
-                            </option>
+                        <label>Kategori <span class="required">*</span></label>
+                        <select id="categoryId" required>
+                            <option value="">Kategori seçin</option>
                         </select>
-
                     </div>
-
 
                     <div class="form-group">
-
-                        <label>
-                            İlçe
-                            <span class="required">*</span>
-                        </label>
-
-                        <input
-                            type="text"
-                            id="district"
-                            required
-                            placeholder="Örn. Ortahisar"
-                        >
-
+                        <label>İlçe <span class="required">*</span></label>
+                        <select id="district" required>
+                            <option value="">İlçe seçin</option>
+                            <option value="Ortahisar">Ortahisar</option>
+                            <option value="Akçaabat">Akçaabat</option>
+                            <option value="Yomra">Yomra</option>
+                            <option value="Arsin">Arsin</option>
+                            <option value="Araklı">Araklı</option>
+                            <option value="Sürmene">Sürmene</option>
+                            <option value="Of">Of</option>
+                            <option value="Beşikdüzü">Beşikdüzü</option>
+                            <option value="Vakfıkebir">Vakfıkebir</option>
+                            <option value="Maçka">Maçka</option>
+                            <option value="Çarşıbaşı">Çarşıbaşı</option>
+                            <option value="Tonya">Tonya</option>
+                            <option value="Düzköy">Düzköy</option>
+                            <option value="Şalpazarı">Şalpazarı</option>
+                            <option value="Çaykara">Çaykara</option>
+                            <option value="Hayrat">Hayrat</option>
+                            <option value="Dernekpazarı">Dernekpazarı</option>
+                            <option value="Köprübaşı">Köprübaşı</option>
+                        </select>
                     </div>
-
 
                     <div class="form-group full">
-
-                        <label>
-                            Açık adres
-                        </label>
-
-                        <input
-                            type="text"
-                            id="address"
-                            placeholder="Mahalle, cadde, sokak..."
-                        >
-
+                        <label>Açık adres</label>
+                        <input type="text" id="address" placeholder="Mahalle, cadde, sokak...">
                     </div>
-
 
                     <div class="form-group full">
-
-                        <label>
-                            İşletme açıklaması
-                        </label>
-
-                        <textarea
-                            id="description"
-                            placeholder="İşletmeniz hakkında kısa bilgi..."
-                        ></textarea>
-
+                        <label>İşletme açıklaması</label>
+                        <textarea id="description" placeholder="İşletmeniz hakkında kısa bilgi..."></textarea>
                     </div>
-
 
                     <div class="form-group">
-
-                        <label>
-                            Telefon
-                        </label>
-
-                        <input
-                            type="tel"
-                            id="phone"
-                            placeholder="0462 xxx xx xx"
-                        >
-
+                        <label>Telefon</label>
+                        <input type="tel" id="phone" placeholder="0462 xxx xx xx">
                     </div>
-
 
                     <div class="form-group">
-
-                        <label>
-                            Instagram
-                        </label>
-
-                        <input
-                            type="text"
-                            id="instagram"
-                            placeholder="@kullaniciadi"
-                        >
-
+                        <label>Instagram</label>
+                        <input type="text" id="instagram" placeholder="@kullaniciadi">
                     </div>
-
 
                     <div class="form-group full">
-
-                        <label>
-                            Web sitesi
-                        </label>
-
-                        <input
-                            type="url"
-                            id="website"
-                            placeholder="https://..."
-                        >
-
+                        <label>Web sitesi</label>
+                        <input type="url" id="website" placeholder="https://...">
                     </div>
-
                 </div>
-
             </div>
 
-
             <!-- FOTOĞRAF -->
-
             <div class="form-section">
-
-                <h2>
-                    📸 İşletme Fotoğrafı
-                </h2>
-
+                <h2>📸 İşletme Fotoğrafı</h2>
                 <div class="image-upload">
-
-                    <input
-                        type="file"
-                        id="businessImage"
-                        accept="image/jpeg,image/png,image/webp"
-                    >
-
+                    <input type="file" id="businessImage" accept="image/jpeg,image/png,image/webp">
+                    <img id="imagePreview" class="preview-img" alt="Görsel Önizleme">
                     <div class="form-note">
                         JPG, PNG veya WebP yükleyebilirsiniz.
                         Maksimum dosya boyutu 5 MB.
                     </div>
-
                 </div>
-
             </div>
-
 
             <!-- YETKİLİ -->
-
             <div class="form-section">
-
-                <h2>
-                    👤 Yetkili Bilgileri
-                </h2>
+                <h2>👤 Yetkili Bilgileri</h2>
 
                 <div class="form-grid">
-
                     <div class="form-group">
-
-                        <label>
-                            Yetkili adı
-                            <span class="required">*</span>
-                        </label>
-
-                        <input
-                            type="text"
-                            id="ownerName"
-                            required
-                            placeholder="Ad Soyad"
-                        >
-
+                        <label>Yetkili adı <span class="required">*</span></label>
+                        <input type="text" id="ownerName" required placeholder="Ad Soyad">
                     </div>
 
-
                     <div class="form-group">
-
-                        <label>
-                            Yetkili telefon
-                            <span class="required">*</span>
-                        </label>
-
-                        <input
-                            type="tel"
-                            id="ownerPhone"
-                            required
-                            placeholder="05xx xxx xx xx"
-                        >
-
+                        <label>Yetkili telefon <span class="required">*</span></label>
+                        <input type="tel" id="ownerPhone" required placeholder="05xx xxx xx xx">
                     </div>
-
 
                     <div class="form-group full">
-
-                        <label>
-                            E-posta
-                        </label>
-
-                        <input
-                            type="email"
-                            id="ownerEmail"
-                            placeholder="ornek@email.com"
-                        >
-
+                        <label>E-posta</label>
+                        <input type="email" id="ownerEmail" placeholder="ornek@email.com">
                     </div>
-
                 </div>
-
             </div>
 
-
-            <button
-                type="submit"
-                id="submitButton"
-                class="submit-button"
-            >
+            <button type="submit" id="submitButton" class="submit-button">
                 İşletme Başvurusu Gönder
             </button>
 
-
-            <div
-                id="formMessage"
-                class="form-message"
-            ></div>
-
+            <div id="formMessage" class="form-message"></div>
         </form>
-
     </div>
-
 </main>
 
-
 <footer class="footer">
-
     <div class="container footer-content">
-
         <div>
-
             <div class="footer-logo">
                 TRABZON <strong>ANLIK</strong>
             </div>
-
-            <p>
-                Trabzon'u keşfet, hayatı yakala.
-            </p>
-
+            <p>Trabzon'u keşfet, hayatı yakala.</p>
         </div>
 
         <div>
-
             <strong>Keşfet</strong>
-
-            <a href="index.html#isletmeler">
-                İşletmeler
-            </a>
-
-            <a href="index.html#etkinlikler">
-                Etkinlikler
-            </a>
-
-            <a href="index.html#ilanlar">
-                İlanlar
-            </a>
-
-            <a href="index.html#trabzon-kesfet">
-                Trabzon'u Keşfet
-            </a>
-
+            <a href="index.html#isletmeler">İşletmeler</a>
+            <a href="index.html#etkinlikler">Etkinlikler</a>
+            <a href="index.html#bugun">Bugün Trabzon</a>
+            <a href="index.html#trabzon-kesfet">Trabzon'u Keşfet</a>
         </div>
 
         <div>
-
             <strong>Trabzon Anlık</strong>
-
-            <a href="#">
-                Hakkımızda
-            </a>
-
-            <a href="#">
-                İletişim
-            </a>
-
-            <a href="isletme-ekle.html">
-                İşletmeni Ekle
-            </a>
-
+            <a href="#">Hakkımızda</a>
+            <a href="#">İletişim</a>
+            <a href="isletme-ekle.html">İşletmeni Ekle</a>
         </div>
-
     </div>
 
     <div class="footer-bottom">
         © 2026 Trabzon Anlık. Tüm hakları saklıdır.
     </div>
-
 </footer>
 
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script src="isletme-ekle.js"></script>
 
 </body>
