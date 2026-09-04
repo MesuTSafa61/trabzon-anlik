@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -96,6 +97,16 @@
             white-space: nowrap;
         }
 
+        .approved-status {
+            background: #eaf7ee;
+            color: #176b35;
+        }
+
+        .featured-status {
+            background: #fff4d6;
+            color: #8a6200;
+        }
+
         .application-details {
             margin-top: 20px;
             padding-top: 20px;
@@ -124,6 +135,7 @@
             margin-top: 22px;
             padding-top: 20px;
             border-top: 1px solid #eee;
+            flex-wrap: wrap;
         }
 
         .action-button {
@@ -132,6 +144,12 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: 700;
+            transition: .2s;
+        }
+
+        .action-button:hover {
+            transform: translateY(-1px);
+            opacity: .92;
         }
 
         .approve-button {
@@ -142,6 +160,16 @@
         .reject-button {
             background: #fff0f0;
             color: #9d2020;
+        }
+
+        .featured-button {
+            background: #f4e8b8;
+            color: #765900;
+        }
+
+        .featured-remove-button {
+            background: #fff4d6;
+            color: #8a6200;
         }
 
         .delete-button {
@@ -192,7 +220,11 @@
             }
 
             .application-actions {
-                flex-wrap: wrap;
+                flex-direction: column;
+            }
+
+            .action-button {
+                width: 100%;
             }
         }
     </style>
@@ -224,7 +256,11 @@
 
             <div>
                 <h1>İşletme Başvuruları</h1>
-                <p>Trabzon Anlık'a gönderilen işletme başvurularını yönet.</p>
+
+                <p>
+                    Trabzon Anlık'a gönderilen işletme
+                    başvurularını yönet.
+                </p>
             </div>
 
             <button
@@ -247,9 +283,11 @@
             id="applications"
             class="applications"
         >
+
             <div class="empty-state">
                 Başvurular yükleniyor...
             </div>
+
         </div>
 
     </div>
@@ -258,7 +296,9 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script src="admin.js"></script>
 
 </body>
 </html>
+```
