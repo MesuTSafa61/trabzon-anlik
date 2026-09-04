@@ -828,3 +828,33 @@ input {
         grid-column: auto;
     }
 }
+
+/* HEADER & DÜZEN DÜZELTMELERİ */
+.header {
+    position: relative;
+    background: #ffffff;
+    border-bottom: 1px solid #eee;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 70px;
+}
+
+.menu-button {
+    background: transparent;
+    border: none;
+    font-size: 26px;
+    cursor: pointer;
+    color: #101c35;
+    padding: 5px;
+}
+
+@media (max-width: 768px) {
+    .desktop-nav {
+        display: none !important;
+    }
+}
+
