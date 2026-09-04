@@ -53,6 +53,57 @@ document.addEventListener(
 
 async function loadCategories() {
 
+    categorySelect.innerHTML = `
+        <option value="">Kategori seçin</option>
+    `;
+
+    const {
+        data,
+        error
+    } = await supabaseClient
+        .from("categories")
+        .select("id, name")
+        .order("id", {
+            ascending: true
+        });
+
+    if (error) {
+
+        console.error("Kategori yükleme hatası:", error);
+
+        showMessage(
+            "Kategoriler yüklenemedi. Lütfen sayfayı yenileyin.",
+            "error"
+        );
+
+        return;
+    }
+
+    console.log("Gelen kategoriler:", data);
+
+    if (!data || data.length === 0) {
+
+        showMessage(
+            "Supabase'de henüz kategori bulunamadı.",
+            "error"
+        );
+
+        return;
+    }
+
+    data.forEach(category => {
+
+        const option = document.createElement("option");
+
+        option.value = category.id;
+        option.textContent = category.name;
+
+        categorySelect.appendChild(option);
+
+    });
+
+}
+
     const {
         data,
         error
