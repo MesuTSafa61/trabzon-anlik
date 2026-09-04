@@ -1,4 +1,4 @@
-```javascript
+
 const SUPABASE_URL =
     "https://yhunhkzsecppbnhjewrt.supabase.co";
 
@@ -634,4 +634,3 @@ function escapeHtml(
         );
 
 }
-```
