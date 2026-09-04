@@ -1,406 +1,1181 @@
 // ============================================================
-// TRABZON ANLIK - ANA SAYFA YÖNETİM SİSTEMİ
+// TRABZON ANLIK - ANA SAYFA SİSTEMİ
 // ============================================================
 
-const SUPABASE_URL = "https://yhunhkzsecppbnhjewrt.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_0h5ycfDBJjgdf6bXlZ9OEg_K45u2b2v";
+const SUPABASE_URL =
+    "https://yhunhkzsecppbnhjewrt.supabase.co";
 
-const supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
+const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_0h5ycfDBJjgdf6bXlZOEg_K45u2b2v";
+
+// ============================================================
+// SUPABASE BAŞLAT
+// ============================================================
+
+let supabaseClient = null;
+
+function initializeSupabase() {
+
+    if (!window.supabase) {
+        console.error("Supabase kütüphanesi yüklenemedi.");
+        return false;
+    }
+
+    try {
+
+        supabaseClient =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_PUBLISHABLE_KEY
+            );
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            "Supabase başlatılamadı:",
+            error
+        );
+
+        return false;
+    }
+}
+
+
+// ============================================================
+// ELEMENTLER
+// ============================================================
+
+const menuButton =
+    document.querySelector("#menuButton");
+
+const mobileNav =
+    document.querySelector("#mobileNav");
+
+const searchButton =
+    document.querySelector("#searchButton");
+
+const searchInput =
+    document.querySelector("#searchInput");
+
+const categoriesContainer =
+    document.querySelector("#categoriesContainer");
+
+const businessContainer =
+    document.querySelector("#businessContainer");
+
+const placesContainer =
+    document.querySelector("#placesContainer");
+
+const searchResultsSection =
+    document.querySelector("#searchResultsSection");
+
+const searchResultsContainer =
+    document.querySelector("#searchResultsContainer");
+
+const searchResultsTitle =
+    document.querySelector("#searchResultsTitle");
+
+
+// ============================================================
+// SAYFA BAŞLANGICI
+// ============================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
+
+        console.log(
+            "Trabzon Anlık başlatılıyor..."
+        );
+
+        const connected =
+            initializeSupabase();
+
+        if (!connected) {
+
+            showGlobalError(
+                "Site bağlantısı kurulamadı. Lütfen sayfayı yenileyin."
+            );
+
+            return;
+        }
+
+        setupSearch();
+        setupMobileMenu();
+        setupPopularSearches();
+
+        await loadCategories();
+        await loadFeaturedBusinesses();
+        await loadPlaces();
+
+        console.log(
+            "Trabzon Anlık hazır."
+        );
+    }
 );
 
-// Element Tanımları
-const menuButton = document.querySelector("#menuButton") || document.querySelector(".menu-button");
-const mobileNav = document.querySelector("#mobileNav");
-const searchButton = document.querySelector("#searchButton");
-const searchInput = document.querySelector("#searchInput");
-const categoriesContainer = document.querySelector("#categoriesContainer");
-const businessContainer = document.querySelector("#businessContainer");
-const placesContainer = document.querySelector("#placesContainer");
-const searchResultsSection = document.querySelector("#searchResultsSection");
-const searchResultsContainer = document.querySelector("#searchResultsContainer");
-const searchResultsTitle = document.querySelector("#searchResultsTitle");
 
-document.addEventListener("DOMContentLoaded", async () => {
-    console.log("Trabzon Anlık başlatılıyor...");
+// ============================================================
+// GENEL HATA MESAJI
+// ============================================================
 
-    await loadCategories();
-    await loadFeaturedBusinesses();
-    await loadPlaces();
-    setupSearch();
-    setupMobileMenu();
-    setupPopularSearches();
-});
+function showGlobalError(message) {
 
-// Kategorileri Yükleme
-async function loadCategories() {
-    if (!categoriesContainer) return;
-
-    const { data, error } = await supabaseClient
-        .from("categories")
-        .select("*")
-        .order("id", { ascending: true });
-
-    if (error) {
-        console.error("Kategoriler alınamadı:", error);
+    if (categoriesContainer) {
         categoriesContainer.innerHTML = `
             <div class="category-card">
                 <span>⚠️</span>
                 <strong>Bağlantı hatası</strong>
-                <small>Kategoriler yüklenemedi.</small>
-            </div>`;
-        return;
+                <small>${escapeHtml(message)}</small>
+            </div>
+        `;
     }
 
-    if (!data || data.length === 0) {
-        categoriesContainer.innerHTML = `
-            <div class="category-card">
-                <span>📂</span>
-                <strong>Henüz kategori yok</strong>
-                <small>Yakında eklenecek.</small>
-            </div>`;
-        return;
-    }
-
-    categoriesContainer.innerHTML = data.map(category => `
-        <a href="#isletmeler" class="category-card" data-category="${escapeHtml(category.slug)}">
-            <span>${escapeHtml(category.icon || "📌")}</span>
-            <strong>${escapeHtml(category.name)}</strong>
-            <small>${escapeHtml(category.description || "")}</small>
-        </a>
-    `).join("");
-
-    document.querySelectorAll(".category-card[data-category]").forEach(card => {
-        card.addEventListener("click", async event => {
-            event.preventDefault();
-            const categorySlug = card.dataset.category;
-            await searchByCategory(categorySlug);
-        });
-    });
-}
-
-// Öne Çıkan İşletmeler
-async function loadFeaturedBusinesses() {
-    if (!businessContainer) return;
-
-    const { data, error } = await supabaseClient
-        .from("businesses")
-        .select(`*, categories ( name, icon )`)
-        .eq("is_approved", true)
-        .eq("is_featured", true)
-        .order("created_at", { ascending: false })
-        .limit(6);
-
-    if (error) {
-        console.error("İşletmeler alınamadı:", error);
+    if (businessContainer) {
         businessContainer.innerHTML = `
             <article class="business-card">
                 <div class="business-image">⚠️</div>
                 <div class="business-content">
                     <span class="badge">HATA</span>
                     <h3>İşletmeler yüklenemedi</h3>
-                    <p>Lütfen daha sonra tekrar deneyin.</p>
+                    <p>${escapeHtml(message)}</p>
                 </div>
-            </article>`;
-        return;
+            </article>
+        `;
     }
 
-    if (!data || data.length === 0) {
-        businessContainer.innerHTML = `
-            <article class="business-card">
-                <div class="business-image">🏪</div>
-                <div class="business-content">
-                    <span class="badge">YAKINDA</span>
-                    <h3>İlk işletmeler çok yakında</h3>
-                    <p>Trabzon'daki işletmeler burada yer alacak.</p>
-                    <div class="business-bottom">
-                        <span>Trabzon Anlık</span>
-                        <span>→</span>
-                    </div>
-                </div>
-            </article>`;
-        return;
-    }
-
-    businessContainer.innerHTML = data.map(business => {
-        const categoryName = business.categories?.name || "İŞLETME";
-        const imageContent = business.image_url
-            ? `<img src="${escapeHtml(business.image_url)}" alt="${escapeHtml(business.name)}" loading="lazy">`
-            : `${escapeHtml(business.categories?.icon || "🏪")}`;
-        const rating = Number(business.rating || 0);
-        const ratingText = rating > 0 ? `⭐ ${rating.toFixed(1)}` : "⭐ Yeni";
-
-        return `
-            <article class="business-card">
-                <div class="business-image">${imageContent}</div>
-                <div class="business-content">
-                    <span class="badge">${escapeHtml(categoryName).toUpperCase()}</span>
-                    <h3>${escapeHtml(business.name)}</h3>
-                    <p>📍 ${escapeHtml(business.district || business.address || "Trabzon")}</p>
-                    <div class="business-bottom">
-                        <span>${ratingText}</span>
-                        <span>→</span>
-                    </div>
-                </div>
-            </article>`;
-    }).join("");
-}
-
-// Trabzon'u Keşfet
-async function loadPlaces() {
-    if (!placesContainer) return;
-
-    const { data, error } = await supabaseClient
-        .from("places")
-        .select("*")
-        .eq("is_featured", true)
-        .order("id", { ascending: true });
-
-    if (error) {
-        console.error("Keşif yerleri alınamadı:", error);
+    if (placesContainer) {
         placesContainer.innerHTML = `
             <a href="#" class="place-card">
                 <div>⚠️</div>
-                <strong>Yerler yüklenemedi</strong>
-                <span>Lütfen daha sonra tekrar deneyin.</span>
-            </a>`;
-        return;
+                <strong>Bağlantı hatası</strong>
+                <span>${escapeHtml(message)}</span>
+            </a>
+        `;
+    }
+}
+
+
+// ============================================================
+// KATEGORİLER
+// ============================================================
+
+async function loadCategories() {
+
+    if (!categoriesContainer) return;
+
+    categoriesContainer.innerHTML = `
+        <div class="category-card">
+            <span>⏳</span>
+            <strong>Yükleniyor...</strong>
+            <small>Kategoriler hazırlanıyor</small>
+        </div>
+    `;
+
+    try {
+
+        const {
+            data,
+            error
+        } = await supabaseClient
+            .from("categories")
+            .select("id, name, slug, icon, description")
+            .order("id", {
+                ascending: true
+            });
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data || data.length === 0) {
+
+            categoriesContainer.innerHTML = `
+                <div class="category-card">
+                    <span>📂</span>
+                    <strong>Henüz kategori yok</strong>
+                    <small>Yakında eklenecek.</small>
+                </div>
+            `;
+
+            return;
+        }
+
+        categoriesContainer.innerHTML =
+            data.map(category => {
+
+                return `
+                    <a
+                        href="#isletmeler"
+                        class="category-card"
+                        data-category="${escapeHtml(category.slug)}"
+                    >
+
+                        <span>
+                            ${escapeHtml(
+                                category.icon || "📌"
+                            )}
+                        </span>
+
+                        <strong>
+                            ${escapeHtml(category.name)}
+                        </strong>
+
+                        <small>
+                            ${escapeHtml(
+                                category.description || ""
+                            )}
+                        </small>
+
+                    </a>
+                `;
+
+            }).join("");
+
+        document
+            .querySelectorAll(
+                ".category-card[data-category]"
+            )
+            .forEach(card => {
+
+                card.addEventListener(
+                    "click",
+                    async event => {
+
+                        event.preventDefault();
+
+                        const categorySlug =
+                            card.dataset.category;
+
+                        await searchByCategory(
+                            categorySlug
+                        );
+                    }
+                );
+            });
+
+    } catch (error) {
+
+        console.error(
+            "Kategoriler alınamadı:",
+            error
+        );
+
+        categoriesContainer.innerHTML = `
+            <div class="category-card">
+                <span>⚠️</span>
+                <strong>Bağlantı hatası</strong>
+                <small>
+                    Kategoriler yüklenemedi.
+                </small>
+            </div>
+        `;
+    }
+}
+
+
+// ============================================================
+// ÖNE ÇIKAN İŞLETMELER
+// ============================================================
+
+async function loadFeaturedBusinesses() {
+
+    if (!businessContainer) return;
+
+    businessContainer.innerHTML = `
+        <article class="business-card">
+            <div class="business-image">⏳</div>
+            <div class="business-content">
+                <span class="badge">YÜKLENİYOR</span>
+                <h3>İşletmeler yükleniyor...</h3>
+                <p>Lütfen bekleyin.</p>
+            </div>
+        </article>
+    `;
+
+    try {
+
+        const {
+            data,
+            error
+        } = await supabaseClient
+            .from("businesses")
+            .select(`
+                *,
+                categories (
+                    name,
+                    icon
+                )
+            `)
+            .eq("is_approved", true)
+            .eq("is_featured", true)
+            .order("created_at", {
+                ascending: false
+            })
+            .limit(6);
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data || data.length === 0) {
+
+            businessContainer.innerHTML = `
+                <article class="business-card">
+                    <div class="business-image">🏪</div>
+                    <div class="business-content">
+                        <span class="badge">
+                            YAKINDA
+                        </span>
+
+                        <h3>
+                            İlk işletmeler çok yakında
+                        </h3>
+
+                        <p>
+                            Trabzon'daki işletmeler
+                            burada yer alacak.
+                        </p>
+
+                        <div class="business-bottom">
+                            <span>
+                                Trabzon Anlık
+                            </span>
+
+                            <span>→</span>
+                        </div>
+                    </div>
+                </article>
+            `;
+
+            return;
+        }
+
+        businessContainer.innerHTML =
+            data.map(
+                renderBusinessCard
+            ).join("");
+
+    } catch (error) {
+
+        console.error(
+            "İşletmeler alınamadı:",
+            error
+        );
+
+        businessContainer.innerHTML = `
+            <article class="business-card">
+
+                <div class="business-image">
+                    ⚠️
+                </div>
+
+                <div class="business-content">
+
+                    <span class="badge">
+                        HATA
+                    </span>
+
+                    <h3>
+                        İşletmeler yüklenemedi
+                    </h3>
+
+                    <p>
+                        Lütfen sayfayı yenileyin.
+                    </p>
+
+                </div>
+
+            </article>
+        `;
+    }
+}
+
+
+// ============================================================
+// İŞLETME KARTI
+// ============================================================
+
+function renderBusinessCard(
+    business
+) {
+
+    const categoryName =
+        business.categories?.name ||
+        "İŞLETME";
+
+    const categoryIcon =
+        business.categories?.icon ||
+        "🏪";
+
+    let imageContent;
+
+    if (business.image_url) {
+
+        imageContent = `
+            <img
+                src="${escapeHtml(
+                    business.image_url
+                )}"
+                alt="${escapeHtml(
+                    business.name
+                )}"
+                loading="lazy"
+            >
+        `;
+
+    } else {
+
+        imageContent =
+            escapeHtml(categoryIcon);
     }
 
-    if (!data || data.length === 0) {
+    const rating =
+        Number(
+            business.rating || 0
+        );
+
+    const ratingText =
+        rating > 0
+            ? `⭐ ${rating.toFixed(1)}`
+            : "⭐ Yeni";
+
+    return `
+        <article class="business-card">
+
+            <div class="business-image">
+                ${imageContent}
+            </div>
+
+            <div class="business-content">
+
+                <span class="badge">
+                    ${escapeHtml(
+                        categoryName
+                    ).toUpperCase()}
+                </span>
+
+                <h3>
+                    ${escapeHtml(
+                        business.name
+                    )}
+                </h3>
+
+                <p>
+                    📍
+                    ${escapeHtml(
+                        business.district ||
+                        business.address ||
+                        "Trabzon"
+                    )}
+                </p>
+
+                <div class="business-bottom">
+
+                    <span>
+                        ${ratingText}
+                    </span>
+
+                    <span>
+                        →
+                    </span>
+
+                </div>
+
+            </div>
+
+        </article>
+    `;
+}
+
+
+// ============================================================
+// TRABZON'U KEŞFET
+// ============================================================
+
+async function loadPlaces() {
+
+    if (!placesContainer) return;
+
+    placesContainer.innerHTML = `
+        <a href="#" class="place-card">
+            <div>⏳</div>
+            <strong>Yükleniyor...</strong>
+            <span>Keşif noktaları hazırlanıyor.</span>
+        </a>
+    `;
+
+    try {
+
+        const {
+            data,
+            error
+        } = await supabaseClient
+            .from("places")
+            .select(`
+                id,
+                name,
+                slug,
+                district,
+                description,
+                image_url,
+                is_featured
+            `)
+            .eq("is_featured", true)
+            .order("id", {
+                ascending: true
+            });
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data || data.length === 0) {
+
+            placesContainer.innerHTML = `
+                <a href="#" class="place-card">
+                    <div>📍</div>
+                    <strong>Yakında</strong>
+                    <span>
+                        Trabzon'un güzel yerleri
+                        burada olacak.
+                    </span>
+                </a>
+            `;
+
+            return;
+        }
+
+        placesContainer.innerHTML =
+            data.map(place => {
+
+                const imageContent =
+                    place.image_url
+                        ? `
+                            <img
+                                src="${escapeHtml(
+                                    place.image_url
+                                )}"
+                                alt="${escapeHtml(
+                                    place.name
+                                )}"
+                                loading="lazy"
+                            >
+                          `
+                        : "🏔️";
+
+                return `
+                    <a
+                        href="#"
+                        class="place-card"
+                        data-place="${escapeHtml(
+                            place.slug
+                        )}"
+                    >
+
+                        <div>
+                            ${imageContent}
+                        </div>
+
+                        <strong>
+                            ${escapeHtml(
+                                place.name
+                            )}
+                        </strong>
+
+                        <span>
+                            ${escapeHtml(
+                                place.district ||
+                                "Trabzon"
+                            )}
+                        </span>
+
+                    </a>
+                `;
+
+            }).join("");
+
+    } catch (error) {
+
+        console.error(
+            "Keşif yerleri alınamadı:",
+            error
+        );
+
         placesContainer.innerHTML = `
             <a href="#" class="place-card">
-                <div>📍</div>
-                <strong>Yakında</strong>
-                <span>Trabzon'un güzel yerleri burada olacak.</span>
-            </a>`;
+                <div>⚠️</div>
+                <strong>
+                    Yerler yüklenemedi
+                </strong>
+                <span>
+                    Lütfen daha sonra tekrar deneyin.
+                </span>
+            </a>
+        `;
+    }
+}
+
+
+// ============================================================
+// ARAMA
+// ============================================================
+
+function setupSearch() {
+
+    if (
+        !searchButton ||
+        !searchInput
+    ) {
         return;
     }
 
-    placesContainer.innerHTML = data.map(place => {
-        const imageContent = place.image_url
-            ? `<img src="${escapeHtml(place.image_url)}" alt="${escapeHtml(place.name)}" loading="lazy">`
-            : "🏔️";
+    searchButton.addEventListener(
+        "click",
+        performSearch
+    );
 
-        return `
-            <a href="#" class="place-card" data-place="${escapeHtml(place.slug)}">
-                <div>${imageContent}</div>
-                <strong>${escapeHtml(place.name)}</strong>
-                <span>${escapeHtml(place.district || "Trabzon")}</span>
-            </a>`;
-    }).join("");
-}
+    searchInput.addEventListener(
+        "keydown",
+        event => {
 
-// Arama Mantığı
-function setupSearch() {
-    if (!searchButton || !searchInput) return;
+            if (
+                event.key === "Enter"
+            ) {
 
-    searchButton.addEventListener("click", performSearch);
-    searchInput.addEventListener("keydown", event => {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            performSearch();
+                event.preventDefault();
+
+                performSearch();
+            }
         }
-    });
+    );
 }
+
 
 async function performSearch() {
-    const searchText = searchInput.value.trim();
+
+    const searchText =
+        searchInput.value.trim();
+
     if (!searchText) {
-        alert("Lütfen aramak istediğiniz kelimeyi yazın.");
+
+        alert(
+            "Lütfen aramak istediğiniz kelimeyi yazın."
+        );
+
         searchInput.focus();
+
         return;
     }
-    await searchBusinesses(searchText);
+
+    await searchBusinesses(
+        searchText
+    );
 }
 
-// İşletme Arama
-async function searchBusinesses(searchText) {
-    if (!searchResultsContainer || !searchResultsSection) return;
 
-    searchResultsSection.style.display = "block";
-    searchResultsTitle.textContent = `"${searchText}" için sonuçlar`;
+// ============================================================
+// İŞLETME ARAMA
+// ============================================================
+
+async function searchBusinesses(
+    searchText
+) {
+
+    if (
+        !searchResultsContainer ||
+        !searchResultsSection
+    ) {
+        return;
+    }
+
+    searchResultsSection.style.display =
+        "block";
+
+    searchResultsTitle.textContent =
+        `"${searchText}" için sonuçlar`;
+
     searchResultsContainer.innerHTML = `
         <article class="business-card">
-            <div class="business-image">🔎</div>
-            <div class="business-content">
-                <span class="badge">ARANIYOR</span>
-                <h3>Sonuçlar getiriliyor...</h3>
-                <p>Lütfen bekleyin.</p>
+
+            <div class="business-image">
+                🔎
             </div>
-        </article>`;
 
-    const cleanQuery = escapeForQuery(searchText);
-    const { data, error } = await supabaseClient
-        .from("businesses")
-        .select(`*, categories ( name, icon )`)
-        .eq("is_approved", true)
-        .or(`name.ilike.%${cleanQuery}%,description.ilike.%${cleanQuery}%,district.ilike.%${cleanQuery}%,address.ilike.%${cleanQuery}%`)
-        .order("is_featured", { ascending: false })
-        .limit(20);
-
-    if (error) {
-        console.error("Arama hatası:", error);
-        searchResultsContainer.innerHTML = `
-            <article class="business-card">
-                <div class="business-image">⚠️</div>
-                <div class="business-content">
-                    <span class="badge">HATA</span>
-                    <h3>Arama yapılamadı</h3>
-                    <p>Lütfen tekrar deneyin.</p>
-                </div>
-            </article>`;
-        return;
-    }
-
-    renderSearchResults(data);
-}
-
-// Kategori Arama
-async function searchByCategory(categorySlug) {
-    if (!searchResultsContainer || !searchResultsSection) return;
-
-    searchResultsSection.style.display = "block";
-    searchResultsTitle.textContent = "Kategori sonuçları";
-    searchResultsContainer.innerHTML = `
-        <article class="business-card">
-            <div class="business-image">🔎</div>
             <div class="business-content">
-                <span class="badge">ARANIYOR</span>
-                <h3>İşletmeler getiriliyor...</h3>
-                <p>Lütfen bekleyin.</p>
+
+                <span class="badge">
+                    ARANIYOR
+                </span>
+
+                <h3>
+                    Sonuçlar getiriliyor...
+                </h3>
+
+                <p>
+                    Lütfen bekleyin.
+                </p>
+
             </div>
-        </article>`;
 
-    const { data: category, error: categoryError } = await supabaseClient
-        .from("categories")
-        .select("id, name")
-        .eq("slug", categorySlug)
-        .maybeSingle();
+        </article>
+    `;
 
-    if (categoryError || !category) {
-        console.error("Kategori bulunamadı:", categoryError);
-        renderSearchResults([]);
-        return;
-    }
+    try {
 
-    searchResultsTitle.textContent = category.name;
+        const cleanQuery =
+            escapeForQuery(
+                searchText
+            );
 
-    const { data, error } = await supabaseClient
-        .from("businesses")
-        .select(`*, categories ( name, icon )`)
-        .eq("is_approved", true)
-        .eq("category_id", category.id)
-        .order("is_featured", { ascending: false })
-        .order("created_at", { ascending: false })
-        .limit(20);
+        const {
+            data,
+            error
+        } = await supabaseClient
+            .from("businesses")
+            .select(`
+                *,
+                categories (
+                    name,
+                    icon
+                )
+            `)
+            .eq("is_approved", true)
+            .or(
+                `name.ilike.%${cleanQuery}%,description.ilike.%${cleanQuery}%,district.ilike.%${cleanQuery}%,address.ilike.%${cleanQuery}%`
+            )
+            .order(
+                "is_featured",
+                {
+                    ascending: false
+                }
+            )
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            )
+            .limit(20);
 
-    if (error) {
-        console.error("Kategori araması hatası:", error);
-        renderSearchResults([]);
-        return;
-    }
-
-    renderSearchResults(data);
-}
-
-// Arama Sonuçlarını Çizme
-function renderSearchResults(data) {
-    if (!searchResultsContainer) return;
-
-    if (!data || data.length === 0) {
-        searchResultsContainer.innerHTML = `
-            <article class="business-card">
-                <div class="business-image">🔍</div>
-                <div class="business-content">
-                    <span class="badge">SONUÇ YOK</span>
-                    <h3>Henüz sonuç bulunamadı</h3>
-                    <p>Başka bir arama yapmayı deneyin.</p>
-                </div>
-            </article>`;
-        return;
-    }
-
-    searchResultsContainer.innerHTML = data.map(business => {
-        const categoryName = business.categories?.name || "İŞLETME";
-        const imageContent = business.image_url
-            ? `<img src="${escapeHtml(business.image_url)}" alt="${escapeHtml(business.name)}" loading="lazy">`
-            : `${escapeHtml(business.categories?.icon || "🏪")}`;
-        const rating = Number(business.rating || 0);
-        const ratingText = rating > 0 ? `⭐ ${rating.toFixed(1)}` : "⭐ Yeni";
-
-        return `
-            <article class="business-card">
-                <div class="business-image">${imageContent}</div>
-                <div class="business-content">
-                    <span class="badge">${escapeHtml(categoryName).toUpperCase()}</span>
-                    <h3>${escapeHtml(business.name)}</h3>
-                    <p>📍 ${escapeHtml(business.district || business.address || "Trabzon")}</p>
-                    <div class="business-bottom">
-                        <span>${ratingText}</span>
-                        <span>→</span>
-                    </div>
-                </div>
-            </article>`;
-    }).join("");
-
-    searchResultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-// Popüler Aramalar
-function setupPopularSearches() {
-    const links = document.querySelectorAll("[data-search]");
-    links.forEach(link => {
-        link.addEventListener("click", async event => {
-            event.preventDefault();
-            const value = link.dataset.search;
-            if (!searchInput) return;
-
-            searchInput.value = value;
-            await performSearch();
-        });
-    });
-}
-
-// Mobil Menü
-function setupMobileMenu() {
-    if (!menuButton) return;
-
-    menuButton.addEventListener("click", () => {
-        if (mobileNav) {
-            mobileNav.classList.toggle("active");
+        if (error) {
+            throw error;
         }
+
+        renderSearchResults(
+            data
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Arama hatası:",
+            error
+        );
+
+        searchResultsContainer.innerHTML = `
+            <article class="business-card">
+
+                <div class="business-image">
+                    ⚠️
+                </div>
+
+                <div class="business-content">
+
+                    <span class="badge">
+                        HATA
+                    </span>
+
+                    <h3>
+                        Arama yapılamadı
+                    </h3>
+
+                    <p>
+                        Lütfen tekrar deneyin.
+                    </p>
+
+                </div>
+
+            </article>
+        `;
+    }
+}
+
+
+// ============================================================
+// KATEGORİ ARAMA
+// ============================================================
+
+async function searchByCategory(
+    categorySlug
+) {
+
+    if (
+        !searchResultsContainer ||
+        !searchResultsSection
+    ) {
+        return;
+    }
+
+    searchResultsSection.style.display =
+        "block";
+
+    searchResultsTitle.textContent =
+        "Kategori sonuçları";
+
+    searchResultsContainer.innerHTML = `
+        <article class="business-card">
+
+            <div class="business-image">
+                🔎
+            </div>
+
+            <div class="business-content">
+
+                <span class="badge">
+                    ARANIYOR
+                </span>
+
+                <h3>
+                    İşletmeler getiriliyor...
+                </h3>
+
+                <p>
+                    Lütfen bekleyin.
+                </p>
+
+            </div>
+
+        </article>
+    `;
+
+    try {
+
+        const {
+            data: category,
+            error: categoryError
+        } = await supabaseClient
+            .from("categories")
+            .select("id, name")
+            .eq(
+                "slug",
+                categorySlug
+            )
+            .maybeSingle();
+
+        if (categoryError) {
+            throw categoryError;
+        }
+
+        if (!category) {
+
+            renderSearchResults([]);
+
+            return;
+        }
+
+        searchResultsTitle.textContent =
+            category.name;
+
+        const {
+            data,
+            error
+        } = await supabaseClient
+            .from("businesses")
+            .select(`
+                *,
+                categories (
+                    name,
+                    icon
+                )
+            `)
+            .eq("is_approved", true)
+            .eq(
+                "category_id",
+                category.id
+            )
+            .order(
+                "is_featured",
+                {
+                    ascending: false
+                }
+            )
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            )
+            .limit(20);
+
+        if (error) {
+            throw error;
+        }
+
+        renderSearchResults(
+            data
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Kategori araması hatası:",
+            error
+        );
+
+        renderSearchResults([]);
+    }
+}
+
+
+// ============================================================
+// ARAMA SONUÇLARI
+// ============================================================
+
+function renderSearchResults(
+    data
+) {
+
+    if (!searchResultsContainer) {
+        return;
+    }
+
+    if (
+        !data ||
+        data.length === 0
+    ) {
+
+        searchResultsContainer.innerHTML = `
+            <article class="business-card">
+
+                <div class="business-image">
+                    🔍
+                </div>
+
+                <div class="business-content">
+
+                    <span class="badge">
+                        SONUÇ YOK
+                    </span>
+
+                    <h3>
+                        Henüz sonuç bulunamadı
+                    </h3>
+
+                    <p>
+                        Başka bir arama yapmayı deneyin.
+                    </p>
+
+                </div>
+
+            </article>
+        `;
+
+        return;
+    }
+
+    searchResultsContainer.innerHTML =
+        data
+            .map(
+                renderBusinessCard
+            )
+            .join("");
+
+    if (searchResultsSection) {
+
+        searchResultsSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    }
+}
+
+
+// ============================================================
+// POPÜLER ARAMALAR
+// ============================================================
+
+function setupPopularSearches() {
+
+    const links =
+        document.querySelectorAll(
+            "[data-search]"
+        );
+
+    links.forEach(link => {
+
+        link.addEventListener(
+            "click",
+            async event => {
+
+                event.preventDefault();
+
+                const value =
+                    link.dataset.search;
+
+                if (!searchInput) {
+                    return;
+                }
+
+                searchInput.value =
+                    value;
+
+                await performSearch();
+            }
+        );
     });
+}
+
+
+// ============================================================
+// MOBİL MENÜ
+// ============================================================
+
+function setupMobileMenu() {
+
+    if (!menuButton) {
+        return;
+    }
+
+    menuButton.addEventListener(
+        "click",
+        () => {
+
+            if (!mobileNav) {
+                return;
+            }
+
+            mobileNav.classList.toggle(
+                "active"
+            );
+
+            const isOpen =
+                mobileNav.classList.contains(
+                    "active"
+                );
+
+            menuButton.setAttribute(
+                "aria-expanded",
+                isOpen
+                    ? "true"
+                    : "false"
+            );
+        }
+    );
 
     if (mobileNav) {
-        mobileNav.querySelectorAll("a").forEach(link => {
-            link.addEventListener("click", () => {
-                mobileNav.classList.remove("active");
+
+        mobileNav
+            .querySelectorAll("a")
+            .forEach(link => {
+
+                link.addEventListener(
+                    "click",
+                    () => {
+
+                        mobileNav.classList.remove(
+                            "active"
+                        );
+
+                        menuButton.setAttribute(
+                            "aria-expanded",
+                            "false"
+                        );
+                    }
+                );
             });
-        });
     }
 }
 
-// Güvenlik & Dönüştürme Yardımcıları
+
+// ============================================================
+// HTML GÜVENLİĞİ
+// ============================================================
+
 function escapeHtml(value) {
-    if (value === null || value === undefined) return "";
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
+
     return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 }
+
+
+// ============================================================
+// SUPABASE ARAMA KARAKTERLERİ
+// ============================================================
 
 function escapeForQuery(value) {
+
     return String(value)
-        .replace(/\\/g, "\\\\")
-        .replace(/%/g, "\\%")
-        .replace(/_/g, "\\_")
-        .replace(/,/g, "\\,");
+        .replace(
+            /\\/g,
+            "\\\\"
+        )
+        .replace(
+            /%/g,
+            "\\%"
+        )
+        .replace(
+            /_/g,
+            "\\_"
+        )
+        .replace(
+            /,/g,
+            "\\,"
+        );
 }
 
-window.addEventListener("error", event => {
-    console.error("Trabzon Anlık JavaScript hatası:", event.error || event.message);
-});
+
+// ============================================================
+// GLOBAL JAVASCRIPT HATA KAYDI
+// ============================================================
+
+window.addEventListener(
+    "error",
+    event => {
+
+        console.error(
+            "Trabzon Anlık JavaScript hatası:",
+            event.error ||
+            event.message
+        );
+    }
+);
+
+window.addEventListener(
+    "unhandledrejection",
+    event => {
+
+        console.error(
+            "Trabzon Anlık Promise hatası:",
+            event.reason
+        );
+    }
+);
