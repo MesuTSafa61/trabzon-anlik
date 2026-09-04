@@ -6,6 +6,50 @@
     <title>Trabzon Anlık | Trabzon'un Şehir Rehberi</title>
     <meta name="description" content="Trabzon'un öne çıkan mekanları, işletmeleri ve keşif noktaları.">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Mobil Menü Görünürlük Kontrolleri */
+        @media (max-width: 768px) {
+            .desktop-nav, 
+            .business-button {
+                display: none !important;
+            }
+            .menu-button {
+                display: block !important;
+            }
+            .mobile-nav {
+                display: none;
+                flex-direction: column;
+                background: #ffffff;
+                width: 100%;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+                padding: 15px 0;
+                z-index: 999;
+            }
+            .mobile-nav.active {
+                display: flex !important;
+            }
+            .mobile-nav a {
+                padding: 12px 20px;
+                color: #101c35;
+                text-decoration: none;
+                font-weight: 600;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .mobile-nav a.mobile-business-btn {
+                color: #7b1830;
+                font-weight: 700;
+            }
+        }
+        @media (min-width: 769px) {
+            .menu-button,
+            .mobile-nav {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 <body>
 
