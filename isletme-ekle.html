@@ -7,15 +7,36 @@
     <meta name="description" content="İşletmeni Trabzon Anlık'a ekle.">
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Mobil Menü Gizleme Ayarı */
+        .mobile-nav {
+            display: none;
+        }
+        .mobile-nav.active {
+            display: flex;
+            flex-direction: column;
+        }
+
         .form-page {
-            padding: 60px 0 90px;
+            padding: 40px 0 80px;
             background: #f7f7f8;
             min-height: calc(100vh - 80px);
         }
 
         .form-header {
             max-width: 760px;
-            margin: 0 auto 35px;
+            margin: 0 auto 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 12px;
+            color: #7b1830;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
         }
 
         .form-header span {
@@ -23,18 +44,22 @@
             font-size: 13px;
             font-weight: 700;
             letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
         }
 
         .form-header h1 {
-            margin: 8px 0 12px;
-            font-size: 42px;
+            margin: 0 0 12px;
+            font-size: 36px;
             color: #101c35;
+            line-height: 1.2;
         }
 
         .form-header p {
             color: #666;
-            font-size: 17px;
+            font-size: 16px;
             line-height: 1.6;
+            margin: 0;
         }
 
         .business-form {
@@ -178,21 +203,13 @@
             color: #9d2020;
         }
 
-        .back-link {
-            display: inline-block;
-            margin-bottom: 25px;
-            color: #7b1830;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
         @media (max-width: 700px) {
             .form-header h1 {
-                font-size: 32px;
+                font-size: 28px;
             }
 
             .business-form {
-                padding: 22px;
+                padding: 20px;
             }
 
             .form-grid {
@@ -246,10 +263,7 @@
 <main class="form-page">
     <div class="container">
         <div class="form-header">
-            <a href="index.html" class="back-link">
-                ← Ana sayfaya dön
-            </a>
-
+            <a href="index.html" class="back-link">← Ana sayfaya dön</a>
             <span>İŞLETMELERE ÖZEL</span>
             <h1>İşletmeni Trabzon Anlık'a ekle.</h1>
             <p>
