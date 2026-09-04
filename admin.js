@@ -1,14 +1,17 @@
+```javascript
 const SUPABASE_URL =
     "https://yhunhkzsecppbnhjewrt.supabase.co";
 
 const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_0h5ycfDBJjgdf6bXlZ9OEg_K45u2b2v";
 
+
 const supabaseClient =
     window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_PUBLISHABLE_KEY
     );
+
 
 const applications =
     document.querySelector("#applications");
@@ -32,6 +35,10 @@ refreshButton.addEventListener(
 );
 
 
+// ============================================================
+// BAŞVURULARI GETİR
+// ============================================================
+
 async function loadApplications() {
 
     applications.innerHTML = `
@@ -39,6 +46,7 @@ async function loadApplications() {
             Başvurular yükleniyor...
         </div>
     `;
+
 
     const {
         data,
@@ -51,7 +59,6 @@ async function loadApplications() {
                 name
             )
         `)
-        .eq("is_approved", false)
         .order("created_at", {
             ascending: false
         });
@@ -59,13 +66,17 @@ async function loadApplications() {
 
     if (error) {
 
-        console.error(error);
+        console.error(
+            "Başvurular yüklenemedi:",
+            error
+        );
+
 
         applications.innerHTML = `
             <div class="empty-state">
                 Başvurular yüklenemedi.
                 <br><br>
-                ${error.message}
+                ${escapeHtml(error.message)}
             </div>
         `;
 
@@ -77,7 +88,7 @@ async function loadApplications() {
 
         applications.innerHTML = `
             <div class="empty-state">
-                🎉 Bekleyen başvuru bulunmuyor.
+                Henüz işletme başvurusu bulunmuyor.
             </div>
         `;
 
@@ -94,6 +105,7 @@ async function loadApplications() {
             const card =
                 document.createElement("div");
 
+
             card.className =
                 "application-card";
 
@@ -102,6 +114,56 @@ async function loadApplications() {
                 business.categories?.name ||
                 "Kategori belirtilmemiş";
 
+
+            // ------------------------------------------------
+            // DURUM
+            // ------------------------------------------------
+
+            const status =
+                business.is_approved
+
+                    ? `
+                        <span class="status approved-status">
+                            ✓ Yayında
+                        </span>
+                      `
+
+                    : `
+                        <span class="status">
+                            ⏳ Bekliyor
+                        </span>
+                      `;
+
+
+            // ------------------------------------------------
+            // ÖNE ÇIKAN BUTONU
+            // ------------------------------------------------
+
+            const featuredButton =
+                business.is_featured
+
+                    ? `
+                        <button
+                            class="action-button featured-remove-button"
+                            onclick="toggleFeatured(${business.id}, false)"
+                        >
+                            ★ Öne Çıkarmayı Kaldır
+                        </button>
+                      `
+
+                    : `
+                        <button
+                            class="action-button featured-button"
+                            onclick="toggleFeatured(${business.id}, true)"
+                        >
+                            ☆ Öne Çıkar
+                        </button>
+                      `;
+
+
+            // ------------------------------------------------
+            // KART
+            // ------------------------------------------------
 
             card.innerHTML = `
 
@@ -114,88 +176,168 @@ async function loadApplications() {
                         </h2>
 
                         <div class="application-meta">
+
                             ${escapeHtml(category)}
+
                             ·
-                            ${escapeHtml(business.district || "-")}
+
+                            ${escapeHtml(
+                                business.district || "-"
+                            )}
+
                         </div>
 
                     </div>
 
-                    <span class="status">
-                        ⏳ Bekliyor
-                    </span>
+
+                    ${status}
 
                 </div>
 
 
                 <div class="application-details">
 
+
                     <div class="detail">
-                        <strong>Adres</strong>
+
+                        <strong>
+                            Adres
+                        </strong>
+
                         <span>
-                            ${escapeHtml(business.address || "-")}
+                            ${escapeHtml(
+                                business.address || "-"
+                            )}
                         </span>
+
                     </div>
 
 
                     <div class="detail">
-                        <strong>Telefon</strong>
+
+                        <strong>
+                            Telefon
+                        </strong>
+
                         <span>
-                            ${escapeHtml(business.phone || "-")}
+                            ${escapeHtml(
+                                business.phone || "-"
+                            )}
                         </span>
+
                     </div>
 
 
                     <div class="detail">
-                        <strong>Yetkili</strong>
+
+                        <strong>
+                            Yetkili
+                        </strong>
+
                         <span>
-                            ${escapeHtml(business.owner_name || "-")}
+                            ${escapeHtml(
+                                business.owner_name || "-"
+                            )}
                         </span>
+
                     </div>
 
 
                     <div class="detail">
-                        <strong>Yetkili Telefon</strong>
+
+                        <strong>
+                            Yetkili Telefon
+                        </strong>
+
                         <span>
-                            ${escapeHtml(business.owner_phone || "-")}
+                            ${escapeHtml(
+                                business.owner_phone || "-"
+                            )}
                         </span>
+
                     </div>
 
 
                     <div class="detail">
-                        <strong>E-posta</strong>
+
+                        <strong>
+                            E-posta
+                        </strong>
+
                         <span>
-                            ${escapeHtml(business.owner_email || "-")}
+                            ${escapeHtml(
+                                business.owner_email || "-"
+                            )}
                         </span>
+
                     </div>
 
 
                     <div class="detail">
-                        <strong>Instagram</strong>
+
+                        <strong>
+                            Instagram
+                        </strong>
+
                         <span>
-                            ${escapeHtml(business.instagram || "-")}
+                            ${escapeHtml(
+                                business.instagram || "-"
+                            )}
                         </span>
+
                     </div>
+
+
+                    <div class="detail">
+
+                        <strong>
+                            Öne Çıkan
+                        </strong>
+
+                        <span>
+                            ${
+                                business.is_featured
+                                    ? "⭐ Evet"
+                                    : "Hayır"
+                            }
+                        </span>
+
+                    </div>
+
 
                 </div>
 
 
                 <div class="application-actions">
 
-                    <button
-                        class="action-button approve-button"
-                        onclick="approveBusiness(${business.id})"
-                    >
-                        ✓ Onayla
-                    </button>
+
+                    ${
+                        !business.is_approved
+
+                            ? `
+
+                                <button
+                                    class="action-button approve-button"
+                                    onclick="approveBusiness(${business.id})"
+                                >
+                                    ✓ Onayla
+                                </button>
 
 
-                    <button
-                        class="action-button reject-button"
-                        onclick="rejectBusiness(${business.id})"
-                    >
-                        ✕ Reddet
-                    </button>
+                                <button
+                                    class="action-button reject-button"
+                                    onclick="rejectBusiness(${business.id})"
+                                >
+                                    ✕ Reddet
+                                </button>
+
+                              `
+
+                            : ""
+                    }
+
+
+                    ${featuredButton}
 
 
                     <button
@@ -205,12 +347,15 @@ async function loadApplications() {
                         🗑 Sil
                     </button>
 
+
                 </div>
 
             `;
 
 
-            applications.appendChild(card);
+            applications.appendChild(
+                card
+            );
 
         }
     );
@@ -218,12 +363,17 @@ async function loadApplications() {
 }
 
 
+// ============================================================
+// İŞLETME ONAYLA
+// ============================================================
+
 async function approveBusiness(id) {
 
     const confirmed =
         confirm(
             "Bu işletmeyi onaylamak ve yayına almak istediğinize emin misiniz?"
         );
+
 
     if (!confirmed) return;
 
@@ -240,7 +390,10 @@ async function approveBusiness(id) {
 
     if (error) {
 
+        console.error(error);
+
         showMessage(
+            "İşletme onaylanamadı: " +
             error.message,
             "error"
         );
@@ -250,7 +403,7 @@ async function approveBusiness(id) {
 
 
     showMessage(
-        "İşletme başarıyla onaylandı.",
+        "İşletme başarıyla onaylandı. ✓",
         "success"
     );
 
@@ -260,12 +413,28 @@ async function approveBusiness(id) {
 }
 
 
-async function rejectBusiness(id) {
+// ============================================================
+// ÖNE ÇIKAR / KALDIR
+// ============================================================
+
+async function toggleFeatured(
+    id,
+    featured
+) {
+
+    const confirmationText =
+        featured
+
+            ? "Bu işletmeyi ana sayfada öne çıkarmak istediğinize emin misiniz?"
+
+            : "Bu işletmenin öne çıkan durumunu kaldırmak istediğinize emin misiniz?";
+
 
     const confirmed =
         confirm(
-            "Bu işletmeyi reddetmek istediğinize emin misiniz?"
+            confirmationText
         );
+
 
     if (!confirmed) return;
 
@@ -275,14 +444,74 @@ async function rejectBusiness(id) {
     } = await supabaseClient
         .from("businesses")
         .update({
-            is_approved: false
+            is_featured: featured
         })
         .eq("id", id);
 
 
     if (error) {
 
+        console.error(
+            "Öne çıkan güncelleme hatası:",
+            error
+        );
+
+
         showMessage(
+            "İşlem gerçekleştirilemedi: " +
+            error.message,
+            "error"
+        );
+
+        return;
+    }
+
+
+    showMessage(
+        featured
+            ? "İşletme ana sayfada öne çıkarıldı. ⭐"
+            : "İşletmenin öne çıkan durumu kaldırıldı.",
+        "success"
+    );
+
+
+    await loadApplications();
+
+}
+
+
+// ============================================================
+// REDDET
+// ============================================================
+
+async function rejectBusiness(id) {
+
+    const confirmed =
+        confirm(
+            "Bu işletmeyi reddetmek istediğinize emin misiniz?"
+        );
+
+
+    if (!confirmed) return;
+
+
+    const {
+        error
+    } = await supabaseClient
+        .from("businesses")
+        .update({
+            is_approved: false,
+            is_featured: false
+        })
+        .eq("id", id);
+
+
+    if (error) {
+
+        console.error(error);
+
+        showMessage(
+            "Başvuru reddedilemedi: " +
             error.message,
             "error"
         );
@@ -296,15 +525,23 @@ async function rejectBusiness(id) {
         "success"
     );
 
+
+    await loadApplications();
+
 }
 
+
+// ============================================================
+// SİL
+// ============================================================
 
 async function deleteBusiness(id) {
 
     const confirmed =
         confirm(
-            "Bu başvuruyu tamamen silmek istediğinize emin misiniz?"
+            "Bu işletmeyi tamamen silmek istediğinize emin misiniz?"
         );
+
 
     if (!confirmed) return;
 
@@ -319,7 +556,10 @@ async function deleteBusiness(id) {
 
     if (error) {
 
+        console.error(error);
+
         showMessage(
+            "İşletme silinemedi: " +
             error.message,
             "error"
         );
@@ -329,7 +569,7 @@ async function deleteBusiness(id) {
 
 
     showMessage(
-        "Başvuru silindi.",
+        "İşletme başarıyla silindi.",
         "success"
     );
 
@@ -339,6 +579,10 @@ async function deleteBusiness(id) {
 }
 
 
+// ============================================================
+// MESAJ
+// ============================================================
+
 function showMessage(
     text,
     type
@@ -347,19 +591,47 @@ function showMessage(
     adminMessage.textContent =
         text;
 
+
     adminMessage.className =
         `message ${type}`;
 
 }
 
 
-function escapeHtml(value) {
+// ============================================================
+// GÜVENLİ HTML
+// ============================================================
+
+function escapeHtml(
+    value
+) {
 
     return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }
+```
