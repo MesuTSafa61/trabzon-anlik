@@ -1,941 +1,1721 @@
 const SUPABASE_URL =
-“https://yhunhkzsecppbnhjewrt.supabase.co”;
+    "https://yhunhkzsecppbnhjewrt.supabase.co";
 
 const SUPABASE_PUBLISHABLE_KEY =
-“sb_publishable_0h5ycfDBJjgdf6bXlZ9OEg_K45u2b2v”;
+    "sb_publishable_0h5ycfDBJjgdf6bXlZ9OEg_K45u2b2v";
+
 
 const supabaseClient =
-window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_PUBLISHABLE_KEY
-);
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+    );
+
 
 // ============================================================
-// YARDIMCI
+// YARDIMCI FONKSİYONLAR
 // ============================================================
 
 function escapeHtml(value) {
 
-return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
+
 
 function getSlug() {
 
-return new URLSearchParams(
-    window.location.search
-).get("slug");
-
+    return new URLSearchParams(
+        window.location.search
+    ).get("slug");
 }
+
 
 function normalizePhone(phone) {
 
-if (!phone) return "";
-let number =
-    String(phone).replace(/\D/g, "");
-if (number.startsWith("0")) {
-    number =
-        "90" + number.substring(1);
-}
-if (!number.startsWith("90")) {
-    number =
-        "90" + number;
-}
-return number;
+    if (!phone) {
+        return "";
+    }
 
+    let number =
+        String(phone).replace(/\D/g, "");
+
+
+    if (number.startsWith("0")) {
+
+        number =
+            "90" + number.substring(1);
+    }
+
+
+    if (!number.startsWith("90")) {
+
+        number =
+            "90" + number;
+    }
+
+
+    return number;
 }
+
 
 function starsHtml(rating) {
 
-const value =
-    Math.round(Number(rating || 0));
-let html = "";
-for (let i = 1; i <= 5; i++) {
-    html +=
-        i <= value
-            ? "★"
-            : "☆";
-}
-return html;
+    const value =
+        Math.round(
+            Number(rating || 0)
+        );
 
+
+    let html = "";
+
+
+    for (
+        let i = 1;
+        i <= 5;
+        i++
+    ) {
+
+        html +=
+            i <= value
+                ? "★"
+                : "☆";
+    }
+
+
+    return html;
 }
+
 
 // ============================================================
-// İŞLETME YÜKLE
+// İŞLETMEYİ YÜKLE
 // ============================================================
 
 async function loadBusiness() {
 
-const slug =
-    getSlug();
-if (!slug) {
-    showError(
-        "İşletme bulunamadı."
-    );
-    return;
-}
-try {
-    const {
-        data: business,
-        error
-    } =
-        await supabaseClient
-            .from("businesses")
-            .select(`
-                id,
-                name,
-                slug,
-                description,
-                address,
-                district,
-                phone,
-                website,
-                instagram,
-                image_url,
-                latitude,
-                longitude,
-                rating,
-                review_count,
-                category_id
-            `)
-            .eq("slug", slug)
-            .eq("is_approved", true)
-            .maybeSingle();
-    if (error) {
-        console.error(
-            "İşletme hatası:",
-            error
-        );
+    const slug =
+        getSlug();
+
+
+    if (!slug) {
+
         showError(
-            "İşletme bilgileri alınamadı."
+            "İşletme bağlantısı bulunamadı."
         );
+
         return;
     }
-    if (!business) {
-        showError(
-            "İşletme bulunamadı."
+
+
+    try {
+
+        console.log(
+            "İşletme yükleniyor:",
+            slug
         );
-        return;
-    }
-    let category = null;
-    if (business.category_id) {
+
+
         const {
-            data
+            data: business,
+            error
         } =
             await supabaseClient
-                .from("categories")
-                .select("name, icon")
+                .from("businesses")
+                .select(`
+                    id,
+                    name,
+                    slug,
+                    description,
+                    address,
+                    district,
+                    phone,
+                    website,
+                    instagram,
+                    image_url,
+                    latitude,
+                    longitude,
+                    rating,
+                    review_count,
+                    category_id
+                `)
                 .eq(
-                    "id",
-                    business.category_id
+                    "slug",
+                    slug
+                )
+                .eq(
+                    "is_approved",
+                    true
                 )
                 .maybeSingle();
-        category = data;
+
+
+        if (error) {
+
+            console.error(
+                "Supabase işletme hatası:",
+                error
+            );
+
+            showError(
+                "İşletme bilgileri alınamadı."
+            );
+
+            return;
+        }
+
+
+        if (!business) {
+
+            showError(
+                "Bu işletme bulunamadı veya henüz onaylanmadı."
+            );
+
+            return;
+        }
+
+
+        let category = null;
+
+
+        if (business.category_id) {
+
+            const {
+                data: categoryData,
+                error: categoryError
+            } =
+                await supabaseClient
+                    .from("categories")
+                    .select(
+                        "name, icon"
+                    )
+                    .eq(
+                        "id",
+                        business.category_id
+                    )
+                    .maybeSingle();
+
+
+            if (categoryError) {
+
+                console.warn(
+                    "Kategori alınamadı:",
+                    categoryError
+                );
+
+            } else {
+
+                category =
+                    categoryData;
+            }
+        }
+
+
+        renderBusiness(
+            business,
+            category
+        );
+
+
+        await loadReviews(
+            business.id
+        );
+
+
+        setupReviewForm(
+            business.id
+        );
+
+
+        setupShareButtons();
+
+
+    } catch (error) {
+
+        console.error(
+            "Genel işletme hatası:",
+            error
+        );
+
+        showError(
+            "Bir hata oluştu. Lütfen tekrar deneyin."
+        );
     }
-    renderBusiness(
-        business,
-        category
-    );
-    await loadReviews(
-        business.id
-    );
-    setupReviewForm(
-        business.id
-    );
-} catch (error) {
-    console.error(error);
-    showError(
-        "Bir hata oluştu. Lütfen tekrar deneyin."
-    );
 }
 
-}
 
 // ============================================================
-// İŞLETME DETAY
+// İŞLETME DETAYINI OLUŞTUR
 // ============================================================
 
 function renderBusiness(
-business,
-category
+    business,
+    category
 ) {
 
-document.title =
-    `${business.name} | Trabzon Anlık`;
-const title =
-    document.querySelector(
-        ".business-detail-title"
-    );
-if (title) {
-    title.textContent =
-        business.name;
-}
-const categoryElement =
-    document.querySelector(
-        ".business-image-category"
-    );
-if (categoryElement) {
-    categoryElement.textContent =
-        `${category?.icon || "🏪"} ${category?.name || "İŞLETME"}`;
-}
-const image =
-    document.querySelector(
-        ".business-detail-image"
-    );
-if (image) {
+    const container =
+        document.querySelector(
+            "#businessContainer"
+        );
+
+
+    if (!container) {
+
+        console.error(
+            "#businessContainer bulunamadı."
+        );
+
+        return;
+    }
+
+
+    document.title =
+        `${business.name} | Trabzon Anlık`;
+
+
+    const categoryName =
+        category?.name ||
+        "İŞLETME";
+
+
+    const categoryIcon =
+        category?.icon ||
+        "🏪";
+
+
+    const rating =
+        Number(
+            business.rating || 0
+        );
+
+
+    const reviewCount =
+        Number(
+            business.review_count || 0
+        );
+
+
+    let imageHtml;
+
+
     if (business.image_url) {
-        image.src =
-            business.image_url;
-        image.alt =
-            business.name;
-        image.style.display =
-            "block";
+
+        imageHtml = `
+            <img
+                class="business-detail-image"
+                src="${escapeHtml(
+                    business.image_url
+                )}"
+                alt="${escapeHtml(
+                    business.name
+                )}"
+                onerror="
+                    this.style.display='none';
+                    document.querySelector('.business-detail-image-fallback').style.display='flex';
+                "
+            >
+
+            <div
+                class="business-detail-image-fallback"
+                style="
+                    display:none;
+                    width:100%;
+                    height:100%;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:80px;
+                    background:#eef2f7;
+                "
+            >
+                ${escapeHtml(categoryIcon)}
+            </div>
+        `;
+
     } else {
-        image.style.display =
-            "none";
-    }
-}
-const description =
-    document.querySelector(
-        ".business-detail-description"
-    );
-if (description) {
-    description.textContent =
-        business.description ||
-        "Bu işletme hakkında henüz açıklama eklenmemiş.";
-}
-const district =
-    document.querySelector(
-        "[data-business-district]"
-    );
-if (district) {
-    district.textContent =
-        business.district ||
-        "Belirtilmemiş";
-}
-const address =
-    document.querySelector(
-        "[data-business-address]"
-    );
-if (address) {
-    address.textContent =
-        business.address ||
-        "Belirtilmemiş";
-}
-const phone =
-    document.querySelector(
-        "[data-business-phone]"
-    );
-if (phone) {
-    phone.textContent =
-        business.phone ||
-        "Belirtilmemiş";
-}
-const rating =
-    Number(
-        business.rating || 0
-    );
-const ratingMain =
-    document.querySelector(
-        ".rating-main"
-    );
-if (ratingMain) {
-    ratingMain.textContent =
-        `⭐ ${rating.toFixed(1)}`;
-}
-const ratingElement =
-    document.querySelector(
-        ".business-detail-rating"
-    );
-if (ratingElement) {
-    ratingElement.innerHTML = `
-        <span class="detail-rating-stars">
-            ${starsHtml(rating)}
-        </span>
-        <strong>
-            ${rating.toFixed(1)}
-        </strong>
-        <span>
-            (${business.review_count || 0} değerlendirme)
-        </span>
-    `;
-}
-// ========================================================
-// TELEFON
-// ========================================================
-const phoneButton =
-    document.querySelector(
-        ".business-action.phone"
-    );
-if (phoneButton) {
-    if (business.phone) {
-        phoneButton.href =
-            `tel:${business.phone}`;
-    } else {
-        phoneButton.style.display =
-            "none";
-    }
-}
-// ========================================================
-// WHATSAPP
-// ========================================================
-const whatsappButton =
-    document.querySelector(
-        ".business-action.whatsapp"
-    );
-if (whatsappButton) {
-    if (business.phone) {
-        whatsappButton.href =
-            `https://wa.me/${normalizePhone(
-                business.phone
-            )}`;
-        whatsappButton.target =
-            "_blank";
-    } else {
-        whatsappButton.style.display =
-            "none";
-    }
-}
-// ========================================================
-// INSTAGRAM
-// ========================================================
-const instagramButton =
-    document.querySelector(
-        ".business-action.instagram"
-    );
-if (instagramButton) {
-    if (business.instagram) {
-        let instagram =
-            business.instagram.trim();
-        if (
-            !instagram.startsWith("http")
-        ) {
-            instagram =
-                "https://instagram.com/" +
-                instagram.replace("@", "");
-        }
-        instagramButton.href =
-            instagram;
-        instagramButton.target =
-            "_blank";
-    } else {
-        instagramButton.style.display =
-            "none";
-    }
-}
-// ========================================================
-// WEB SİTESİ
-// ========================================================
-const websiteButton =
-    document.querySelector(
-        ".business-action.website"
-    );
-if (websiteButton) {
-    if (business.website) {
-        let website =
-            business.website.trim();
-        if (
-            !website.startsWith("http")
-        ) {
-            website =
-                "https://" + website;
-        }
-        websiteButton.href =
-            website;
-        websiteButton.target =
-            "_blank";
-    } else {
-        websiteButton.style.display =
-            "none";
-    }
-}
-// ========================================================
-// HARİTA
-// ========================================================
-const mapButton =
-    document.querySelector(
-        ".business-action.map"
-    );
-const mapContainer =
-    document.querySelector(
-        ".business-map"
-    );
-if (
-    business.latitude &&
-    business.longitude
-) {
-    const lat =
-        Number(
-            business.latitude
-        );
-    const lng =
-        Number(
-            business.longitude
-        );
-    if (mapButton) {
-        mapButton.href =
-            `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-        mapButton.target =
-            "_blank";
-    }
-    if (mapContainer) {
-        mapContainer.innerHTML = `
-            <iframe
-                src="https://www.google.com/maps?q=${lat},${lng}&z=16&output=embed"
-                width="100%"
-                height="350"
-                style="border:0;"
-                loading="lazy"
-                allowfullscreen>
-            </iframe>
+
+        imageHtml = `
+            <div
+                class="business-detail-image-fallback"
+                style="
+                    display:flex;
+                    width:100%;
+                    height:100%;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:80px;
+                    background:#eef2f7;
+                "
+            >
+                ${escapeHtml(categoryIcon)}
+            </div>
         `;
     }
-} else if (business.address) {
+
+
+    container.innerHTML = `
+
+        <article class="business-detail-card">
+
+            <div class="business-detail-image-wrap">
+
+                ${imageHtml}
+
+                <div class="business-image-overlay"></div>
+
+                <div class="business-image-category">
+
+                    ${escapeHtml(categoryIcon)}
+
+                    ${escapeHtml(categoryName)}
+
+                </div>
+
+            </div>
+
+
+            <div class="business-detail-content">
+
+                <h1 class="business-detail-title">
+
+                    ${escapeHtml(
+                        business.name
+                    )}
+
+                </h1>
+
+
+                <div class="business-detail-rating">
+
+                    <span class="detail-rating-stars">
+
+                        ${starsHtml(rating)}
+
+                    </span>
+
+                    <strong>
+
+                        ${rating.toFixed(1)}
+
+                    </strong>
+
+                    <span>
+
+                        (${reviewCount} değerlendirme)
+
+                    </span>
+
+                </div>
+
+
+                <p class="business-detail-description">
+
+                    ${escapeHtml(
+                        business.description ||
+                        "Bu işletme hakkında henüz açıklama eklenmemiş."
+                    )}
+
+                </p>
+
+
+                <div class="business-info">
+
+
+                    <div class="business-info-item">
+
+                        <span>
+                            📍
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                İlçe
+                            </strong>
+
+                            <br>
+
+                            ${escapeHtml(
+                                business.district ||
+                                "Belirtilmemiş"
+                            )}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="business-info-item">
+
+                        <span>
+                            🏠
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Adres
+                            </strong>
+
+                            <br>
+
+                            ${escapeHtml(
+                                business.address ||
+                                "Belirtilmemiş"
+                            )}
+
+                        </div>
+
+                    </div>
+
+
+                    ${
+                        business.phone
+                            ? `
+                                <div class="business-info-item">
+
+                                    <span>
+                                        📞
+                                    </span>
+
+                                    <div>
+
+                                        <strong>
+                                            Telefon
+                                        </strong>
+
+                                        <br>
+
+                                        ${escapeHtml(
+                                            business.phone
+                                        )}
+
+                                    </div>
+
+                                </div>
+                            `
+                            : ""
+                    }
+
+
+                </div>
+
+
+                <div class="business-actions">
+
+
+                    ${
+                        business.phone
+                            ? `
+                                <a
+                                    class="business-action phone"
+                                    href="tel:${escapeHtml(
+                                        business.phone
+                                    )}"
+                                >
+                                    📞 Ara
+                                </a>
+                            `
+                            : ""
+                    }
+
+
+                    ${
+                        business.phone
+                            ? `
+                                <a
+                                    class="business-action whatsapp"
+                                    href="https://wa.me/${normalizePhone(
+                                        business.phone
+                                    )}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    💬 WhatsApp
+                                </a>
+                            `
+                            : ""
+                    }
+
+
+                    ${
+                        business.instagram
+                            ? `
+                                <a
+                                    class="business-action instagram"
+                                    href="${formatInstagram(
+                                        business.instagram
+                                    )}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    📷 Instagram
+                                </a>
+                            `
+                            : ""
+                    }
+
+
+                    ${
+                        business.website
+                            ? `
+                                <a
+                                    class="business-action website"
+                                    href="${formatWebsite(
+                                        business.website
+                                    )}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    🌐 Web Sitesi
+                                </a>
+                            `
+                            : ""
+                    }
+
+
+                    ${
+                        business.address ||
+                        (
+                            business.latitude &&
+                            business.longitude
+                        )
+                            ? `
+                                <a
+                                    class="business-action map"
+                                    href="${getMapUrl(
+                                        business
+                                    )}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    📍 Yol Tarifi
+                                </a>
+                            `
+                            : ""
+                    }
+
+
+                </div>
+
+
+                <div class="share-actions">
+
+                    <button
+                        type="button"
+                        id="share-business"
+                        class="share-button"
+                    >
+                        📤 Paylaş
+                    </button>
+
+
+                    <button
+                        type="button"
+                        id="copy-business-link"
+                        class="share-button"
+                    >
+                        🔗 Linki Kopyala
+                    </button>
+
+                </div>
+
+
+                <div class="business-map">
+
+                    ${renderMap(business)}
+
+                </div>
+
+
+            </div>
+
+        </article>
+
+    `;
+}
+
+
+// ============================================================
+// INSTAGRAM URL
+// ============================================================
+
+function formatInstagram(value) {
+
+    let instagram =
+        String(value || "").trim();
+
+
+    if (!instagram) {
+        return "#";
+    }
+
+
+    if (
+        instagram.startsWith("http://") ||
+        instagram.startsWith("https://")
+    ) {
+
+        return instagram;
+    }
+
+
+    instagram =
+        instagram.replace(
+            /^@/,
+            ""
+        );
+
+
+    return `https://instagram.com/${encodeURIComponent(
+        instagram
+    )}`;
+}
+
+
+// ============================================================
+// WEBSITE URL
+// ============================================================
+
+function formatWebsite(value) {
+
+    let website =
+        String(value || "").trim();
+
+
+    if (!website) {
+        return "#";
+    }
+
+
+    if (
+        website.startsWith("http://") ||
+        website.startsWith("https://")
+    ) {
+
+        return website;
+    }
+
+
+    return `https://${website}`;
+}
+
+
+// ============================================================
+// HARİTA URL
+// ============================================================
+
+function getMapUrl(
+    business
+) {
+
+    if (
+        business.latitude &&
+        business.longitude
+    ) {
+
+        return (
+            "https://www.google.com/maps/dir/?api=1" +
+            `&destination=${business.latitude},${business.longitude}`
+        );
+    }
+
+
     const address =
         encodeURIComponent(
-            `${business.address}, ${business.district || ""}, Trabzon`
+            [
+                business.address,
+                business.district,
+                "Trabzon"
+            ]
+                .filter(Boolean)
+                .join(", ")
         );
-    if (mapButton) {
-        mapButton.href =
-            `https://www.google.com/maps/search/?api=1&query=${address}`;
-        mapButton.target =
-            "_blank";
+
+
+    return (
+        "https://www.google.com/maps/search/?api=1" +
+        `&query=${address}`
+    );
+}
+
+
+// ============================================================
+// HARİTA GÖSTER
+// ============================================================
+
+function renderMap(
+    business
+) {
+
+    if (
+        business.latitude &&
+        business.longitude
+    ) {
+
+        const lat =
+            Number(
+                business.latitude
+            );
+
+
+        const lng =
+            Number(
+                business.longitude
+            );
+
+
+        return `
+
+            <iframe
+                src="https://www.google.com/maps?q=${lat},${lng}&z=16&output=embed"
+                loading="lazy"
+                allowfullscreen
+            ></iframe>
+
+        `;
     }
-    if (mapContainer) {
-        mapContainer.innerHTML = `
+
+
+    if (business.address) {
+
+        return `
+
             <div class="map-placeholder">
+
                 <div class="map-placeholder-icon">
                     📍
                 </div>
+
                 <strong>
                     Konum
                 </strong>
+
                 <p>
                     ${escapeHtml(
                         business.address
                     )}
                 </p>
+
             </div>
+
         `;
     }
+
+
+    return `
+
+        <div class="map-placeholder">
+
+            <div class="map-placeholder-icon">
+                📍
+            </div>
+
+            <strong>
+                Konum bilgisi eklenmemiş
+            </strong>
+
+            <p>
+                İşletme sahibi konum bilgisini henüz eklememiş.
+            </p>
+
+        </div>
+
+    `;
 }
 
-}
 
 // ============================================================
 // YORUMLARI YÜKLE
 // ============================================================
 
 async function loadReviews(
-businessId
+    businessId
 ) {
 
-const container =
-    document.querySelector(
-        "#reviews-list"
-    );
-if (!container) {
-    return;
-}
-const {
-    data: reviews,
-    error
-} =
-    await supabaseClient
-        .from("reviews")
-        .select(`
-            id,
-            name,
-            rating,
-            comment,
-            created_at
-        `)
-        .eq(
-            "business_id",
-            businessId
-        )
-        .eq(
-            "is_approved",
-            true
-        )
-        .order(
-            "created_at",
-            {
-                ascending: false
-            }
+    const container =
+        document.querySelector(
+            "#reviews-list"
         );
-if (error) {
-    console.error(
-        "Yorumlar alınamadı:",
-        error
-    );
-    container.innerHTML = `
-        <div class="review-error">
-            Yorumlar yüklenemedi.
-        </div>
-    `;
-    return;
-}
-const reviewList =
-    reviews || [];
-const count =
-    reviewList.length;
-// ========================================================
-// ORTALAMA PUAN
-// ========================================================
-let average = 0;
-if (count > 0) {
-    const total =
-        reviewList.reduce(
-            (
-                sum,
-                review
-            ) =>
-                sum +
-                Number(
-                    review.rating || 0
-                ),
-            0
-        );
-    average =
-        total / count;
-}
-const averageElement =
-    document.querySelector(
-        "#review-average"
-    );
-if (averageElement) {
-    averageElement.textContent =
-        average.toFixed(1);
-}
-const countElement =
-    document.querySelector(
-        "#review-count"
-    );
-if (countElement) {
-    countElement.textContent =
-        count;
-}
-const starsElement =
-    document.querySelector(
-        "#review-stars-summary"
-    );
-if (starsElement) {
-    starsElement.textContent =
-        starsHtml(average);
-}
-// ========================================================
-// YORUM YOK
-// ========================================================
-if (reviewList.length === 0) {
-    container.innerHTML = `
-        <div class="no-reviews">
-            <div>
-                💬
-            </div>
-            <strong>
-                Henüz yorum yok
-            </strong>
-            <p>
-                Bu işletme için ilk yorumu sen yaz!
-            </p>
-        </div>
-    `;
-    return;
-}
-container.innerHTML =
-    reviewList
-        .map(
-            renderReview
-        )
-        .join("");
 
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML = `
+        <div class="reviews-loading">
+            Yorumlar yükleniyor...
+        </div>
+    `;
+
+
+    const {
+        data: reviews,
+        error
+    } =
+        await supabaseClient
+            .from("reviews")
+            .select(`
+                id,
+                name,
+                rating,
+                comment,
+                created_at
+            `)
+            .eq(
+                "business_id",
+                businessId
+            )
+            .eq(
+                "is_approved",
+                true
+            )
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Yorum yükleme hatası:",
+            error
+        );
+
+
+        container.innerHTML = `
+
+            <div class="review-error">
+
+                Yorumlar şu anda yüklenemiyor.
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    const reviewList =
+        reviews || [];
+
+
+    const count =
+        reviewList.length;
+
+
+    let average = 0;
+
+
+    if (count > 0) {
+
+        const total =
+            reviewList.reduce(
+                (
+                    sum,
+                    review
+                ) => {
+
+                    return (
+                        sum +
+                        Number(
+                            review.rating || 0
+                        )
+                    );
+
+                },
+                0
+            );
+
+
+        average =
+            total / count;
+    }
+
+
+    // Ortalama
+
+    const averageElement =
+        document.querySelector(
+            "#review-average"
+        );
+
+
+    if (averageElement) {
+
+        averageElement.textContent =
+            average.toFixed(1);
+    }
+
+
+    // Sayı
+
+    const countElement =
+        document.querySelector(
+            "#review-count"
+        );
+
+
+    if (countElement) {
+
+        countElement.textContent =
+            count;
+    }
+
+
+    // Yıldızlar
+
+    const starsElement =
+        document.querySelector(
+            "#review-stars-summary"
+        );
+
+
+    if (starsElement) {
+
+        starsElement.textContent =
+            starsHtml(
+                average
+            );
+    }
+
+
+    // Yorum yoksa
+
+    if (reviewList.length === 0) {
+
+        container.innerHTML = `
+
+            <div class="no-reviews">
+
+                <div>
+                    💬
+                </div>
+
+                <strong>
+                    Henüz yorum yok
+                </strong>
+
+                <p>
+                    Bu işletme için ilk yorumu sen yaz!
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        reviewList
+            .map(
+                renderReview
+            )
+            .join("");
 }
+
 
 // ============================================================
 // YORUM KARTI
 // ============================================================
 
 function renderReview(
-review
+    review
 ) {
 
-const date =
-    new Date(
+    const date =
         review.created_at
-    ).toLocaleDateString(
-        "tr-TR",
-        {
-            day: "numeric",
-            month: "long",
-            year: "numeric"
-        }
-    );
-const name =
-    review.name ||
-    "Misafir";
-return `
-    <article class="review-card">
-        <div class="review-top">
-            <div class="review-user">
-                <div class="review-avatar">
-                    ${escapeHtml(
-                        name
-                            .charAt(0)
-                            .toUpperCase()
-                    )}
-                </div>
-                <div>
-                    <strong>
-                        ${escapeHtml(name)}
-                    </strong>
-                    <small>
-                        ${date}
-                    </small>
-                </div>
-            </div>
-            <div class="review-stars">
-                ${starsHtml(
-                    review.rating
-                )}
-            </div>
-        </div>
-        ${
-            review.comment
-                ? `
-                    <p class="review-comment">
-                        ${escapeHtml(
-                            review.comment
-                        )}
-                    </p>
-                `
-                : ""
-        }
-    </article>
-`;
+            ? new Date(
+                review.created_at
+            ).toLocaleDateString(
+                "tr-TR",
+                {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric"
+                }
+            )
+            : "";
 
+
+    const name =
+        review.name ||
+        "Misafir";
+
+
+    return `
+
+        <article class="review-card">
+
+            <div class="review-top">
+
+                <div class="review-user">
+
+                    <div class="review-avatar">
+
+                        ${escapeHtml(
+                            name
+                                .charAt(0)
+                                .toUpperCase()
+                        )}
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+
+                            ${escapeHtml(
+                                name
+                            )}
+
+                        </strong>
+
+
+                        <small>
+
+                            ${escapeHtml(
+                                date
+                            )}
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <div class="review-stars">
+
+                    ${starsHtml(
+                        review.rating
+                    )}
+
+                </div>
+
+            </div>
+
+
+            ${
+                review.comment
+                    ? `
+                        <p class="review-comment">
+
+                            ${escapeHtml(
+                                review.comment
+                            )}
+
+                        </p>
+                    `
+                    : ""
+            }
+
+        </article>
+
+    `;
 }
+
 
 // ============================================================
 // YORUM FORMU
 // ============================================================
 
 function setupReviewForm(
-businessId
+    businessId
 ) {
 
-const form =
-    document.querySelector(
-        "#review-form"
-    );
-if (!form) {
-    return;
-}
-const stars =
-    form.querySelectorAll(
-        ".star-input"
-    );
-const ratingInput =
-    form.querySelector(
-        "#review-rating"
-    );
-const ratingText =
-    form.querySelector(
-        "#selected-rating"
-    );
-stars.forEach(
-    star => {
-        star.addEventListener(
-            "click",
-            () => {
-                const rating =
-                    Number(
-                        star.dataset.rating
-                    );
-                ratingInput.value =
-                    rating;
-                stars.forEach(
-                    item => {
-                        const itemRating =
-                            Number(
-                                item.dataset.rating
-                            );
-                        item.classList.toggle(
-                            "active",
-                            itemRating <= rating
+    const form =
+        document.querySelector(
+            "#review-form"
+        );
+
+
+    if (!form) {
+
+        console.error(
+            "#review-form bulunamadı."
+        );
+
+        return;
+    }
+
+
+    const stars =
+        form.querySelectorAll(
+            ".star-input"
+        );
+
+
+    const ratingInput =
+        form.querySelector(
+            "#review-rating"
+        );
+
+
+    const ratingText =
+        form.querySelector(
+            "#selected-rating"
+        );
+
+
+    // ========================================================
+    // YILDIZ SEÇİMİ
+    // ========================================================
+
+    stars.forEach(
+        star => {
+
+            star.addEventListener(
+                "click",
+                function() {
+
+                    const rating =
+                        Number(
+                            this.dataset.rating
                         );
+
+
+                    ratingInput.value =
+                        rating;
+
+
+                    stars.forEach(
+                        item => {
+
+                            const itemRating =
+                                Number(
+                                    item.dataset.rating
+                                );
+
+
+                            item.classList.toggle(
+                                "active",
+                                itemRating <= rating
+                            );
+                        }
+                    );
+
+
+                    if (ratingText) {
+
+                        ratingText.textContent =
+                            `${rating} / 5`;
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+    // ========================================================
+    // FORM GÖNDERME
+    // ========================================================
+
+    form.addEventListener(
+        "submit",
+        async function(event) {
+
+            // SAYFANIN YENİLENMESİNİ KES
+            event.preventDefault();
+            event.stopPropagation();
+
+
+            const nameInput =
+                form.querySelector(
+                    "#review-name"
+                );
+
+
+            const commentInput =
+                form.querySelector(
+                    "#review-comment"
+                );
+
+
+            const submitButton =
+                form.querySelector(
+                    ".review-submit"
+                );
+
+
+            const name =
+                nameInput
+                    ? nameInput.value.trim()
+                    : "";
+
+
+            const comment =
+                commentInput
+                    ? commentInput.value.trim()
+                    : "";
+
+
+            const rating =
+                Number(
+                    ratingInput.value
+                );
+
+
+            // =================================================
+            // KONTROLLER
+            // =================================================
+
+            if (
+                name.length < 2
+            ) {
+
+                showReviewMessage(
+                    "Lütfen adınızı yazın.",
+                    "error"
+                );
+
+                if (nameInput) {
+                    nameInput.focus();
+                }
+
+                return;
+            }
+
+
+            if (
+                name.length > 50
+            ) {
+
+                showReviewMessage(
+                    "Adınız en fazla 50 karakter olabilir.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            if (
+                rating < 1 ||
+                rating > 5
+            ) {
+
+                showReviewMessage(
+                    "Lütfen 1 ile 5 arasında bir puan seçin.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            if (
+                comment.length > 1000
+            ) {
+
+                showReviewMessage(
+                    "Yorumunuz en fazla 1000 karakter olabilir.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            // =================================================
+            // GÖNDERİLİYOR
+            // =================================================
+
+            if (submitButton) {
+
+                submitButton.disabled =
+                    true;
+
+                submitButton.textContent =
+                    "Gönderiliyor...";
+            }
+
+
+            clearReviewMessage();
+
+
+            try {
+
+                const {
+                    data,
+                    error
+                } =
+                    await supabaseClient
+                        .from("reviews")
+                        .insert({
+                            business_id:
+                                businessId,
+
+                            name:
+                                name,
+
+                            rating:
+                                rating,
+
+                            comment:
+                                comment || null,
+
+                            is_approved:
+                                false
+                        })
+                        .select()
+                        .maybeSingle();
+
+
+                if (error) {
+
+                    console.error(
+                        "Yorum gönderme hatası:",
+                        error
+                    );
+
+
+                    showReviewMessage(
+                        "Yorum gönderilemedi. Lütfen tekrar deneyin.",
+                        "error"
+                    );
+
+
+                    return;
+                }
+
+
+                console.log(
+                    "Yorum başarıyla gönderildi:",
+                    data
+                );
+
+
+                // =================================================
+                // BAŞARILI
+                // =================================================
+
+                form.reset();
+
+
+                ratingInput.value =
+                    "";
+
+
+                stars.forEach(
+                    star => {
+
+                        star.classList.remove(
+                            "active"
+                        );
+
                     }
                 );
-                if (ratingText) {
-                    ratingText.textContent =
-                        `${rating} / 5`;
-                }
-            }
-        );
-    }
-);
-form.addEventListener(
-    "submit",
-    async event => {
-        event.preventDefault();
-        const name =
-            document
-                .querySelector(
-                    "#review-name"
-                )
-                ?.value
-                .trim();
-        const comment =
-            document
-                .querySelector(
-                    "#review-comment"
-                )
-                ?.value
-                .trim();
-        const rating =
-            Number(
-                ratingInput.value
-            );
-        if (
-            !name ||
-            name.length < 2
-        ) {
-            showReviewMessage(
-                "Lütfen adınızı yazın.",
-                "error"
-            );
-            return;
-        }
-        if (
-            rating < 1 ||
-            rating > 5
-        ) {
-            showReviewMessage(
-                "Lütfen yıldız puanı seçin.",
-                "error"
-            );
-            return;
-        }
-        if (
-            comment.length > 1000
-        ) {
-            showReviewMessage(
-                "Yorumunuz en fazla 1000 karakter olabilir.",
-                "error"
-            );
-            return;
-        }
-        const submitButton =
-            form.querySelector(
-                ".review-submit"
-            );
-        if (submitButton) {
-            submitButton.disabled =
-                true;
-            submitButton.textContent =
-                "Gönderiliyor...";
-        }
-        const {
-            error
-        } =
-            await supabaseClient
-                .from("reviews")
-                .insert({
-                    business_id:
-                        businessId,
-                    name:
-                        name,
-                    rating:
-                        rating,
-                    comment:
-                        comment || null,
-                    is_approved:
-                        false
-                });
-        if (error) {
-            console.error(
-                "Yorum gönderme hatası:",
-                error
-            );
-            showReviewMessage(
-                "Yorum gönderilemedi. Lütfen tekrar deneyin.",
-                "error"
-            );
-        } else {
-            form.reset();
-            ratingInput.value =
-                "";
-            stars.forEach(
-                star =>
-                    star.classList.remove(
-                        "active"
-                    )
-            );
-            if (ratingText) {
-                ratingText.textContent =
-                    "Puan seçin";
-            }
-            showReviewMessage(
-                "Yorumunuz gönderildi. Onaylandıktan sonra yayınlanacaktır. ⭐",
-                "success"
-            );
-        }
-        if (submitButton) {
-            submitButton.disabled =
-                false;
-            submitButton.textContent =
-                "Yorumu Gönder";
-        }
-    }
-);
 
+
+                if (ratingText) {
+
+                    ratingText.textContent =
+                        "Puan seçin";
+                }
+
+
+                showReviewMessage(
+                    "Yorumunuz gönderildi! Onaylandıktan sonra yayınlanacaktır. ⭐",
+                    "success"
+                );
+
+
+                // Formun olduğu bölüme yumuşak şekilde getir
+
+                const message =
+                    document.querySelector(
+                        "#review-message"
+                    );
+
+
+                if (message) {
+
+                    message.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+                }
+
+
+            } catch (error) {
+
+                console.error(
+                    "Beklenmeyen yorum hatası:",
+                    error
+                );
+
+
+                showReviewMessage(
+                    "Bir hata oluştu. Lütfen tekrar deneyin.",
+                    "error"
+                );
+
+
+            } finally {
+
+                if (submitButton) {
+
+                    submitButton.disabled =
+                        false;
+
+                    submitButton.textContent =
+                        "Yorumu Gönder";
+                }
+
+            }
+
+        }
+    );
 }
+
 
 // ============================================================
 // YORUM MESAJI
 // ============================================================
 
 function showReviewMessage(
-message,
-type
+    message,
+    type
 ) {
 
-const element =
-    document.querySelector(
-        "#review-message"
-    );
-if (!element) {
-    return;
-}
-element.textContent =
-    message;
-element.className =
-    `review-message ${type}`;
-element.style.display =
-    "block";
+    const element =
+        document.querySelector(
+            "#review-message"
+        );
 
+
+    if (!element) {
+        return;
+    }
+
+
+    element.textContent =
+        message;
+
+
+    element.className =
+        `review-message ${type}`;
+
+
+    element.style.display =
+        "block";
 }
+
+
+function clearReviewMessage() {
+
+    const element =
+        document.querySelector(
+            "#review-message"
+        );
+
+
+    if (!element) {
+        return;
+    }
+
+
+    element.textContent =
+        "";
+
+
+    element.style.display =
+        "none";
+}
+
 
 // ============================================================
 // HATA
 // ============================================================
 
 function showError(
-message
+    message
 ) {
 
-const container =
-    document.querySelector(
-        "#businessContainer"
-    );
-if (!container) {
-    return;
-}
-container.innerHTML = `
-    <div class="business-error">
-        <div>
-            😕
-        </div>
-        <h2>
-            ${escapeHtml(message)}
-        </h2>
-        <a href="index.html">
-            Ana Sayfaya Dön
-        </a>
-    </div>
-`;
+    const container =
+        document.querySelector(
+            "#businessContainer"
+        );
 
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML = `
+
+        <div class="business-error">
+
+            <div>
+                😕
+            </div>
+
+            <h2>
+                ${escapeHtml(
+                    message
+                )}
+            </h2>
+
+            <a href="index.html">
+                Ana Sayfaya Dön
+            </a>
+
+        </div>
+
+    `;
 }
+
 
 // ============================================================
-// PAYLAŞ
+// PAYLAŞ / LİNK KOPYALA
 // ============================================================
 
 function setupShareButtons() {
 
-const shareButton =
-    document.querySelector(
-        "#share-business"
-    );
-const copyButton =
-    document.querySelector(
-        "#copy-business-link"
-    );
-if (shareButton) {
-    shareButton.addEventListener(
-        "click",
-        async () => {
-            try {
-                if (
-                    navigator.share
-                ) {
-                    await navigator.share({
-                        title:
-                            document.title,
-                        text:
-                            "Trabzon Anlık'ta bu işletmeye göz at!",
-                        url:
+    const shareButton =
+        document.querySelector(
+            "#share-business"
+        );
+
+
+    const copyButton =
+        document.querySelector(
+            "#copy-business-link"
+        );
+
+
+    if (shareButton) {
+
+        shareButton.addEventListener(
+            "click",
+            async function() {
+
+                try {
+
+                    if (
+                        navigator.share
+                    ) {
+
+                        await navigator.share({
+
+                            title:
+                                document.title,
+
+                            text:
+                                "Trabzon Anlık'ta bu işletmeye göz at!",
+
+                            url:
+                                window.location.href
+
+                        });
+
+                    } else {
+
+                        await navigator.clipboard.writeText(
                             window.location.href
-                    });
-                } else {
+                        );
+
+
+                        shareButton.textContent =
+                            "✓ Link Kopyalandı";
+
+
+                        setTimeout(
+                            () => {
+
+                                shareButton.textContent =
+                                    "📤 Paylaş";
+
+                            },
+                            2000
+                        );
+                    }
+
+
+                } catch (error) {
+
+                    console.log(
+                        "Paylaşım iptal edildi."
+                    );
+
+                }
+
+            }
+        );
+    }
+
+
+    if (copyButton) {
+
+        copyButton.addEventListener(
+            "click",
+            async function() {
+
+                try {
+
                     await navigator.clipboard.writeText(
                         window.location.href
                     );
-                    alert(
-                        "İşletme bağlantısı kopyalandı."
+
+
+                    copyButton.textContent =
+                        "✓ Kopyalandı";
+
+
+                    setTimeout(
+                        () => {
+
+                            copyButton.textContent =
+                                "🔗 Linki Kopyala";
+
+                        },
+                        2000
                     );
+
+
+                } catch (error) {
+
+                    console.error(
+                        error
+                    );
+
+
+                    alert(
+                        "Link kopyalanamadı."
+                    );
+
                 }
-            } catch (error) {
-                console.log(
-                    "Paylaşım iptal edildi."
-                );
+
             }
-        }
-    );
-}
-if (copyButton) {
-    copyButton.addEventListener(
-        "click",
-        async () => {
-            try {
-                await navigator.clipboard.writeText(
-                    window.location.href
-                );
-                copyButton.textContent =
-                    "✓ Kopyalandı";
-                setTimeout(
-                    () => {
-                        copyButton.textContent =
-                            "🔗 Linki Kopyala";
-                    },
-                    2000
-                );
-            } catch (error) {
-                alert(
-                    "Link kopyalanamadı."
-                );
-            }
-        }
-    );
+        );
+    }
 }
 
-}
 
 // ============================================================
-// BAŞLAT
+// SAYFA BAŞLAT
 // ============================================================
 
 document.addEventListener(
-“DOMContentLoaded”,
-() => {
+    "DOMContentLoaded",
+    function() {
 
-    loadBusiness();
-    setupShareButtons();
-}
+        loadBusiness();
 
+    }
 );
