@@ -1,462 +1,707 @@
 <!DOCTYPE html>
 <html lang="tr">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>
-        İşletme Detayı | Trabzon Anlık
-    </title>
-
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
-
-    <style>
-
-        /* =====================================================
-           İŞLETME DETAY SAYFASI
-        ===================================================== */
-
-        body {
-            background: #f6f8fb;
-        }
-
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+<title>İşletme Detayı | Trabzon Anlık</title>
+<link
+    rel="stylesheet"
+    href="style.css"
+>
+<style>
+    body {
+        background: #f6f8fb;
+    }
+    .business-detail {
+        max-width: 1150px;
+        margin: 40px auto 80px;
+        padding: 0 20px;
+    }
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 20px;
+        color: #111827;
+        text-decoration: none;
+        font-weight: 700;
+    }
+    .back-button:hover {
+        opacity: .7;
+    }
+    .business-detail-card {
+        background: #ffffff;
+        border-radius: 26px;
+        overflow: hidden;
+        box-shadow: 0 15px 45px rgba(0,0,0,.08);
+    }
+    .business-detail-image-wrap {
+        position: relative;
+        width: 100%;
+        height: 470px;
+        overflow: hidden;
+        background: #e5e7eb;
+    }
+    .business-detail-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .business-image-overlay {
+        position: absolute;
+        inset: auto 0 0 0;
+        height: 180px;
+        background: linear-gradient(
+            to top,
+            rgba(0,0,0,.65),
+            transparent
+        );
+        pointer-events: none;
+    }
+    .business-image-category {
+        position: absolute;
+        left: 25px;
+        bottom: 22px;
+        display: inline-flex;
+        align-items: center;
+        padding: 9px 15px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.94);
+        color: #111827;
+        font-size: 14px;
+        font-weight: 800;
+    }
+    .business-detail-content {
+        padding: 36px;
+    }
+    .business-detail-title {
+        margin: 0 0 12px;
+        font-size: 42px;
+        line-height: 1.15;
+        color: #111827;
+    }
+    .business-detail-rating {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 28px;
+        color: #475569;
+        font-size: 16px;
+    }
+    .rating-main {
+        font-size: 21px;
+        font-weight: 800;
+        color: #111827;
+    }
+    .detail-rating-stars {
+        color: #f5a623;
+        font-size: 21px;
+        letter-spacing: 2px;
+    }
+    .business-detail-description {
+        margin-bottom: 30px;
+        color: #4b5563;
+        font-size: 17px;
+        line-height: 1.75;
+    }
+    .business-info {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 30px;
+    }
+    .business-info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 16px 18px;
+        background: #f8fafc;
+        border: 1px solid #eef2f7;
+        border-radius: 15px;
+        color: #374151;
+        line-height: 1.5;
+    }
+    .business-info-item strong {
+        color: #111827;
+    }
+    .business-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .business-action {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 52px;
+        padding: 14px 18px;
+        border-radius: 14px;
+        text-decoration: none;
+        font-weight: 800;
+        background: #111827;
+        color: white;
+        transition: transform .2s ease, opacity .2s ease;
+    }
+    .business-action:hover {
+        transform: translateY(-2px);
+        opacity: .9;
+    }
+    .business-action.whatsapp {
+        background: #16a34a;
+    }
+    .business-action.instagram {
+        background: #7c3aed;
+    }
+    .business-action.map {
+        background: #2563eb;
+    }
+    .business-action.website {
+        background: #475569;
+    }
+    .share-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+    }
+    .share-button {
+        border: 0;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: #f1f5f9;
+        color: #111827;
+        font-weight: 700;
+        cursor: pointer;
+        transition: .2s ease;
+    }
+    .share-button:hover {
+        background: #e2e8f0;
+    }
+    .business-map {
+        margin-top: 28px;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+    .business-map iframe {
+        width: 100%;
+        height: 350px;
+        display: block;
+        border: 0;
+    }
+    .map-placeholder {
+        padding: 45px 20px;
+        text-align: center;
+        background: #f8fafc;
+        color: #64748b;
+    }
+    .map-placeholder-icon {
+        font-size: 42px;
+        margin-bottom: 8px;
+    }
+    .map-placeholder strong {
+        display: block;
+        color: #111827;
+        font-size: 18px;
+    }
+    .map-placeholder p {
+        margin: 8px 0 0;
+    }
+    /* =========================
+       YORUMLAR
+    ========================= */
+    .reviews-section {
+        margin-top: 32px;
+        padding: 34px;
+        background: #fff;
+        border-radius: 26px;
+        box-shadow: 0 15px 45px rgba(0,0,0,.06);
+    }
+    .reviews-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+    .section-eyebrow {
+        display: block;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        color: #d71920;
+        margin-bottom: 8px;
+    }
+    .reviews-header h2 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        color: #111827;
+    }
+    .reviews-header p {
+        margin: 0;
+        color: #777;
+    }
+    .reviews-summary {
+        min-width: 165px;
+        text-align: center;
+        padding: 18px 24px;
+        background: #f8f8f8;
+        border-radius: 18px;
+    }
+    .reviews-score {
+        font-size: 25px;
+    }
+    .reviews-score strong {
+        font-size: 32px;
+    }
+    .reviews-stars {
+        color: #f5a623;
+        font-size: 20px;
+        letter-spacing: 2px;
+        margin: 4px 0;
+    }
+    .reviews-count {
+        font-size: 13px;
+        color: #777;
+    }
+    .review-form-card {
+        padding: 25px;
+        background: #f8f9fa;
+        border-radius: 20px;
+        margin-bottom: 35px;
+    }
+    .review-form-card h3 {
+        margin: 0 0 6px;
+        font-size: 20px;
+        color: #111827;
+    }
+    .review-form-description {
+        color: #777;
+        margin-top: 0;
+        margin-bottom: 22px;
+    }
+    .review-field {
+        margin-bottom: 20px;
+    }
+    .review-field label {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #111827;
+    }
+    .review-field input,
+    .review-field textarea {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+        background: #fff;
+        border-radius: 12px;
+        padding: 13px 15px;
+        font-size: 15px;
+        font-family: inherit;
+        outline: none;
+        transition: .2s;
+    }
+    .review-field input:focus,
+    .review-field textarea:focus {
+        border-color: #d71920;
+        box-shadow: 0 0 0 3px rgba(215,25,32,.08);
+    }
+    .review-field textarea {
+        resize: vertical;
+        min-height: 120px;
+    }
+    .star-selector {
+        display: flex;
+        gap: 3px;
+    }
+    .star-input {
+        border: 0;
+        background: transparent;
+        color: #d1d5db;
+        font-size: 36px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0 3px;
+        transition: .15s;
+    }
+    .star-input:hover,
+    .star-input.active {
+        color: #f5a623;
+        transform: scale(1.08);
+    }
+    .selected-rating {
+        margin-top: 7px;
+        color: #777;
+        font-size: 13px;
+    }
+    .review-submit {
+        border: 0;
+        background: #d71920;
+        color: white;
+        padding: 14px 25px;
+        border-radius: 12px;
+        font-weight: 800;
+        cursor: pointer;
+        font-size: 15px;
+        transition: .2s;
+    }
+    .review-submit:hover {
+        transform: translateY(-1px);
+        opacity: .92;
+    }
+    .review-submit:disabled {
+        opacity: .6;
+        cursor: wait;
+    }
+    .review-note {
+        font-size: 12px;
+        color: #888;
+        margin: 12px 0 0;
+    }
+    .review-message {
+        padding: 12px 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .review-message.success {
+        background: #eaf8ef;
+        color: #18733a;
+    }
+    .review-message.error {
+        background: #fff0f0;
+        color: #c62828;
+    }
+    .reviews-list-title h3 {
+        margin: 0 0 18px;
+        color: #111827;
+    }
+    .review-card {
+        padding: 20px 0;
+        border-bottom: 1px solid #eee;
+    }
+    .review-card:last-child {
+        border-bottom: 0;
+    }
+    .review-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+    }
+    .review-user {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .review-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eef2f7;
+        font-weight: 800;
+        color: #555;
+    }
+    .review-user strong {
+        display: block;
+        color: #111827;
+    }
+    .review-user small {
+        display: block;
+        color: #999;
+        margin-top: 3px;
+    }
+    .review-card .review-stars {
+        color: #f5a623;
+        letter-spacing: 1px;
+    }
+    .review-comment {
+        margin: 15px 0 0 56px;
+        line-height: 1.7;
+        color: #444;
+    }
+    .no-reviews,
+    .reviews-loading,
+    .review-error {
+        padding: 35px 20px;
+        text-align: center;
+        color: #777;
+    }
+    .no-reviews div {
+        font-size: 38px;
+        margin-bottom: 8px;
+    }
+    .business-error {
+        background: white;
+        border-radius: 24px;
+        padding: 70px 25px;
+        text-align: center;
+    }
+    .business-error > div {
+        font-size: 50px;
+    }
+    .business-error h2 {
+        color: #111827;
+    }
+    .business-error a {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 12px 18px;
+        background: #111827;
+        color: white;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 700;
+    }
+    @media (max-width: 700px) {
         .business-detail {
-            max-width: 1150px;
-            margin: 40px auto 80px;
-            padding: 0 20px;
+            margin: 25px auto 50px;
+            padding: 0 14px;
         }
-
-
-        /* GERİ BUTONU */
-
-        .back-button {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 20px;
-            color: #111827;
-            text-decoration: none;
-            font-weight: 700;
-        }
-
-        .back-button:hover {
-            opacity: .7;
-        }
-
-
-        /* ANA KART */
-
-        .business-detail-card {
-            background: #ffffff;
-            border-radius: 26px;
-            overflow: hidden;
-            box-shadow:
-                0 15px 45px rgba(0,0,0,.08);
-        }
-
-
-        /* FOTOĞRAF */
-
         .business-detail-image-wrap {
-            position: relative;
-            width: 100%;
-            height: 470px;
-            overflow: hidden;
-            background: #e5e7eb;
+            height: 290px;
         }
-
-        .business-detail-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-
-        /* FOTOĞRAF ÜZERİNDEKİ GRADIENT */
-
-        .business-image-overlay {
-            position: absolute;
-            inset: auto 0 0 0;
-            height: 180px;
-            background:
-                linear-gradient(
-                    to top,
-                    rgba(0,0,0,.65),
-                    transparent
-                );
-            pointer-events: none;
-        }
-
-
-        /* FOTOĞRAF ÜZERİNDE KATEGORİ */
-
-        .business-image-category {
-            position: absolute;
-            left: 25px;
-            bottom: 22px;
-
-            display: inline-flex;
-            align-items: center;
-
-            padding: 9px 15px;
-
-            border-radius: 999px;
-
-            background: rgba(255,255,255,.94);
-
-            color: #111827;
-
-            font-size: 14px;
-            font-weight: 800;
-        }
-
-
-        /* İÇERİK */
-
         .business-detail-content {
-            padding: 36px;
+            padding: 24px 20px;
         }
-
-
-        /* BAŞLIK */
-
         .business-detail-title {
-            margin: 0 0 12px;
-
-            font-size: 42px;
-            line-height: 1.15;
-
-            color: #111827;
+            font-size: 29px;
         }
-
-
-        /* PUAN */
-
-        .business-detail-rating {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-
-            margin-bottom: 28px;
-
-            color: #475569;
-            font-size: 16px;
-        }
-
-        .rating-main {
-            font-size: 21px;
-            font-weight: 800;
-            color: #111827;
-        }
-
-
-        /* AÇIKLAMA */
-
-        .business-detail-description {
-            margin-bottom: 30px;
-
-            color: #4b5563;
-
-            font-size: 17px;
-            line-height: 1.75;
-        }
-
-
-        /* BİLGİLER */
-
-        .business-info {
-            display: grid;
-            gap: 12px;
-            margin-bottom: 30px;
-        }
-
-        .business-info-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-
-            padding: 16px 18px;
-
-            background: #f8fafc;
-
-            border: 1px solid #eef2f7;
-
-            border-radius: 15px;
-
-            color: #374151;
-
-            line-height: 1.5;
-        }
-
-        .business-info-item strong {
-            color: #111827;
-        }
-
-
-        /* BUTONLAR */
-
         .business-actions {
-            display: grid;
-
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-
-            gap: 12px;
-
-            margin-bottom: 20px;
+            grid-template-columns: 1fr;
         }
-
-        .business-action {
-            display: flex;
-
-            align-items: center;
-            justify-content: center;
-
-            min-height: 52px;
-
-            padding: 14px 18px;
-
-            border-radius: 14px;
-
-            text-decoration: none;
-
-            font-weight: 800;
-
-            background: #111827;
-            color: white;
-
-            transition:
-                transform .2s ease,
-                opacity .2s ease;
-        }
-
-        .business-action:hover {
-            transform: translateY(-2px);
-            opacity: .9;
-        }
-
-        .business-action.whatsapp {
-            background: #16a34a;
-        }
-
-        .business-action.instagram {
-            background: #7c3aed;
-        }
-
-        .business-action.map {
-            background: #2563eb;
-        }
-
-        .business-action.website {
-            background: #475569;
-        }
-
-
-        /* PAYLAŞ */
-
-        .share-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-
-            padding-top: 20px;
-
-            border-top:
-                1px solid #e5e7eb;
-        }
-
-        .share-button {
-            border: 0;
-
-            padding: 12px 16px;
-
-            border-radius: 12px;
-
-            background: #f1f5f9;
-
-            color: #111827;
-
-            font-weight: 700;
-
-            cursor: pointer;
-
-            transition: .2s ease;
-        }
-
-        .share-button:hover {
-            background: #e2e8f0;
-        }
-
-
-        /* HARİTA */
-
-        .business-map {
-            margin-top: 28px;
-
-            border-radius: 20px;
-
-            overflow: hidden;
-
-            border: 1px solid #e5e7eb;
-        }
-
         .business-map iframe {
+            height: 280px;
+        }
+        .reviews-section {
+            padding: 22px 16px;
+            border-radius: 20px;
+        }
+        .reviews-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .reviews-summary {
             width: 100%;
-            height: 350px;
-
-            display: block;
-
-            border: 0;
+            box-sizing: border-box;
         }
-
-
-        /* YÜKLENİYOR / HATA */
-
-        .loading,
-        .error {
-            text-align: center;
-
-            padding: 90px 20px;
+        .review-form-card {
+            padding: 18px;
         }
-
-
-        /* MOBİL */
-
-        @media (max-width: 700px) {
-
-            .business-detail {
-                margin: 25px auto 50px;
-                padding: 0 14px;
-            }
-
-            .business-detail-image-wrap {
-                height: 290px;
-            }
-
-            .business-detail-content {
-                padding: 24px 20px;
-            }
-
-            .business-detail-title {
-                font-size: 29px;
-            }
-
-            .business-actions {
-                grid-template-columns: 1fr;
-            }
-
-            .business-map iframe {
-                height: 280px;
-            }
-
+        .review-top {
+            flex-direction: column;
         }
-
-    </style>
-
+        .review-comment {
+            margin-left: 0;
+        }
+        .star-input {
+            font-size: 32px;
+        }
+    }
+</style>
 </head>
-
-
 <body>
-
-
-    <!-- =====================================================
-         HEADER
-    ====================================================== -->
-
-    <header class="header">
-
-        <div class="header-content">
-
-            <a
-                href="index.html"
-                class="logo"
-            >
-                TRABZON ANLIK
-            </a>
-
-
-            <nav class="nav">
-
-                <a href="index.html">
-                    Ana Sayfa
-                </a>
-
-                <a href="index.html#kategoriler">
-                    Kategoriler
-                </a>
-
-                <a href="isletme-ekle.html">
-                    İşletmeni Ekle
-                </a>
-
-            </nav>
-
-        </div>
-
-    </header>
-
-
-
-    <!-- =====================================================
-         ANA İÇERİK
-    ====================================================== -->
-
-    <main class="business-detail">
-
-
+<header class="header">
+    <div class="header-content">
         <a
             href="index.html"
-            class="back-button"
+            class="logo"
         >
-            ← Ana Sayfaya Dön
+            TRABZON ANLIK
         </a>
-
-
-        <div id="businessContainer">
-
-            <div class="loading">
-
-                <h2>
-                    İşletme yükleniyor...
-                </h2>
-
-                <p>
-                    Lütfen bekleyin.
-                </p>
-
-            </div>
-
+        <nav class="nav">
+            <a href="index.html">
+                Ana Sayfa
+            </a>
+            <a href="index.html#kategoriler">
+                Kategoriler
+            </a>
+            <a href="isletme-ekle.html">
+                İşletmeni Ekle
+            </a>
+        </nav>
+    </div>
+</header>
+<main class="business-detail">
+    <a
+        href="index.html"
+        class="back-button"
+    >
+        ← Ana Sayfaya Dön
+    </a>
+    <div id="businessContainer">
+        <div class="loading">
+            <h2>
+                İşletme yükleniyor...
+            </h2>
+            <p>
+                Lütfen bekleyin.
+            </p>
         </div>
-
-
-    </main>
-
-
-
-    <!-- SUPABASE -->
-
-    <script
-        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-    ></script>
-
-
-    <!-- İŞLETME JS -->
-
-    <script
-        src="isletme.js?v=2"
-    ></script>
-
-
+    </div>
+    <!-- =================================================
+         YORUMLAR
+    ================================================== -->
+    <section class="reviews-section">
+        <div class="reviews-header">
+            <div>
+                <span class="section-eyebrow">
+                    İŞLETME YORUMLARI
+                </span>
+                <h2>
+                    Müşteriler ne diyor?
+                </h2>
+                <p>
+                    Deneyimini paylaş, diğer Trabzonlulara yardımcı ol.
+                </p>
+            </div>
+            <div class="reviews-summary">
+                <div class="reviews-score">
+                    ⭐
+                    <strong id="review-average">
+                        0.0
+                    </strong>
+                </div>
+                <div
+                    class="reviews-stars"
+                    id="review-stars-summary"
+                >
+                    ☆☆☆☆☆
+                </div>
+                <div class="reviews-count">
+                    <span id="review-count">
+                        0
+                    </span>
+                    değerlendirme
+                </div>
+            </div>
+        </div>
+        <div class="review-form-card">
+            <h3>
+                ⭐ Deneyimini paylaş
+            </h3>
+            <p class="review-form-description">
+                Bu işletmeyi ziyaret ettiysen puanını ve yorumunu paylaş.
+            </p>
+            <form id="review-form">
+                <div class="review-field">
+                    <label for="review-name">
+                        Adınız
+                    </label>
+                    <input
+                        type="text"
+                        id="review-name"
+                        name="name"
+                        placeholder="Adınızı yazın"
+                        maxlength="50"
+                        autocomplete="name"
+                        required
+                    >
+                </div>
+                <div class="review-field">
+                    <label>
+                        Puanınız
+                    </label>
+                    <div class="star-selector">
+                        <button
+                            type="button"
+                            class="star-input"
+                            data-rating="1"
+                            aria-label="1 yıldız"
+                        >★</button>
+                        <button
+                            type="button"
+                            class="star-input"
+                            data-rating="2"
+                            aria-label="2 yıldız"
+                        >★</button>
+                        <button
+                            type="button"
+                            class="star-input"
+                            data-rating="3"
+                            aria-label="3 yıldız"
+                        >★</button>
+                        <button
+                            type="button"
+                            class="star-input"
+                            data-rating="4"
+                            aria-label="4 yıldız"
+                        >★</button>
+                        <button
+                            type="button"
+                            class="star-input"
+                            data-rating="5"
+                            aria-label="5 yıldız"
+                        >★</button>
+                    </div>
+                    <div
+                        id="selected-rating"
+                        class="selected-rating"
+                    >
+                        Puan seçin
+                    </div>
+                    <input
+                        type="hidden"
+                        id="review-rating"
+                        value=""
+                    >
+                </div>
+                <div class="review-field">
+                    <label for="review-comment">
+                        Yorumunuz
+                    </label>
+                    <textarea
+                        id="review-comment"
+                        name="comment"
+                        rows="5"
+                        maxlength="1000"
+                        placeholder="Bu işletme hakkındaki deneyiminizi yazın..."
+                    ></textarea>
+                </div>
+                <div
+                    id="review-message"
+                    class="review-message"
+                    style="display:none;"
+                ></div>
+                <button
+                    type="submit"
+                    class="review-submit"
+                >
+                    Yorumu Gönder
+                </button>
+                <p class="review-note">
+                    ℹ️ Yorumunuz yayınlanmadan önce kontrol edilir.
+                </p>
+            </form>
+        </div>
+        <div class="reviews-list-wrapper">
+            <div class="reviews-list-title">
+                <h3>
+                    Son değerlendirmeler
+                </h3>
+            </div>
+            <div id="reviews-list">
+                <div class="reviews-loading">
+                    Yorumlar yükleniyor...
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+></script>
+<script
+    src="isletme.js?v=4"
+></script>
 </body>
-
 </html>
