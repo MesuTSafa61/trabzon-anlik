@@ -113,12 +113,6 @@ async function loadBusiness() {
 
     try {
 
-        console.log(
-            "İşletme yükleniyor:",
-            slug
-        );
-
-
         const {
             data: business,
             error
@@ -156,7 +150,7 @@ async function loadBusiness() {
         if (error) {
 
             console.error(
-                "Supabase işletme hatası:",
+                "İşletme yükleme hatası:",
                 error
             );
 
@@ -184,8 +178,7 @@ async function loadBusiness() {
         if (business.category_id) {
 
             const {
-                data: categoryData,
-                error: categoryError
+                data: categoryData
             } =
                 await supabaseClient
                     .from("categories")
@@ -199,18 +192,8 @@ async function loadBusiness() {
                     .maybeSingle();
 
 
-            if (categoryError) {
-
-                console.warn(
-                    "Kategori alınamadı:",
-                    categoryError
-                );
-
-            } else {
-
-                category =
-                    categoryData;
-            }
+            category =
+                categoryData || null;
         }
 
 
@@ -232,11 +215,10 @@ async function loadBusiness() {
 
         setupShareButtons();
 
-
     } catch (error) {
 
         console.error(
-            "Genel işletme hatası:",
+            "İşletme genel hata:",
             error
         );
 
@@ -248,7 +230,7 @@ async function loadBusiness() {
 
 
 // ============================================================
-// İŞLETME DETAYINI OLUŞTUR
+// İŞLETME DETAYI
 // ============================================================
 
 function renderBusiness(
@@ -263,11 +245,6 @@ function renderBusiness(
 
 
     if (!container) {
-
-        console.error(
-            "#businessContainer bulunamadı."
-        );
-
         return;
     }
 
@@ -304,6 +281,7 @@ function renderBusiness(
     if (business.image_url) {
 
         imageHtml = `
+
             <img
                 class="business-detail-image"
                 src="${escapeHtml(
@@ -314,7 +292,8 @@ function renderBusiness(
                 )}"
                 onerror="
                     this.style.display='none';
-                    document.querySelector('.business-detail-image-fallback').style.display='flex';
+                    const fallback=this.parentElement.querySelector('.business-detail-image-fallback');
+                    if(fallback) fallback.style.display='flex';
                 "
             >
 
@@ -332,11 +311,13 @@ function renderBusiness(
             >
                 ${escapeHtml(categoryIcon)}
             </div>
+
         `;
 
     } else {
 
         imageHtml = `
+
             <div
                 class="business-detail-image-fallback"
                 style="
@@ -351,6 +332,7 @@ function renderBusiness(
             >
                 ${escapeHtml(categoryIcon)}
             </div>
+
         `;
     }
 
@@ -396,15 +378,11 @@ function renderBusiness(
                     </span>
 
                     <strong>
-
                         ${rating.toFixed(1)}
-
                     </strong>
 
                     <span>
-
                         (${reviewCount} değerlendirme)
-
                     </span>
 
                 </div>
@@ -422,18 +400,13 @@ function renderBusiness(
 
                 <div class="business-info">
 
-
                     <div class="business-info-item">
 
-                        <span>
-                            📍
-                        </span>
+                        <span>📍</span>
 
                         <div>
 
-                            <strong>
-                                İlçe
-                            </strong>
+                            <strong>İlçe</strong>
 
                             <br>
 
@@ -449,15 +422,11 @@ function renderBusiness(
 
                     <div class="business-info-item">
 
-                        <span>
-                            🏠
-                        </span>
+                        <span>🏠</span>
 
                         <div>
 
-                            <strong>
-                                Adres
-                            </strong>
+                            <strong>Adres</strong>
 
                             <br>
 
@@ -474,17 +443,14 @@ function renderBusiness(
                     ${
                         business.phone
                             ? `
+
                                 <div class="business-info-item">
 
-                                    <span>
-                                        📞
-                                    </span>
+                                    <span>📞</span>
 
                                     <div>
 
-                                        <strong>
-                                            Telefon
-                                        </strong>
+                                        <strong>Telefon</strong>
 
                                         <br>
 
@@ -495,20 +461,20 @@ function renderBusiness(
                                     </div>
 
                                 </div>
+
                             `
                             : ""
                     }
-
 
                 </div>
 
 
                 <div class="business-actions">
 
-
                     ${
                         business.phone
                             ? `
+
                                 <a
                                     class="business-action phone"
                                     href="tel:${escapeHtml(
@@ -517,6 +483,7 @@ function renderBusiness(
                                 >
                                     📞 Ara
                                 </a>
+
                             `
                             : ""
                     }
@@ -525,6 +492,7 @@ function renderBusiness(
                     ${
                         business.phone
                             ? `
+
                                 <a
                                     class="business-action whatsapp"
                                     href="https://wa.me/${normalizePhone(
@@ -535,6 +503,7 @@ function renderBusiness(
                                 >
                                     💬 WhatsApp
                                 </a>
+
                             `
                             : ""
                     }
@@ -543,6 +512,7 @@ function renderBusiness(
                     ${
                         business.instagram
                             ? `
+
                                 <a
                                     class="business-action instagram"
                                     href="${formatInstagram(
@@ -553,6 +523,7 @@ function renderBusiness(
                                 >
                                     📷 Instagram
                                 </a>
+
                             `
                             : ""
                     }
@@ -561,6 +532,7 @@ function renderBusiness(
                     ${
                         business.website
                             ? `
+
                                 <a
                                     class="business-action website"
                                     href="${formatWebsite(
@@ -571,6 +543,7 @@ function renderBusiness(
                                 >
                                     🌐 Web Sitesi
                                 </a>
+
                             `
                             : ""
                     }
@@ -583,6 +556,7 @@ function renderBusiness(
                             business.longitude
                         )
                             ? `
+
                                 <a
                                     class="business-action map"
                                     href="${getMapUrl(
@@ -593,10 +567,10 @@ function renderBusiness(
                                 >
                                     📍 Yol Tarifi
                                 </a>
+
                             `
                             : ""
                     }
-
 
                 </div>
 
@@ -629,7 +603,6 @@ function renderBusiness(
 
                 </div>
 
-
             </div>
 
         </article>
@@ -639,7 +612,7 @@ function renderBusiness(
 
 
 // ============================================================
-// INSTAGRAM URL
+// INSTAGRAM
 // ============================================================
 
 function formatInstagram(value) {
@@ -669,14 +642,17 @@ function formatInstagram(value) {
         );
 
 
-    return `https://instagram.com/${encodeURIComponent(
-        instagram
-    )}`;
+    return (
+        "https://instagram.com/" +
+        encodeURIComponent(
+            instagram
+        )
+    );
 }
 
 
 // ============================================================
-// WEBSITE URL
+// WEB SİTESİ
 // ============================================================
 
 function formatWebsite(value) {
@@ -699,12 +675,12 @@ function formatWebsite(value) {
     }
 
 
-    return `https://${website}`;
+    return "https://" + website;
 }
 
 
 // ============================================================
-// HARİTA URL
+// HARİTA
 // ============================================================
 
 function getMapUrl(
@@ -755,22 +731,14 @@ function renderMap(
         business.longitude
     ) {
 
-        const lat =
-            Number(
-                business.latitude
-            );
-
-
-        const lng =
-            Number(
-                business.longitude
-            );
-
-
         return `
 
             <iframe
-                src="https://www.google.com/maps?q=${lat},${lng}&z=16&output=embed"
+                src="https://www.google.com/maps?q=${Number(
+                    business.latitude
+                )},${Number(
+                    business.longitude
+                )}&z=16&output=embed"
                 loading="lazy"
                 allowfullscreen
             ></iframe>
@@ -847,9 +815,11 @@ async function loadReviews(
 
 
     container.innerHTML = `
+
         <div class="reviews-loading">
             Yorumlar yükleniyor...
         </div>
+
     `;
 
 
@@ -941,8 +911,6 @@ async function loadReviews(
     }
 
 
-    // Ortalama
-
     const averageElement =
         document.querySelector(
             "#review-average"
@@ -956,8 +924,6 @@ async function loadReviews(
     }
 
 
-    // Sayı
-
     const countElement =
         document.querySelector(
             "#review-count"
@@ -970,8 +936,6 @@ async function loadReviews(
             count;
     }
 
-
-    // Yıldızlar
 
     const starsElement =
         document.querySelector(
@@ -988,17 +952,13 @@ async function loadReviews(
     }
 
 
-    // Yorum yoksa
-
     if (reviewList.length === 0) {
 
         container.innerHTML = `
 
             <div class="no-reviews">
 
-                <div>
-                    💬
-                </div>
+                <div>💬</div>
 
                 <strong>
                     Henüz yorum yok
@@ -1075,20 +1035,11 @@ function renderReview(
                     <div>
 
                         <strong>
-
-                            ${escapeHtml(
-                                name
-                            )}
-
+                            ${escapeHtml(name)}
                         </strong>
 
-
                         <small>
-
-                            ${escapeHtml(
-                                date
-                            )}
-
+                            ${escapeHtml(date)}
                         </small>
 
                     </div>
@@ -1110,6 +1061,7 @@ function renderReview(
             ${
                 review.comment
                     ? `
+
                         <p class="review-comment">
 
                             ${escapeHtml(
@@ -1117,6 +1069,7 @@ function renderReview(
                             )}
 
                         </p>
+
                     `
                     : ""
             }
@@ -1170,7 +1123,7 @@ function setupReviewForm(
 
 
     // ========================================================
-    // YILDIZ SEÇİMİ
+    // YILDIZ
     // ========================================================
 
     stars.forEach(
@@ -1203,6 +1156,7 @@ function setupReviewForm(
                                 "active",
                                 itemRating <= rating
                             );
+
                         }
                     );
 
@@ -1211,6 +1165,7 @@ function setupReviewForm(
 
                         ratingText.textContent =
                             `${rating} / 5`;
+
                     }
 
                 }
@@ -1221,14 +1176,13 @@ function setupReviewForm(
 
 
     // ========================================================
-    // FORM GÖNDERME
+    // FORM
     // ========================================================
 
     form.addEventListener(
         "submit",
         async function(event) {
 
-            // SAYFANIN YENİLENMESİNİ KES
             event.preventDefault();
             event.stopPropagation();
 
@@ -1282,9 +1236,7 @@ function setupReviewForm(
                     "error"
                 );
 
-                if (nameInput) {
-                    nameInput.focus();
-                }
+                nameInput?.focus();
 
                 return;
             }
@@ -1330,9 +1282,8 @@ function setupReviewForm(
             }
 
 
-            // =================================================
-            // GÖNDERİLİYOR
-            // =================================================
+            clearReviewMessage();
+
 
             if (submitButton) {
 
@@ -1344,18 +1295,21 @@ function setupReviewForm(
             }
 
 
-            clearReviewMessage();
-
-
             try {
 
+                // =================================================
+                // ÖNEMLİ:
+                // .select() KULLANMIYORUZ.
+                // Çünkü yeni yorum henüz onaylanmadı.
+                // =================================================
+
                 const {
-                    data,
                     error
                 } =
                     await supabaseClient
                         .from("reviews")
                         .insert({
+
                             business_id:
                                 businessId,
 
@@ -1370,9 +1324,8 @@ function setupReviewForm(
 
                             is_approved:
                                 false
-                        })
-                        .select()
-                        .maybeSingle();
+
+                        });
 
 
                 if (error) {
@@ -1391,12 +1344,6 @@ function setupReviewForm(
 
                     return;
                 }
-
-
-                console.log(
-                    "Yorum başarıyla gönderildi:",
-                    data
-                );
 
 
                 // =================================================
@@ -1429,12 +1376,10 @@ function setupReviewForm(
 
 
                 showReviewMessage(
-                    "Yorumunuz gönderildi! Onaylandıktan sonra yayınlanacaktır. ⭐",
+                    "Yorumunuz gönderildi! ⭐ Onaylandıktan sonra yayınlanacaktır.",
                     "success"
                 );
 
-
-                // Formun olduğu bölüme yumuşak şekilde getir
 
                 const message =
                     document.querySelector(
@@ -1444,12 +1389,18 @@ function setupReviewForm(
 
                 if (message) {
 
-                    message.scrollIntoView({
-                        behavior: "smooth",
-                        block: "center"
-                    });
-                }
+                    setTimeout(
+                        () => {
 
+                            message.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center"
+                            });
+
+                        },
+                        50
+                    );
+                }
 
             } catch (error) {
 
@@ -1463,7 +1414,6 @@ function setupReviewForm(
                     "Bir hata oluştu. Lütfen tekrar deneyin.",
                     "error"
                 );
-
 
             } finally {
 
@@ -1566,9 +1516,7 @@ function showError(
             </div>
 
             <h2>
-                ${escapeHtml(
-                    message
-                )}
+                ${escapeHtml(message)}
             </h2>
 
             <a href="index.html">
@@ -1582,7 +1530,7 @@ function showError(
 
 
 // ============================================================
-// PAYLAŞ / LİNK KOPYALA
+// PAYLAŞ
 // ============================================================
 
 function setupShareButtons() {
@@ -1646,7 +1594,6 @@ function setupShareButtons() {
                         );
                     }
 
-
                 } catch (error) {
 
                     console.log(
@@ -1687,13 +1634,7 @@ function setupShareButtons() {
                         2000
                     );
 
-
                 } catch (error) {
-
-                    console.error(
-                        error
-                    );
-
 
                     alert(
                         "Link kopyalanamadı."
@@ -1708,7 +1649,7 @@ function setupShareButtons() {
 
 
 // ============================================================
-// SAYFA BAŞLAT
+// BAŞLAT
 // ============================================================
 
 document.addEventListener(
