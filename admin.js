@@ -1,472 +1,1146 @@
 const SUPABASE_URL =
     "https://yhunhkzsecppbnhjewrt.supabase.co";
-
 const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_0h5ycfDBJjgdf6bXlZ9OEg_K45u2b2v";
-
-
+const BUSINESS_IMAGES_BUCKET = "business-images";
 const supabaseClient =
     window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_PUBLISHABLE_KEY
     );
-
-
-// ============================================================
+// ===============================
 // ELEMENTLER
-// ============================================================
-
-const loginScreen =
-    document.querySelector("#loginScreen");
-
-const loginForm =
-    document.querySelector("#loginForm");
-
-const loginEmail =
-    document.querySelector("#loginEmail");
-
-const loginPassword =
-    document.querySelector("#loginPassword");
-
-const loginError =
-    document.querySelector("#loginError");
-
-const adminApp =
-    document.querySelector("#adminApp");
-
-const adminUser =
-    document.querySelector("#adminUser");
-
-const logoutButton =
-    document.querySelector("#logoutButton");
-
-const refreshButton =
-    document.querySelector("#refreshButton");
-
-const applications =
-    document.querySelector("#applications");
-
-const reviewsList =
-    document.querySelector("#reviewsList");
-
-const adminMessage =
-    document.querySelector("#adminMessage");
-
-
-// ============================================================
-// SAYFA BAŞLANGICI
-// ============================================================
-
-document.addEventListener(
-    "DOMContentLoaded",
-    initializeAdmin
-);
-
-
-// ============================================================
-// ADMIN BAŞLAT
-// ============================================================
-
+// ===============================
+const loginScreen = document.getElementById("loginScreen");
+const loginForm = document.getElementById("loginForm");
+const loginEmail = document.getElementById("loginEmail");
+const loginPassword = document.getElementById("loginPassword");
+const loginError = document.getElementById("loginError");
+const adminApp = document.getElementById("adminApp");
+const adminUser = document.getElementById("adminUser");
+const logoutButton = document.getElementById("logoutButton");
+const refreshButton = document.getElementById("refreshButton");
+const applications = document.getElementById("applications");
+const reviewsList = document.getElementById("reviewsList");
+const adminMessage = document.getElementById("adminMessage");
+// ===============================
+// BAŞLANGIÇ
+// ===============================
+document.addEventListener("DOMContentLoaded", () => {
+    initializeAdmin();
+});
 async function initializeAdmin() {
-
-    try {
-
-        const {
-            data: {
-                session
-            }
-        } = await supabaseClient.auth.getSession();
-
-
-        if (!session) {
-
-            showLogin();
-
-            return;
-        }
-
-
-        const isAdmin =
-            await checkAdmin(
-                session.user.id
-            );
-
-
-        if (!isAdmin) {
-
-            await supabaseClient.auth.signOut();
-
-            showLoginError(
-                "Bu hesap yönetim paneline erişim yetkisine sahip değil."
-            );
-
-            return;
-        }
-
-
-        showAdmin(
-            session.user
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Admin başlatma hatası:",
-            error
-        );
-
-        showLoginError(
-            "Yönetim paneli başlatılamadı."
-        );
-
-    }
-
-}
-
-
-// ============================================================
-// ADMIN KONTROLÜ
-// ============================================================
-
-async function checkAdmin(
-    userId
-) {
-
     const {
-        data,
-        error
-    } = await supabaseClient
-        .from("admin_users")
-        .select("id")
-        .eq("id", userId)
-        .maybeSingle();
-
-
-    if (error) {
-
-        console.error(
-            "Admin kontrol hatası:",
-            error
-        );
-
-        return false;
+        data: { session }
+    } = await supabaseClient.auth.getSession();
+    if (session && session.user) {
+        await checkAdmin(session.user.id);
+    } else {
+        showLogin();
     }
-
-
-    return !!data;
-
-}
-
-
-// ============================================================
-// GİRİŞ
-// ============================================================
-
-if (loginForm) {
-
-    loginForm.addEventListener(
-        "submit",
-        async function(event) {
-
-            event.preventDefault();
-
-
-            const email =
-                loginEmail.value.trim();
-
-            const password =
-                loginPassword.value;
-
-
-            if (!email || !password) {
-
-                showLoginError(
-                    "E-posta ve şifre gerekli."
-                );
-
-                return;
+    supabaseClient.auth.onAuthStateChange(
+        async (event, session) => {
+            if (event === "SIGNED_IN" && session?.user) {
+                await checkAdmin(session.user.id);
             }
-
-
-            setLoginLoading(
-                true
-            );
-
-
-            const {
-                data,
-                error
-            } = await supabaseClient.auth.signInWithPassword({
-                email,
-                password
-            });
-
-
-            setLoginLoading(
-                false
-            );
-
-
-            if (error) {
-
-                console.error(
-                    "Giriş hatası:",
-                    error
-                );
-
-                showLoginError(
-                    "Giriş yapılamadı. E-posta veya şifre hatalı olabilir."
-                );
-
-                return;
+            if (event === "SIGNED_OUT") {
+                showLogin();
             }
-
-
-            const user =
-                data?.user;
-
-
-            if (!user) {
-
-                showLoginError(
-                    "Kullanıcı bilgileri alınamadı."
-                );
-
-                return;
-            }
-
-
-            const isAdmin =
-                await checkAdmin(
-                    user.id
-                );
-
-
-            if (!isAdmin) {
-
-                await supabaseClient.auth.signOut();
-
-                showLoginError(
-                    "Bu hesap admin olarak tanımlanmamış."
-                );
-
-                return;
-            }
-
-
-            loginError.style.display =
-                "none";
-
-
-            showAdmin(
-                user
-            );
-
         }
     );
-
 }
-
-
-// ============================================================
-// GİRİŞ EKRANI
-// ============================================================
-
-function showLogin() {
-
-    if (loginScreen) {
-
-        loginScreen.style.display =
-            "flex";
-
+// ===============================
+// ADMİN KONTROLÜ
+// ===============================
+async function checkAdmin(userId) {
+    const { data, error } = await supabaseClient
+        .from("admin_users")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+    if (error) {
+        console.error("Admin kontrol hatası:", error);
+        showLoginError("Admin kontrolü sırasında hata oluştu.");
+        showLogin();
+        return;
     }
-
-
-    if (adminApp) {
-
-        adminApp.style.display =
-            "none";
-
+    if (!data) {
+        await supabaseClient.auth.signOut();
+        showLoginError(
+            "Bu hesap yönetim paneline erişim yetkisine sahip değil."
+        );
+        return;
     }
-
+    const {
+        data: { user }
+    } = await supabaseClient.auth.getUser();
+    await showAdmin(user);
 }
-
-
-// ============================================================
-// ADMIN PANELİNİ GÖSTER
-// ============================================================
-
-async function showAdmin(
-    user
-) {
-
-    if (loginScreen) {
-
-        loginScreen.style.display =
-            "none";
-
-    }
-
-
-    if (adminApp) {
-
-        adminApp.style.display =
-            "block";
-
-    }
-
-
+// ===============================
+// ADMİN PANELİNİ GÖSTER
+// ===============================
+async function showAdmin(user) {
+    loginScreen.style.display = "none";
+    adminApp.style.display = "block";
     if (adminUser) {
-
-        adminUser.textContent =
-            `Giriş yapan admin: ${user.email || ""}`;
-
+        adminUser.textContent = user?.email || "";
     }
-
-
     await Promise.all([
         loadApplications(),
         loadReviews()
     ]);
-
 }
-
-
-// ============================================================
-// ÇIKIŞ
-// ============================================================
-
-if (logoutButton) {
-
-    logoutButton.addEventListener(
-        "click",
-        async function() {
-
-            const confirmed =
-                confirm(
-                    "Yönetim panelinden çıkış yapmak istiyor musunuz?"
-                );
-
-
-            if (!confirmed) {
-
-                return;
-            }
-
-
-            await supabaseClient.auth.signOut();
-
-
-            if (adminApp) {
-
-                adminApp.style.display =
-                    "none";
-
-            }
-
-
-            showLogin();
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// YENİLE
-// ============================================================
-
-if (refreshButton) {
-
-    refreshButton.addEventListener(
-        "click",
-        async function() {
-
-            await Promise.all([
-                loadApplications(),
-                loadReviews()
-            ]);
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// OTURUM DEĞİŞİKLİĞİ
-// ============================================================
-
-supabaseClient.auth.onAuthStateChange(
-    async function(
-        event,
-        session
-    ) {
-
-        if (
-            event === "SIGNED_OUT" ||
-            !session
-        ) {
-
-            showLogin();
-
-            return;
-        }
-
-
-        if (
-            event === "SIGNED_IN"
-        ) {
-
-            const isAdmin =
-                await checkAdmin(
-                    session.user.id
-                );
-
-
-            if (!isAdmin) {
-
-                await supabaseClient.auth.signOut();
-
-                showLoginError(
-                    "Bu hesabın admin yetkisi yok."
-                );
-
-                return;
-            }
-
-
-            showAdmin(
-                session.user
-            );
-
-        }
-
-    }
-);
-
-
-// ============================================================
-// YORUMLARI GETİR
-// ============================================================
-
-async function loadReviews() {
-
-    if (!reviewsList) {
-
+// ===============================
+// LOGIN
+// ===============================
+loginForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const email = loginEmail.value.trim();
+    const password = loginPassword.value;
+    if (!email || !password) {
+        showLoginError("E-posta ve şifre gerekli.");
         return;
     }
-
-
+    setLoginLoading(true);
+    showLoginError("");
+    const {
+        data,
+        error
+    } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+    });
+    if (error) {
+        console.error("Login hatası:", error);
+        showLoginError(
+            "Giriş başarısız. E-posta veya şifreyi kontrol et."
+        );
+        setLoginLoading(false);
+        return;
+    }
+    if (data?.user) {
+        await checkAdmin(data.user.id);
+    }
+    setLoginLoading(false);
+});
+// ===============================
+// ÇIKIŞ
+// ===============================
+logoutButton?.addEventListener("click", async () => {
+    await supabaseClient.auth.signOut();
+    showLogin();
+});
+// ===============================
+// YENİLE
+// ===============================
+refreshButton?.addEventListener("click", async () => {
+    refreshButton.disabled = true;
+    await Promise.all([
+        loadApplications(),
+        loadReviews()
+    ]);
+    refreshButton.disabled = false;
+    showMessage(
+        "Bilgiler yenilendi.",
+        "success"
+    );
+});
+// ===============================
+// BAŞVURULAR / İŞLETMELER
+// ===============================
+async function loadApplications() {
+    if (!applications) return;
+    applications.innerHTML = `
+        <div class="loading">
+            İşletmeler yükleniyor...
+        </div>
+    `;
+    const {
+        data,
+        error
+    } = await supabaseClient
+        .from("businesses")
+        .select(`
+            *,
+            categories (
+                name
+            )
+        `)
+        .order("created_at", {
+            ascending: false
+        });
+    if (error) {
+        console.error(
+            "İşletmeler yüklenirken hata:",
+            error
+        );
+        applications.innerHTML = `
+            <div class="error">
+                İşletmeler yüklenemedi.
+            </div>
+        `;
+        return;
+    }
+    if (!data || data.length === 0) {
+        applications.innerHTML = `
+            <div class="empty">
+                Henüz işletme bulunmuyor.
+            </div>
+        `;
+        return;
+    }
+    // Her işletmenin fotoğraflarını getir
+    const businessesWithImages = await Promise.all(
+        data.map(async (business) => {
+            const {
+                data: images,
+                error: imageError
+            } = await supabaseClient
+                .from("business_images")
+                .select("*")
+                .eq("business_id", business.id)
+                .order("sort_order", {
+                    ascending: true
+                })
+                .order("created_at", {
+                    ascending: true
+                });
+            if (imageError) {
+                console.error(
+                    "Fotoğraflar alınamadı:",
+                    business.id,
+                    imageError
+                );
+            }
+            return {
+                ...business,
+                images: images || []
+            };
+        })
+    );
+    applications.innerHTML =
+        businessesWithImages
+            .map(renderBusinessCard)
+            .join("");
+}
+// ===============================
+// İŞLETME KARTI
+// ===============================
+function renderBusinessCard(business) {
+    const categoryName =
+        business.categories?.name || "Kategori yok";
+    const images =
+        business.images || [];
+    const statusText =
+        business.is_approved
+            ? "Onaylı"
+            : "Bekliyor";
+    const statusClass =
+        business.is_approved
+            ? "approved"
+            : "pending";
+    const featuredText =
+        business.is_featured
+            ? "⭐ Öne Çıkarılmış"
+            : "☆ Öne Çıkar";
+    const featuredClass =
+        business.is_featured
+            ? "featured-remove-button"
+            : "featured-button";
+    return `
+        <div class="application-card">
+            <div class="application-header">
+                <div>
+                    <h3>
+                        ${escapeHtml(business.name || "")}
+                    </h3>
+                    <span class="status ${statusClass}">
+                        ${statusText}
+                    </span>
+                </div>
+                <div class="business-rating">
+                    ⭐ ${Number(business.rating || 0).toFixed(1)}
+                    (${business.review_count || 0})
+                </div>
+            </div>
+            <div class="application-info">
+                <p>
+                    <strong>Kategori:</strong>
+                    ${escapeHtml(categoryName)}
+                </p>
+                <p>
+                    <strong>İlçe:</strong>
+                    ${escapeHtml(business.district || "-")}
+                </p>
+                <p>
+                    <strong>Adres:</strong>
+                    ${escapeHtml(business.address || "-")}
+                </p>
+                <p>
+                    <strong>Telefon:</strong>
+                    ${escapeHtml(business.phone || "-")}
+                </p>
+                <p>
+                    <strong>İşletme sahibi:</strong>
+                    ${escapeHtml(business.owner_name || "-")}
+                </p>
+                <p>
+                    <strong>Sahibi telefon:</strong>
+                    ${escapeHtml(business.owner_phone || "-")}
+                </p>
+                <p>
+                    <strong>Sahibi e-posta:</strong>
+                    ${escapeHtml(business.owner_email || "-")}
+                </p>
+                <p>
+                    <strong>Instagram:</strong>
+                    ${escapeHtml(business.instagram || "-")}
+                </p>
+            </div>
+            <!-- ========================= -->
+            <!-- FOTOĞRAF GALERİSİ -->
+            <!-- ========================= -->
+            <div class="admin-gallery">
+                <div class="admin-gallery-header">
+                    <h4>
+                        🖼️ Fotoğraf Galerisi
+                    </h4>
+                    <span>
+                        ${images.length} fotoğraf
+                    </span>
+                </div>
+                ${
+                    images.length > 0
+                        ? `
+                            <div class="admin-gallery-grid">
+                                ${images
+                                    .map(
+                                        (image, index) =>
+                                            renderAdminImage(
+                                                image,
+                                                images,
+                                                index
+                                            )
+                                    )
+                                    .join("")}
+                            </div>
+                        `
+                        : `
+                            <div class="admin-gallery-empty">
+                                Henüz fotoğraf eklenmemiş.
+                            </div>
+                        `
+                }
+                <div class="admin-upload-area">
+                    <input
+                        type="file"
+                        id="imageInput-${business.id}"
+                        accept="image/*"
+                    >
+                    <button
+                        type="button"
+                        onclick="uploadBusinessImage(${business.id})"
+                    >
+                        ➕ Fotoğraf Ekle
+                    </button>
+                </div>
+            </div>
+            <!-- ========================= -->
+            <!-- BUTONLAR -->
+            <!-- ========================= -->
+            <div class="application-actions">
+                ${
+                    !business.is_approved
+                        ? `
+                            <button
+                                type="button"
+                                class="approve-button"
+                                onclick="approveBusiness(${business.id})"
+                            >
+                                ✓ Onayla
+                            </button>
+                            <button
+                                type="button"
+                                class="reject-button"
+                                onclick="rejectBusiness(${business.id})"
+                            >
+                                ✕ Reddet
+                            </button>
+                        `
+                        : ""
+                }
+                <button
+                    type="button"
+                    class="${featuredClass}"
+                    onclick="toggleFeatured(
+                        ${business.id},
+                        ${!business.is_featured}
+                    )"
+                >
+                    ${featuredText}
+                </button>
+                <button
+                    type="button"
+                    class="delete-button"
+                    onclick="deleteBusiness(${business.id})"
+                >
+                    🗑️ İşletmeyi Sil
+                </button>
+            </div>
+        </div>
+    `;
+}
+// ===============================
+// GALERİ FOTOĞRAFI
+// ===============================
+function renderAdminImage(image, images, index) {
+    const isCover =
+        image.is_cover === true;
+    const previousImage =
+        index > 0
+            ? images[index - 1]
+            : null;
+    const nextImage =
+        index < images.length - 1
+            ? images[index + 1]
+            : null;
+    return `
+        <div class="admin-gallery-item">
+            <div class="admin-image-wrapper">
+                <img
+                    src="${escapeHtml(image.image_url || "")}"
+                    alt="İşletme fotoğrafı"
+                    loading="lazy"
+                >
+                ${
+                    isCover
+                        ? `
+                            <span class="cover-badge">
+                                ⭐ Kapak
+                            </span>
+                        `
+                        : ""
+                }
+            </div>
+            <div class="admin-image-actions">
+                ${
+                    !isCover
+                        ? `
+                            <button
+                                type="button"
+                                onclick="setCoverImage(${image.id}, ${image.business_id})"
+                            >
+                                ⭐ Kapak Yap
+                            </button>
+                        `
+                        : `
+                            <button
+                                type="button"
+                                disabled
+                            >
+                                ✓ Kapak Fotoğrafı
+                            </button>
+                        `
+                }
+                <button
+                    type="button"
+                    ${
+                        previousImage
+                            ? `onclick="moveImage(
+                                ${image.id},
+                                ${image.business_id},
+                                'up'
+                            )"`
+                            : "disabled"
+                    }
+                >
+                    ↑
+                </button>
+                <button
+                    type="button"
+                    ${
+                        nextImage
+                            ? `onclick="moveImage(
+                                ${image.id},
+                                ${image.business_id},
+                                'down'
+                            )"`
+                            : "disabled"
+                    }
+                >
+                    ↓
+                </button>
+                <button
+                    type="button"
+                    class="image-delete-button"
+                    onclick="deleteBusinessImage(
+                        ${image.id},
+                        ${image.business_id},
+                        ${isCover}
+                    )"
+                >
+                    🗑️
+                </button>
+            </div>
+        </div>
+    `;
+}
+// ===============================
+// FOTOĞRAF YÜKLE
+// ===============================
+async function uploadBusinessImage(businessId) {
+    const input =
+        document.getElementById(
+            `imageInput-${businessId}`
+        );
+    if (!input || !input.files?.length) {
+        showMessage(
+            "Lütfen bir fotoğraf seç.",
+            "error"
+        );
+        return;
+    }
+    const file =
+        input.files[0];
+    // Dosya kontrolü
+    if (!file.type.startsWith("image/")) {
+        showMessage(
+            "Sadece resim dosyaları yükleyebilirsin.",
+            "error"
+        );
+        return;
+    }
+    // Maksimum 5 MB
+    const maxSize =
+        5 * 1024 * 1024;
+    if (file.size > maxSize) {
+        showMessage(
+            "Fotoğraf en fazla 5 MB olabilir.",
+            "error"
+        );
+        return;
+    }
+    try {
+        showMessage(
+            "Fotoğraf yükleniyor...",
+            "info"
+        );
+        // Mevcut fotoğraflar
+        const {
+            data: existingImages,
+            error: existingError
+        } = await supabaseClient
+            .from("business_images")
+            .select("*")
+            .eq("business_id", businessId)
+            .order("sort_order", {
+                ascending: true
+            });
+        if (existingError) {
+            throw existingError;
+        }
+        const images =
+            existingImages || [];
+        // Sıra numarası
+        const maxSortOrder =
+            images.reduce(
+                (max, image) =>
+                    Math.max(
+                        max,
+                        Number(image.sort_order || 0)
+                    ),
+                -1
+            );
+        const sortOrder =
+            maxSortOrder + 1;
+        // İlk fotoğraf otomatik kapak
+        const isCover =
+            images.length === 0;
+        // Dosya uzantısı
+        let extension =
+            file.name
+                .split(".")
+                .pop()
+                ?.toLowerCase() || "jpg";
+        extension =
+            extension.replace(
+                /[^a-z0-9]/g,
+                ""
+            ) || "jpg";
+        // Benzersiz dosya adı
+        const randomPart =
+            Math.random()
+                .toString(36)
+                .substring(2, 10);
+        const filePath =
+            `businesses/${businessId}/${Date.now()}-${randomPart}.${extension}`;
+        // Storage'a yükle
+        const {
+            error: uploadError
+        } = await supabaseClient
+            .storage
+            .from(BUSINESS_IMAGES_BUCKET)
+            .upload(
+                filePath,
+                file,
+                {
+                    cacheControl: "3600",
+                    upsert: false,
+                    contentType: file.type
+                }
+            );
+        if (uploadError) {
+            throw uploadError;
+        }
+        // Public URL
+        const {
+            data: publicUrlData
+        } = supabaseClient
+            .storage
+            .from(BUSINESS_IMAGES_BUCKET)
+            .getPublicUrl(filePath);
+        const imageUrl =
+            publicUrlData?.publicUrl;
+        if (!imageUrl) {
+            throw new Error(
+                "Fotoğraf URL'si oluşturulamadı."
+            );
+        }
+        // DB'ye kaydet
+        const {
+            error: insertError
+        } = await supabaseClient
+            .from("business_images")
+            .insert({
+                business_id: businessId,
+                image_url: imageUrl,
+                is_cover: isCover,
+                sort_order: sortOrder
+            });
+        if (insertError) {
+            // DB kaydı başarısızsa Storage dosyasını temizle
+            await supabaseClient
+                .storage
+                .from(BUSINESS_IMAGES_BUCKET)
+                .remove([filePath]);
+            throw insertError;
+        }
+        input.value = "";
+        showMessage(
+            isCover
+                ? "Fotoğraf yüklendi ve kapak fotoğrafı yapıldı."
+                : "Fotoğraf başarıyla yüklendi.",
+            "success"
+        );
+        await loadApplications();
+    } catch (error) {
+        console.error(
+            "Fotoğraf yükleme hatası:",
+            error
+        );
+        showMessage(
+            "Fotoğraf yüklenirken hata oluştu.",
+            "error"
+        );
+    }
+}
+// ===============================
+// KAPAK FOTOĞRAFI YAP
+// ===============================
+async function setCoverImage(
+    imageId,
+    businessId
+) {
+    try {
+        showMessage(
+            "Kapak fotoğrafı değiştiriliyor...",
+            "info"
+        );
+        // Önce tüm fotoğrafları kapaktan çıkar
+        const {
+            error: resetError
+        } = await supabaseClient
+            .from("business_images")
+            .update({
+                is_cover: false
+            })
+            .eq("business_id", businessId);
+        if (resetError) {
+            throw resetError;
+        }
+        // Seçilen fotoğrafı kapak yap
+        const {
+            error: coverError
+        } = await supabaseClient
+            .from("business_images")
+            .update({
+                is_cover: true
+            })
+            .eq("id", imageId)
+            .eq("business_id", businessId);
+        if (coverError) {
+            throw coverError;
+        }
+        showMessage(
+            "Kapak fotoğrafı değiştirildi.",
+            "success"
+        );
+        await loadApplications();
+    } catch (error) {
+        console.error(
+            "Kapak değiştirme hatası:",
+            error
+        );
+        showMessage(
+            "Kapak fotoğrafı değiştirilemedi.",
+            "error"
+        );
+    }
+}
+// ===============================
+// FOTOĞRAF SİL
+// ===============================
+async function deleteBusinessImage(
+    imageId,
+    businessId,
+    wasCover
+) {
+    const confirmed =
+        confirm(
+            "Bu fotoğrafı silmek istediğine emin misin?"
+        );
+    if (!confirmed) return;
+    try {
+        showMessage(
+            "Fotoğraf siliniyor...",
+            "info"
+        );
+        // Önce DB kaydını getir
+        const {
+            data: image,
+            error: imageError
+        } = await supabaseClient
+            .from("business_images")
+            .select("*")
+            .eq("id", imageId)
+            .maybeSingle();
+        if (imageError) {
+            throw imageError;
+        }
+        if (!image) {
+            throw new Error(
+                "Fotoğraf bulunamadı."
+            );
+        }
+        // Storage path'ini URL'den çıkar
+        const storagePath =
+            extractStoragePath(
+                image.image_url
+            );
+        // Storage'dan sil
+        if (storagePath) {
+            const {
+                error: storageError
+            } = await supabaseClient
+                .storage
+                .from(BUSINESS_IMAGES_BUCKET)
+                .remove([
+                    storagePath
+                ]);
+            if (storageError) {
+                console.warn(
+                    "Storage silme uyarısı:",
+                    storageError
+                );
+            }
+        }
+        // DB'den sil
+        const {
+            error: deleteError
+        } = await supabaseClient
+            .from("business_images")
+            .delete()
+            .eq("id", imageId);
+        if (deleteError) {
+            throw deleteError;
+        }
+        // Eğer kapak silindiyse yeni kapak belirle
+        if (wasCover) {
+            const {
+                data: remainingImages
+            } = await supabaseClient
+                .from("business_images")
+                .select("*")
+                .eq("business_id", businessId)
+                .order("sort_order", {
+                    ascending: true
+                })
+                .order("created_at", {
+                    ascending: true
+                });
+            if (
+                remainingImages &&
+                remainingImages.length > 0
+            ) {
+                await supabaseClient
+                    .from("business_images")
+                    .update({
+                        is_cover: true
+                    })
+                    .eq(
+                        "id",
+                        remainingImages[0].id
+                    );
+            }
+        }
+        showMessage(
+            "Fotoğraf silindi.",
+            "success"
+        );
+        await loadApplications();
+    } catch (error) {
+        console.error(
+            "Fotoğraf silme hatası:",
+            error
+        );
+        showMessage(
+            "Fotoğraf silinemedi.",
+            "error"
+        );
+    }
+}
+// ===============================
+// FOTOĞRAF SIRASINI DEĞİŞTİR
+// ===============================
+async function moveImage(
+    imageId,
+    businessId,
+    direction
+) {
+    try {
+        const {
+            data: images,
+            error
+        } = await supabaseClient
+            .from("business_images")
+            .select("*")
+            .eq("business_id", businessId)
+            .order("sort_order", {
+                ascending: true
+            })
+            .order("created_at", {
+                ascending: true
+            });
+        if (error) {
+            throw error;
+        }
+        if (!images || images.length < 2) {
+            return;
+        }
+        const currentIndex =
+            images.findIndex(
+                image =>
+                    Number(image.id) ===
+                    Number(imageId)
+            );
+        if (currentIndex === -1) {
+            return;
+        }
+        const targetIndex =
+            direction === "up"
+                ? currentIndex - 1
+                : currentIndex + 1;
+        if (
+            targetIndex < 0 ||
+            targetIndex >= images.length
+        ) {
+            return;
+        }
+        const current =
+            images[currentIndex];
+        const target =
+            images[targetIndex];
+        const currentOrder =
+            Number(current.sort_order || 0);
+        const targetOrder =
+            Number(target.sort_order || 0);
+        // İki sırayı değiştir
+        const {
+            error: firstUpdateError
+        } = await supabaseClient
+            .from("business_images")
+            .update({
+                sort_order: -999999
+            })
+            .eq("id", current.id);
+        if (firstUpdateError) {
+            throw firstUpdateError;
+        }
+        const {
+            error: targetUpdateError
+        } = await supabaseClient
+            .from("business_images")
+            .update({
+                sort_order: currentOrder
+            })
+            .eq("id", target.id);
+        if (targetUpdateError) {
+            throw targetUpdateError;
+        }
+        const {
+            error: finalUpdateError
+        } = await supabaseClient
+            .from("business_images")
+            .update({
+                sort_order: targetOrder
+            })
+            .eq("id", current.id);
+        if (finalUpdateError) {
+            throw finalUpdateError;
+        }
+        await loadApplications();
+    } catch (error) {
+        console.error(
+            "Fotoğraf sıralama hatası:",
+            error
+        );
+        showMessage(
+            "Fotoğraf sırası değiştirilemedi.",
+            "error"
+        );
+    }
+}
+// ===============================
+// STORAGE PATH ÇIKAR
+// ===============================
+function extractStoragePath(
+    imageUrl
+) {
+    if (!imageUrl) {
+        return null;
+    }
+    try {
+        const marker =
+            `/object/public/${BUSINESS_IMAGES_BUCKET}/`;
+        const index =
+            imageUrl.indexOf(marker);
+        if (index === -1) {
+            return null;
+        }
+        return imageUrl.substring(
+            index + marker.length
+        );
+    } catch (error) {
+        console.error(
+            "Storage path çıkarma hatası:",
+            error
+        );
+        return null;
+    }
+}
+// ===============================
+// İŞLETME ONAYLA
+// ===============================
+async function approveBusiness(id) {
+    try {
+        const {
+            error
+        } = await supabaseClient
+            .from("businesses")
+            .update({
+                is_approved: true
+            })
+            .eq("id", id);
+        if (error) {
+            throw error;
+        }
+        showMessage(
+            "İşletme onaylandı.",
+            "success"
+        );
+        await loadApplications();
+    } catch (error) {
+        console.error(
+            "Onaylama hatası:",
+            error
+        );
+        showMessage(
+            "İşletme onaylanamadı.",
+            "error"
+        );
+    }
+}
+// ===============================
+// ÖNE ÇIKAR
+// ===============================
+async function toggleFeatured(
+    id,
+    featured
+) {
+    try {
+        const {
+            error
+        } = await supabaseClient
+            .from("businesses")
+            .update({
+                is_featured: featured
+            })
+            .eq("id", id);
+        if (error) {
+            throw error;
+        }
+        showMessage(
+            featured
+                ? "İşletme öne çıkarıldı."
+                : "İşletme öne çıkarılmaktan kaldırıldı.",
+            "success"
+        );
+        await loadApplications();
+    } catch (error) {
+        console.error(
+            "Öne çıkarma hatası:",
+            error
+        );
+        showMessage(
+            "İşlem gerçekleştirilemedi.",
+            "error"
+        );
+    }
+}
+// ===============================
+// İŞLETME REDDET
+// ===============================
+async function rejectBusiness(id) {
+    const confirmed =
+        confirm(
+            "Bu işletme başvurusunu reddetmek istediğine emin misin?"
+        );
+    if (!confirmed) return;
+    try {
+        const {
+            error
+        } = await supabaseClient
+            .from("businesses")
+            .update({
+                is_approved: false,
+                is_featured: false
+            })
+            .eq("id", id);
+        if (error) {
+            throw error;
+        }
+        showMessage(
+            "İşletme reddedildi.",
+            "success"
+        );
+        await loadApplications();
+    } catch (error) {
+        console.error(
+            "Reddetme hatası:",
+            error
+        );
+        showMessage(
+            "İşletme reddedilemedi.",
+            "error"
+        );
+    }
+}
+// ===============================
+// İŞLETME SİL
+// ===============================
+async function deleteBusiness(id) {
+    const confirmed =
+        confirm(
+            "Bu işletmeyi ve tüm fotoğraflarını silmek istediğine emin misin?"
+        );
+    if (!confirmed) return;
+    try {
+        showMessage(
+            "İşletme ve fotoğraflar siliniyor...",
+            "info"
+        );
+        // İşletmenin fotoğraflarını getir
+        const {
+            data: images,
+            error: imagesError
+        } = await supabaseClient
+            .from("business_images")
+            .select("*")
+            .eq("business_id", id);
+        if (imagesError) {
+            throw imagesError;
+        }
+        // Storage dosyalarını sil
+        if (images && images.length > 0) {
+            const storagePaths =
+                images
+                    .map(image =>
+                        extractStoragePath(
+                            image.image_url
+                        )
+                    )
+                    .filter(Boolean);
+            if (storagePaths.length > 0) {
+                const {
+                    error: storageError
+                } = await supabaseClient
+                    .storage
+                    .from(BUSINESS_IMAGES_BUCKET)
+                    .remove(storagePaths);
+                if (storageError) {
+                    console.warn(
+                        "Storage temizleme uyarısı:",
+                        storageError
+                    );
+                }
+            }
+            // business_images kayıtlarını sil
+            const {
+                error: imageDeleteError
+            } = await supabaseClient
+                .from("business_images")
+                .delete()
+                .eq("business_id", id);
+            if (imageDeleteError) {
+                throw imageDeleteError;
+            }
+        }
+        // İşletmeyi sil
+        const {
+            error
+        } = await supabaseClient
+            .from("businesses")
+            .delete()
+            .eq("id", id);
+        if (error) {
+            throw error;
+        }
+        showMessage(
+            "İşletme silindi.",
+            "success"
+        );
+        await loadApplications();
+    } catch (error) {
+        console.error(
+            "İşletme silme hatası:",
+            error
+        );
+        showMessage(
+            "İşletme silinemedi.",
+            "error"
+        );
+    }
+}
+// ===============================
+// YORUMLAR
+// ===============================
+async function loadReviews() {
+    if (!reviewsList) return;
     reviewsList.innerHTML = `
-        <div class="empty-state">
+        <div class="loading">
             Yorumlar yükleniyor...
         </div>
     `;
-
-
     const {
         data,
         error
@@ -479,1341 +1153,366 @@ async function loadReviews() {
                 name
             )
         `)
-        .order(
-            "created_at",
-            {
-                ascending: false
-            }
-        );
-
-
+        .order("created_at", {
+            ascending: false
+        });
     if (error) {
-
         console.error(
-            "Yorumlar yüklenemedi:",
+            "Yorumlar yüklenirken hata:",
             error
         );
-
-
         reviewsList.innerHTML = `
-            <div class="empty-state">
+            <div class="error">
                 Yorumlar yüklenemedi.
-                <br><br>
-                ${escapeHtml(error.message)}
             </div>
         `;
-
         return;
     }
-
-
-    if (
-        !data ||
-        data.length === 0
-    ) {
-
+    if (!data || data.length === 0) {
         reviewsList.innerHTML = `
-            <div class="empty-state">
+            <div class="empty">
                 Henüz yorum bulunmuyor.
             </div>
         `;
-
         return;
     }
-
-
-    reviewsList.innerHTML = "";
-
-
-    data.forEach(
-        review => {
-
-            const card =
-                document.createElement(
-                    "div"
-                );
-
-
-            card.className =
-                "review-card";
-
-
-            const businessName =
-                review.businesses?.name ||
-                "İşletme";
-
-
-            const rating =
-                Number(
-                    review.rating || 0
-                );
-
-
-            const stars =
-                "★".repeat(
-                    Math.max(
-                        0,
-                        Math.min(
-                            5,
-                            rating
-                        )
-                    )
-                ) +
-                "☆".repeat(
-                    Math.max(
-                        0,
-                        5 - rating
-                    )
-                );
-
-
-            const date =
-                formatDate(
-                    review.created_at
-                );
-
-
-            const status =
-                review.is_approved
-                    ? `
-                        <span class="status approved-status">
-                            ✓ Yayında
-                        </span>
-                      `
-                    : `
-                        <span class="status pending-status">
-                            ⏳ Onay Bekliyor
-                        </span>
-                      `;
-
-
-            const actionButtons =
-                review.is_approved
-
-                    ? `
-                        <button
-                            class="action-button delete-button"
-                            onclick="deleteReview(${review.id})"
-                        >
-                            🗑 Yorumu Sil
-                        </button>
-                      `
-
-                    : `
-                        <button
-                            class="action-button approve-button"
-                            onclick="approveReview(${review.id})"
-                        >
-                            ✓ Yorumu Onayla
-                        </button>
-
-                        <button
-                            class="action-button reject-button"
-                            onclick="deleteReview(${review.id})"
-                        >
-                            ✕ Reddet / Sil
-                        </button>
-                      `;
-
-
-            card.innerHTML = `
-
-                <div class="review-top">
-
-                    <div>
-
-                        <h2 class="review-title">
-                            ${escapeHtml(
-                                review.name ||
-                                "İsimsiz"
-                            )}
-                        </h2>
-
-                        <div class="review-meta">
-
-                            <span class="review-business">
-                                🏪
-                                ${escapeHtml(
-                                    businessName
-                                )}
-                            </span>
-
-                            <div class="review-date">
-                                ${escapeHtml(date)}
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    ${status}
-
-                </div>
-
-
-                <div class="review-rating">
-                    ${stars}
-                    <span style="font-size:14px; color:#777;">
-                        (${rating}/5)
+    reviewsList.innerHTML =
+        data
+            .map(renderReview)
+            .join("");
+}
+// ===============================
+// YORUM KARTI
+// ===============================
+function renderReview(review) {
+    const businessName =
+        review.businesses?.name ||
+        "Bilinmeyen işletme";
+    const rating =
+        Number(review.rating || 0);
+    return `
+        <div class="review-card">
+            <div class="review-header">
+                <div>
+                    <strong>
+                        ${escapeHtml(
+                            review.user_name ||
+                            "İsimsiz"
+                        )}
+                    </strong>
+                    <span>
+                        ${escapeHtml(
+                            businessName
+                        )}
                     </span>
                 </div>
-
-
-                <div class="review-comment">
-
-                    ${escapeHtml(
-                        review.comment ||
-                        "Yorum metni bulunmuyor."
-                    )}
-
+                <div>
+                    ${"⭐".repeat(rating)}
                 </div>
-
-
-                <div class="review-actions">
-
-                    ${actionButtons}
-
-                </div>
-
-            `;
-
-
-            reviewsList.appendChild(
-                card
-            );
-
-        }
-    );
-
+            </div>
+            <p>
+                ${escapeHtml(
+                    review.comment || ""
+                )}
+            </p>
+            <small>
+                ${formatDate(
+                    review.created_at
+                )}
+            </small>
+            <div class="review-actions">
+                ${
+                    !review.is_approved
+                        ? `
+                            <button
+                                type="button"
+                                class="approve-button"
+                                onclick="approveReview(${review.id})"
+                            >
+                                ✓ Onayla
+                            </button>
+                        `
+                        : `
+                            <span class="approved-label">
+                                ✓ Onaylı
+                            </span>
+                        `
+                }
+                <button
+                    type="button"
+                    class="delete-button"
+                    onclick="deleteReview(
+                        ${review.id},
+                        ${review.business_id}
+                    )"
+                >
+                    🗑️ Sil
+                </button>
+            </div>
+        </div>
+    `;
 }
-
-
-// ============================================================
+// ===============================
 // YORUM ONAYLA
-// ============================================================
-
+// ===============================
 async function approveReview(
     reviewId
 ) {
-
-    const confirmed =
-        confirm(
-            "Bu yorumu yayınlamak istediğinize emin misiniz?"
+    try {
+        const {
+            data: review,
+            error: reviewFetchError
+        } = await supabaseClient
+            .from("reviews")
+            .select("*")
+            .eq("id", reviewId)
+            .single();
+        if (reviewFetchError) {
+            throw reviewFetchError;
+        }
+        const {
+            error
+        } = await supabaseClient
+            .from("reviews")
+            .update({
+                is_approved: true
+            })
+            .eq("id", reviewId);
+        if (error) {
+            throw error;
+        }
+        await updateBusinessRating(
+            review.business_id
         );
-
-
-    if (!confirmed) {
-
-        return;
-    }
-
-
-    const {
-        data: review,
-        error: reviewError
-    } = await supabaseClient
-        .from("reviews")
-        .select(`
-            id,
-            business_id,
-            rating,
-            is_approved
-        `)
-        .eq(
-            "id",
-            reviewId
-        )
-        .maybeSingle();
-
-
-    if (reviewError) {
-
-        console.error(
-            reviewError
-        );
-
         showMessage(
-            "Yorum bilgisi alınamadı: " +
-            reviewError.message,
-            "error"
+            "Yorum onaylandı.",
+            "success"
         );
-
-        return;
-    }
-
-
-    if (!review) {
-
-        showMessage(
-            "Yorum bulunamadı.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    const {
-        error
-    } = await supabaseClient
-        .from("reviews")
-        .update({
-            is_approved: true
-        })
-        .eq(
-            "id",
-            reviewId
-        );
-
-
-    if (error) {
-
+        await loadReviews();
+    } catch (error) {
         console.error(
             "Yorum onaylama hatası:",
             error
         );
-
         showMessage(
-            "Yorum onaylanamadı: " +
-            error.message,
+            "Yorum onaylanamadı.",
             "error"
         );
-
-        return;
     }
-
-
-    await updateBusinessRating(
-        review.business_id
-    );
-
-
-    showMessage(
-        "Yorum başarıyla yayınlandı. ✓",
-        "success"
-    );
-
-
-    await loadReviews();
-
 }
-
-
-// ============================================================
+// ===============================
 // İŞLETME PUANINI GÜNCELLE
-// ============================================================
-
+// ===============================
 async function updateBusinessRating(
     businessId
 ) {
-
-    if (!businessId) {
-
-        return;
-    }
-
-
     const {
-        data: approvedReviews,
+        data: reviews,
         error
     } = await supabaseClient
         .from("reviews")
         .select("rating")
-        .eq(
-            "business_id",
-            businessId
-        )
-        .eq(
-            "is_approved",
-            true
-        );
-
-
+        .eq("business_id", businessId)
+        .eq("is_approved", true);
     if (error) {
-
-        console.error(
-            "Puan hesaplama hatası:",
-            error
-        );
-
-        return;
+        throw error;
     }
-
-
-    const ratings =
-        (approvedReviews || [])
-            .map(
-                review =>
-                    Number(
-                        review.rating
-                    )
-            )
-            .filter(
-                rating =>
-                    rating >= 1 &&
-                    rating <= 5
-            );
-
-
+    const reviewList =
+        reviews || [];
     const reviewCount =
-        ratings.length;
-
-
+        reviewList.length;
     const total =
-        ratings.reduce(
-            (
-                sum,
-                rating
-            ) =>
-                sum + rating,
+        reviewList.reduce(
+            (sum, review) =>
+                sum +
+                Number(review.rating || 0),
             0
         );
-
-
-    const average =
+    const rating =
         reviewCount > 0
-            ? Number(
-                (
-                    total /
-                    reviewCount
-                ).toFixed(1)
-            )
+            ? total / reviewCount
             : 0;
-
-
     const {
         error: updateError
     } = await supabaseClient
         .from("businesses")
         .update({
-            rating: average,
-            review_count: reviewCount
+            rating:
+                Math.round(
+                    rating * 10
+                ) / 10,
+            review_count:
+                reviewCount
         })
-        .eq(
-            "id",
-            businessId
-        );
-
-
+        .eq("id", businessId);
     if (updateError) {
-
-        console.error(
-            "İşletme puanı güncellenemedi:",
-            updateError
-        );
-
+        throw updateError;
     }
-
 }
-
-
-// ============================================================
+// ===============================
 // YORUM SİL
-// ============================================================
-
+// ===============================
 async function deleteReview(
-    reviewId
+    reviewId,
+    businessId
 ) {
-
     const confirmed =
         confirm(
-            "Bu yorumu tamamen silmek istediğinize emin misiniz?"
+            "Bu yorumu silmek istediğine emin misin?"
         );
-
-
-    if (!confirmed) {
-
-        return;
-    }
-
-
-    const {
-        data: review,
-        error: reviewError
-    } = await supabaseClient
-        .from("reviews")
-        .select(`
-            id,
-            business_id
-        `)
-        .eq(
-            "id",
-            reviewId
-        )
-        .maybeSingle();
-
-
-    if (reviewError) {
-
-        console.error(
-            reviewError
+    if (!confirmed) return;
+    try {
+        const {
+            error
+        } = await supabaseClient
+            .from("reviews")
+            .delete()
+            .eq("id", reviewId);
+        if (error) {
+            throw error;
+        }
+        await updateBusinessRating(
+            businessId
         );
-
         showMessage(
-            "Yorum bilgisi alınamadı: " +
-            reviewError.message,
-            "error"
+            "Yorum silindi.",
+            "success"
         );
-
-        return;
-    }
-
-
-    if (!review) {
-
-        showMessage(
-            "Yorum bulunamadı.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    const {
-        error
-    } = await supabaseClient
-        .from("reviews")
-        .delete()
-        .eq(
-            "id",
-            reviewId
-        );
-
-
-    if (error) {
-
+        await loadReviews();
+    } catch (error) {
         console.error(
             "Yorum silme hatası:",
             error
         );
-
         showMessage(
-            "Yorum silinemedi: " +
-            error.message,
+            "Yorum silinemedi.",
             "error"
         );
-
-        return;
     }
-
-
-    await updateBusinessRating(
-        review.business_id
-    );
-
-
-    showMessage(
-        "Yorum başarıyla silindi.",
-        "success"
-    );
-
-
-    await loadReviews();
-
 }
-
-
-// ============================================================
-// BAŞVURULARI GETİR
-// ============================================================
-
-async function loadApplications() {
-
-    if (!applications) {
-
-        return;
-    }
-
-
-    applications.innerHTML = `
-        <div class="empty-state">
-            Başvurular yükleniyor...
-        </div>
-    `;
-
-
-    const {
-        data,
-        error
-    } = await supabaseClient
-        .from("businesses")
-        .select(`
-            *,
-            categories (
-                name
-            )
-        `)
-        .order(
-            "created_at",
-            {
-                ascending: false
-            }
-        );
-
-
-    if (error) {
-
-        console.error(
-            "Başvurular yüklenemedi:",
-            error
-        );
-
-
-        applications.innerHTML = `
-            <div class="empty-state">
-                Başvurular yüklenemedi.
-                <br><br>
-                ${escapeHtml(error.message)}
-            </div>
-        `;
-
-        return;
-    }
-
-
-    if (
-        !data ||
-        data.length === 0
-    ) {
-
-        applications.innerHTML = `
-            <div class="empty-state">
-                Henüz işletme başvurusu bulunmuyor.
-            </div>
-        `;
-
-        return;
-    }
-
-
-    applications.innerHTML = "";
-
-
-    data.forEach(
-        business => {
-
-            const card =
-                document.createElement(
-                    "div"
-                );
-
-
-            card.className =
-                "application-card";
-
-
-            const category =
-                business.categories?.name ||
-                "Kategori belirtilmemiş";
-
-
-            const status =
-                business.is_approved
-
-                    ? `
-                        <span class="status approved-status">
-                            ✓ Yayında
-                        </span>
-                      `
-
-                    : `
-                        <span class="status pending-status">
-                            ⏳ Bekliyor
-                        </span>
-                      `;
-
-
-            const featuredButton =
-                business.is_featured
-
-                    ? `
-                        <button
-                            class="action-button featured-remove-button"
-                            onclick="toggleFeatured(
-                                ${business.id},
-                                false
-                            )"
-                        >
-                            ★ Öne Çıkarmayı Kaldır
-                        </button>
-                      `
-
-                    : `
-                        <button
-                            class="action-button featured-button"
-                            onclick="toggleFeatured(
-                                ${business.id},
-                                true
-                            )"
-                        >
-                            ☆ Öne Çıkar
-                        </button>
-                      `;
-
-
-            card.innerHTML = `
-
-                <div class="application-top">
-
-                    <div>
-
-                        <h2 class="application-title">
-                            ${escapeHtml(
-                                business.name
-                            )}
-                        </h2>
-
-                        <div class="application-meta">
-
-                            ${escapeHtml(
-                                category
-                            )}
-
-                            ·
-
-                            ${escapeHtml(
-                                business.district || "-"
-                            )}
-
-                        </div>
-
-                    </div>
-
-
-                    ${status}
-
-                </div>
-
-
-                <div class="application-details">
-
-                    <div class="detail">
-
-                        <strong>
-                            Adres
-                        </strong>
-
-                        <span>
-                            ${escapeHtml(
-                                business.address || "-"
-                            )}
-                        </span>
-
-                    </div>
-
-
-                    <div class="detail">
-
-                        <strong>
-                            Telefon
-                        </strong>
-
-                        <span>
-                            ${escapeHtml(
-                                business.phone || "-"
-                            )}
-                        </span>
-
-                    </div>
-
-
-                    <div class="detail">
-
-                        <strong>
-                            Yetkili
-                        </strong>
-
-                        <span>
-                            ${escapeHtml(
-                                business.owner_name || "-"
-                            )}
-                        </span>
-
-                    </div>
-
-
-                    <div class="detail">
-
-                        <strong>
-                            Yetkili Telefon
-                        </strong>
-
-                        <span>
-                            ${escapeHtml(
-                                business.owner_phone || "-"
-                            )}
-                        </span>
-
-                    </div>
-
-
-                    <div class="detail">
-
-                        <strong>
-                            E-posta
-                        </strong>
-
-                        <span>
-                            ${escapeHtml(
-                                business.owner_email || "-"
-                            )}
-                        </span>
-
-                    </div>
-
-
-                    <div class="detail">
-
-                        <strong>
-                            Instagram
-                        </strong>
-
-                        <span>
-                            ${escapeHtml(
-                                business.instagram || "-"
-                            )}
-                        </span>
-
-                    </div>
-
-
-                    <div class="detail">
-
-                        <strong>
-                            Puan
-                        </strong>
-
-                        <span>
-                            ⭐
-                            ${Number(
-                                business.rating || 0
-                            ).toFixed(1)}
-
-                            ·
-
-                            ${Number(
-                                business.review_count || 0
-                            )}
-
-                            yorum
-                        </span>
-
-                    </div>
-
-
-                    <div class="detail">
-
-                        <strong>
-                            Öne Çıkan
-                        </strong>
-
-                        <span>
-                            ${
-                                business.is_featured
-                                    ? "⭐ Evet"
-                                    : "Hayır"
-                            }
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="application-actions">
-
-                    ${
-                        !business.is_approved
-
-                            ? `
-                                <button
-                                    class="action-button approve-button"
-                                    onclick="approveBusiness(
-                                        ${business.id}
-                                    )"
-                                >
-                                    ✓ Onayla
-                                </button>
-
-                                <button
-                                    class="action-button reject-button"
-                                    onclick="rejectBusiness(
-                                        ${business.id}
-                                    )"
-                                >
-                                    ✕ Reddet
-                                </button>
-                              `
-
-                            : ""
-                    }
-
-
-                    ${featuredButton}
-
-
-                    <button
-                        class="action-button delete-button"
-                        onclick="deleteBusiness(
-                            ${business.id}
-                        )"
-                    >
-                        🗑 Sil
-                    </button>
-
-                </div>
-
-            `;
-
-
-            applications.appendChild(
-                card
-            );
-
-        }
-    );
-
-}
-
-
-// ============================================================
-// İŞLETME ONAYLA
-// ============================================================
-
-async function approveBusiness(
-    id
-) {
-
-    const confirmed =
-        confirm(
-            "Bu işletmeyi onaylamak ve yayına almak istediğinize emin misiniz?"
-        );
-
-
-    if (!confirmed) {
-
-        return;
-    }
-
-
-    const {
-        error
-    } = await supabaseClient
-        .from("businesses")
-        .update({
-            is_approved: true
-        })
-        .eq(
-            "id",
-            id
-        );
-
-
-    if (error) {
-
-        console.error(
-            error
-        );
-
-        showMessage(
-            "İşletme onaylanamadı: " +
-            error.message,
-            "error"
-        );
-
-        return;
-    }
-
-
-    showMessage(
-        "İşletme başarıyla onaylandı. ✓",
-        "success"
-    );
-
-
-    await loadApplications();
-
-}
-
-
-// ============================================================
-// ÖNE ÇIKAR / KALDIR
-// ============================================================
-
-async function toggleFeatured(
-    id,
-    featured
-) {
-
-    const confirmationText =
-        featured
-
-            ? "Bu işletmeyi ana sayfada öne çıkarmak istediğinize emin misiniz?"
-
-            : "Bu işletmenin öne çıkan durumunu kaldırmak istediğinize emin misiniz?";
-
-
-    const confirmed =
-        confirm(
-            confirmationText
-        );
-
-
-    if (!confirmed) {
-
-        return;
-    }
-
-
-    const {
-        error
-    } = await supabaseClient
-        .from("businesses")
-        .update({
-            is_featured: featured
-        })
-        .eq(
-            "id",
-            id
-        );
-
-
-    if (error) {
-
-        console.error(
-            "Öne çıkan güncelleme hatası:",
-            error
-        );
-
-
-        showMessage(
-            "İşlem gerçekleştirilemedi: " +
-            error.message,
-            "error"
-        );
-
-        return;
-    }
-
-
-    showMessage(
-        featured
-            ? "İşletme ana sayfada öne çıkarıldı. ⭐"
-            : "İşletmenin öne çıkan durumu kaldırıldı.",
-        "success"
-    );
-
-
-    await loadApplications();
-
-}
-
-
-// ============================================================
-// REDDET
-// ============================================================
-
-async function rejectBusiness(
-    id
-) {
-
-    const confirmed =
-        confirm(
-            "Bu işletmeyi reddetmek istediğinize emin misiniz?"
-        );
-
-
-    if (!confirmed) {
-
-        return;
-    }
-
-
-    const {
-        error
-    } = await supabaseClient
-        .from("businesses")
-        .update({
-            is_approved: false,
-            is_featured: false
-        })
-        .eq(
-            "id",
-            id
-        );
-
-
-    if (error) {
-
-        console.error(
-            error
-        );
-
-        showMessage(
-            "Başvuru reddedilemedi: " +
-            error.message,
-            "error"
-        );
-
-        return;
-    }
-
-
-    showMessage(
-        "Başvuru reddedildi.",
-        "success"
-    );
-
-
-    await loadApplications();
-
-}
-
-
-// ============================================================
-// İŞLETME SİL
-// ============================================================
-
-async function deleteBusiness(
-    id
-) {
-
-    const confirmed =
-        confirm(
-            "Bu işletmeyi tamamen silmek istediğinize emin misiniz?"
-        );
-
-
-    if (!confirmed) {
-
-        return;
-    }
-
-
-    const {
-        error
-    } = await supabaseClient
-        .from("businesses")
-        .delete()
-        .eq(
-            "id",
-            id
-        );
-
-
-    if (error) {
-
-        console.error(
-            error
-        );
-
-        showMessage(
-            "İşletme silinemedi: " +
-            error.message,
-            "error"
-        );
-
-        return;
-    }
-
-
-    showMessage(
-        "İşletme başarıyla silindi.",
-        "success"
-    );
-
-
-    await loadApplications();
-
-}
-
-
-// ============================================================
+// ===============================
 // MESAJ
-// ============================================================
-
+// ===============================
 function showMessage(
     text,
-    type
+    type = "info"
 ) {
-
-    if (!adminMessage) {
-
-        return;
-    }
-
-
-    adminMessage.textContent =
-        text;
-
-
+    if (!adminMessage) return;
+    adminMessage.textContent = text;
     adminMessage.className =
-        `message ${type}`;
-
-
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
-
-
-    setTimeout(
-        function() {
-
-            if (
-                adminMessage.className ===
-                `message ${type}`
-            ) {
-
-                adminMessage.className =
-                    "message";
-
-            }
-
-        },
-        5000
+        `admin-message ${type}`;
+    adminMessage.style.display =
+        "block";
+    clearTimeout(
+        showMessage.timeout
     );
-
+    showMessage.timeout =
+        setTimeout(() => {
+            adminMessage.style.display =
+                "none";
+        }, 3500);
 }
-
-
-// ============================================================
-// GİRİŞ HATASI
-// ============================================================
-
+// ===============================
+// LOGIN HATASI
+// ===============================
 function showLoginError(
     message
 ) {
-
-    if (!loginError) {
-
-        return;
-    }
-
-
+    if (!loginError) return;
     loginError.textContent =
-        message;
-
-
+        message || "";
     loginError.style.display =
-        "block";
-
+        message
+            ? "block"
+            : "none";
 }
-
-
-// ============================================================
-// GİRİŞ YÜKLENİYOR
-// ============================================================
-
+// ===============================
+// LOGIN GÖSTER
+// ===============================
+function showLogin() {
+    if (loginScreen) {
+        loginScreen.style.display =
+            "flex";
+    }
+    if (adminApp) {
+        adminApp.style.display =
+            "none";
+    }
+    if (loginPassword) {
+        loginPassword.value = "";
+    }
+}
+// ===============================
+// LOGIN LOADING
+// ===============================
 function setLoginLoading(
     loading
 ) {
-
     const button =
         loginForm?.querySelector(
-            ".login-button"
+            'button[type="submit"]'
         );
-
-
-    if (!button) {
-
-        return;
-    }
-
-
+    if (!button) return;
     button.disabled =
         loading;
-
-
     button.textContent =
         loading
             ? "Giriş yapılıyor..."
             : "Giriş Yap";
-
 }
-
-
-// ============================================================
+// ===============================
 // TARİH
-// ============================================================
-
+// ===============================
 function formatDate(
     value
 ) {
-
     if (!value) {
-
         return "-";
     }
-
-
     const date =
-        new Date(
-            value
-        );
-
-
+        new Date(value);
     if (
         Number.isNaN(
             date.getTime()
         )
     ) {
-
         return "-";
     }
-
-
     return date.toLocaleString(
         "tr-TR",
         {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
+            dateStyle: "medium",
+            timeStyle: "short"
         }
     );
-
 }
-
-
-// ============================================================
-// GÜVENLİ HTML
-// ============================================================
-
+// ===============================
+// HTML ESCAPE
+// ===============================
 function escapeHtml(
     value
 ) {
-
     return String(
         value ?? ""
     )
-
         .replace(
             /&/g,
             "&amp;"
         )
-
         .replace(
             /</g,
             "&lt;"
         )
-
         .replace(
             />/g,
             "&gt;"
         )
-
         .replace(
             /"/g,
             "&quot;"
         )
-
         .replace(
             /'/g,
             "&#039;"
         );
-
 }
