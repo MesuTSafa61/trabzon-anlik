@@ -1,33 +1,24 @@
 <!DOCTYPE html>
 <html lang="tr">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-
     <title>Yönetim Paneli | Trabzon Anlık</title>
-
     <link
         rel="stylesheet"
         href="style.css"
     >
-
     <style>
-
         body {
             background: #f5f6f8;
         }
-
         .admin-page {
             padding: 40px 0 80px;
             min-height: calc(100vh - 80px);
         }
-
         .admin-header {
             display: flex;
             justify-content: space-between;
@@ -35,31 +26,26 @@
             gap: 20px;
             margin-bottom: 30px;
         }
-
         .admin-header h1 {
             margin: 0 0 8px;
             color: #101c35;
             font-size: 34px;
         }
-
         .admin-header p {
             margin: 0;
             color: #777;
         }
-
         .admin-logo {
             color: #7b1830;
             font-weight: 800;
             font-size: 14px;
             letter-spacing: 1px;
         }
-
         .admin-actions {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
         }
-
         .refresh-button,
         .logout-button {
             border: 0;
@@ -68,21 +54,17 @@
             cursor: pointer;
             font-weight: 700;
         }
-
         .refresh-button {
             background: #101c35;
             color: white;
         }
-
         .logout-button {
             background: #fff0f0;
             color: #9d2020;
         }
-
         .admin-section {
             margin-bottom: 45px;
         }
-
         .section-title {
             display: flex;
             justify-content: space-between;
@@ -90,24 +72,20 @@
             gap: 15px;
             margin-bottom: 18px;
         }
-
         .section-title h2 {
             margin: 0;
             color: #101c35;
             font-size: 25px;
         }
-
         .section-title span {
             color: #777;
             font-size: 14px;
         }
-
         .applications,
         .reviews-list {
             display: grid;
             gap: 18px;
         }
-
         .application-card,
         .review-card {
             background: white;
@@ -115,7 +93,6 @@
             padding: 24px;
             box-shadow: 0 5px 25px rgba(0,0,0,.06);
         }
-
         .application-top,
         .review-top {
             display: flex;
@@ -123,21 +100,18 @@
             align-items: flex-start;
             gap: 20px;
         }
-
         .application-title,
         .review-title {
             margin: 0 0 7px;
             color: #101c35;
             font-size: 22px;
         }
-
         .application-meta,
         .review-meta {
             color: #777;
             font-size: 14px;
             line-height: 1.7;
         }
-
         .status {
             display: inline-block;
             padding: 7px 12px;
@@ -146,39 +120,32 @@
             font-weight: 700;
             white-space: nowrap;
         }
-
         .approved-status {
             background: #eaf7ee;
             color: #176b35;
         }
-
         .pending-status {
             background: #fff4d6;
             color: #8a6200;
         }
-
         .application-details {
             margin-top: 20px;
             padding-top: 20px;
             border-top: 1px solid #eee;
-
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 14px 30px;
         }
-
         .detail strong {
             display: block;
             color: #101c35;
             font-size: 13px;
             margin-bottom: 4px;
         }
-
         .detail span {
             color: #666;
             font-size: 14px;
         }
-
         .application-actions,
         .review-actions {
             display: flex;
@@ -188,7 +155,6 @@
             border-top: 1px solid #eee;
             flex-wrap: wrap;
         }
-
         .action-button {
             border: 0;
             padding: 11px 17px;
@@ -197,37 +163,30 @@
             font-weight: 700;
             transition: .2s;
         }
-
         .action-button:hover {
             transform: translateY(-1px);
             opacity: .92;
         }
-
         .approve-button {
             background: #176b35;
             color: white;
         }
-
         .reject-button {
             background: #fff0f0;
             color: #9d2020;
         }
-
         .featured-button {
             background: #f4e8b8;
             color: #765900;
         }
-
         .featured-remove-button {
             background: #fff4d6;
             color: #8a6200;
         }
-
         .delete-button {
             background: #eee;
             color: #333;
         }
-
         .review-comment {
             margin-top: 18px;
             padding: 18px;
@@ -238,26 +197,22 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
-
         .review-rating {
             margin-top: 12px;
             font-size: 20px;
             letter-spacing: 2px;
         }
-
         .review-business {
             display: inline-block;
             margin-top: 8px;
             color: #7b1830;
             font-weight: 700;
         }
-
         .review-date {
             color: #999;
             font-size: 13px;
             margin-top: 8px;
         }
-
         .empty-state {
             background: white;
             padding: 50px 20px;
@@ -265,26 +220,22 @@
             border-radius: 16px;
             color: #777;
         }
-
         .message {
             display: none;
             margin-bottom: 20px;
             padding: 14px;
             border-radius: 10px;
         }
-
         .message.success {
             display: block;
             background: #eaf7ee;
             color: #176b35;
         }
-
         .message.error {
             display: block;
             background: #fff0f0;
             color: #9d2020;
         }
-
         .login-screen {
             min-height: calc(100vh - 80px);
             display: flex;
@@ -292,7 +243,6 @@
             justify-content: center;
             padding: 30px 20px;
         }
-
         .login-card {
             width: 100%;
             max-width: 430px;
@@ -301,22 +251,18 @@
             border-radius: 18px;
             box-shadow: 0 10px 40px rgba(0,0,0,.08);
         }
-
         .login-card h1 {
             margin: 0 0 8px;
             color: #101c35;
         }
-
         .login-card p {
             margin: 0 0 25px;
             color: #777;
             line-height: 1.6;
         }
-
         .login-field {
             margin-bottom: 16px;
         }
-
         .login-field label {
             display: block;
             margin-bottom: 7px;
@@ -324,7 +270,6 @@
             font-size: 14px;
             font-weight: 700;
         }
-
         .login-field input {
             width: 100%;
             box-sizing: border-box;
@@ -334,11 +279,9 @@
             font-size: 15px;
             outline: none;
         }
-
         .login-field input:focus {
             border-color: #7b1830;
         }
-
         .login-button {
             width: 100%;
             border: 0;
@@ -349,7 +292,6 @@
             font-weight: 800;
             cursor: pointer;
         }
-
         .login-error {
             display: none;
             margin-top: 15px;
@@ -359,66 +301,187 @@
             color: #9d2020;
             font-size: 14px;
         }
-
         .admin-user {
             font-size: 13px;
             color: #777;
             margin-top: 5px;
         }
-
         #adminApp {
             display: none;
         }
-
+        /* =====================================================
+           FOTOĞRAF GALERİSİ YÖNETİMİ
+           ===================================================== */
+        .gallery-admin {
+            margin-top: 22px;
+            padding-top: 22px;
+            border-top: 1px solid #eee;
+        }
+        .gallery-admin-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .gallery-admin-title h3 {
+            margin: 0;
+            color: #101c35;
+            font-size: 18px;
+        }
+        .gallery-admin-title span {
+            color: #777;
+            font-size: 13px;
+        }
+        .gallery-upload-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: #f8f9fb;
+            border-radius: 12px;
+            border: 1px dashed #d8dce3;
+        }
+        .gallery-file-input {
+            max-width: 100%;
+            font-size: 14px;
+        }
+        .gallery-upload-button {
+            border: 0;
+            padding: 10px 16px;
+            border-radius: 8px;
+            background: #101c35;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .gallery-upload-button:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            background: #f1f2f5;
+            border-radius: 12px;
+            min-height: 150px;
+            border: 1px solid #e5e7eb;
+        }
+        .gallery-item img {
+            display: block;
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+        .gallery-item-cover {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            padding: 5px 8px;
+            border-radius: 6px;
+            background: #f4e8b8;
+            color: #765900;
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .gallery-item-actions {
+            display: flex;
+            gap: 6px;
+            padding: 8px;
+            background: white;
+        }
+        .gallery-item-button {
+            flex: 1;
+            border: 0;
+            padding: 7px 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .gallery-cover-button {
+            background: #f4e8b8;
+            color: #765900;
+        }
+        .gallery-delete-button {
+            background: #fff0f0;
+            color: #9d2020;
+        }
+        .gallery-item-button:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+        .gallery-empty {
+            padding: 20px;
+            margin-top: 12px;
+            border-radius: 10px;
+            background: #f8f9fb;
+            color: #777;
+            text-align: center;
+            font-size: 13px;
+        }
+        .gallery-loading {
+            padding: 15px;
+            color: #777;
+            font-size: 13px;
+        }
+        @media (max-width: 900px) {
+            .gallery-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
         @media (max-width: 700px) {
-
             .admin-header {
                 flex-direction: column;
                 align-items: flex-start;
             }
-
             .admin-actions {
                 width: 100%;
             }
-
             .refresh-button,
             .logout-button {
                 flex: 1;
             }
-
             .application-top,
             .review-top {
                 flex-direction: column;
             }
-
             .application-details {
                 grid-template-columns: 1fr;
             }
-
             .application-actions,
             .review-actions {
                 flex-direction: column;
             }
-
             .action-button {
                 width: 100%;
             }
-
             .login-card {
                 padding: 25px;
             }
+            .gallery-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .gallery-upload-area {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .gallery-upload-button {
+                width: 100%;
+            }
         }
-
     </style>
-
 </head>
-
 <body>
-
 <header class="header">
-
     <div class="container header-content">
-
         <a
             href="index.html"
             class="logo"
@@ -426,42 +489,29 @@
             <span>TRABZON</span>
             <strong>ANLIK</strong>
         </a>
-
         <div class="admin-logo">
             YÖNETİM PANELİ
         </div>
-
     </div>
-
 </header>
-
-
 <!-- ========================================================= -->
 <!-- GİRİŞ EKRANI -->
 <!-- ========================================================= -->
-
 <section
     id="loginScreen"
     class="login-screen"
 >
-
     <div class="login-card">
-
         <h1>Yönetim Paneli</h1>
-
         <p>
             Trabzon Anlık yönetim paneline erişmek için
             admin hesabınızla giriş yapın.
         </p>
-
         <form id="loginForm">
-
             <div class="login-field">
-
                 <label for="loginEmail">
                     E-posta
                 </label>
-
                 <input
                     type="email"
                     id="loginEmail"
@@ -469,16 +519,11 @@
                     autocomplete="email"
                     required
                 >
-
             </div>
-
-
             <div class="login-field">
-
                 <label for="loginPassword">
                     Şifre
                 </label>
-
                 <input
                     type="password"
                     id="loginPassword"
@@ -486,64 +531,42 @@
                     autocomplete="current-password"
                     required
                 >
-
             </div>
-
-
             <button
                 type="submit"
                 class="login-button"
             >
                 Giriş Yap
             </button>
-
         </form>
-
-
         <div
             id="loginError"
             class="login-error"
         ></div>
-
     </div>
-
 </section>
-
-
 <!-- ========================================================= -->
 <!-- ADMIN UYGULAMASI -->
 <!-- ========================================================= -->
-
 <main
     id="adminApp"
     class="admin-page"
 >
-
     <div class="container">
-
-
         <div class="admin-header">
-
             <div>
-
                 <h1>
                     Yönetim Paneli
                 </h1>
-
                 <p>
                     İşletmeleri ve kullanıcı yorumlarını yönet.
                 </p>
-
                 <div
                     id="adminUser"
                     class="admin-user"
                 ></div>
-
             </div>
-
-
             <div class="admin-actions">
-
                 <button
                     class="refresh-button"
                     id="refreshButton"
@@ -551,7 +574,6 @@
                 >
                     ↻ Yenile
                 </button>
-
                 <button
                     class="logout-button"
                     id="logoutButton"
@@ -559,101 +581,61 @@
                 >
                     Çıkış Yap
                 </button>
-
             </div>
-
         </div>
-
-
         <div
             id="adminMessage"
             class="message"
         ></div>
-
-
         <!-- ================================================= -->
         <!-- YORUMLAR -->
         <!-- ================================================= -->
-
         <section class="admin-section">
-
             <div class="section-title">
-
                 <div>
-
                     <h2>
                         💬 Yorum Yönetimi
                     </h2>
-
                     <span>
                         Onay bekleyen ve yayınlanmış yorumlar
                     </span>
-
                 </div>
-
             </div>
-
-
             <div
                 id="reviewsList"
                 class="reviews-list"
             >
-
                 <div class="empty-state">
                     Yorumlar yükleniyor...
                 </div>
-
             </div>
-
         </section>
-
-
         <!-- ================================================= -->
         <!-- İŞLETMELER -->
         <!-- ================================================= -->
-
         <section class="admin-section">
-
             <div class="section-title">
-
                 <div>
-
                     <h2>
                         🏪 İşletme Başvuruları
                     </h2>
-
                     <span>
                         İşletme kayıtlarını ve yayın durumlarını yönet
                     </span>
-
                 </div>
-
             </div>
-
-
             <div
                 id="applications"
                 class="applications"
             >
-
                 <div class="empty-state">
                     Başvurular yükleniyor...
                 </div>
-
             </div>
-
         </section>
-
-
     </div>
-
 </main>
-
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script src="admin.js?v=3"></script>
-
+<script src="admin.js?v=4"></script>
 </body>
-
 </html>
