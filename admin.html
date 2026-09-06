@@ -12,515 +12,445 @@
         href="style.css"
     >
     <style>
-        body {
-            background: #f5f6f8;
-        }
-        .admin-page {
-            padding: 40px 0 80px;
-            min-height: calc(100vh - 80px);
+        /* =========================
+           ADMIN GENEL
+        ========================= */
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
         }
         .admin-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .admin-header h1 {
-            margin: 0 0 8px;
-            color: #101c35;
-            font-size: 34px;
-        }
-        .admin-header p {
-            margin: 0;
-            color: #777;
-        }
-        .admin-logo {
-            color: #7b1830;
-            font-weight: 800;
-            font-size: 14px;
-            letter-spacing: 1px;
-        }
-        .admin-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .refresh-button,
-        .logout-button {
-            border: 0;
-            padding: 12px 18px;
-            border-radius: 9px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-        .refresh-button {
-            background: #101c35;
-            color: white;
-        }
-        .logout-button {
-            background: #fff0f0;
-            color: #9d2020;
-        }
-        .admin-section {
-            margin-bottom: 45px;
-        }
-        .section-title {
-            display: flex;
             justify-content: space-between;
-            align-items: center;
             gap: 15px;
-            margin-bottom: 18px;
-        }
-        .section-title h2 {
-            margin: 0;
-            color: #101c35;
-            font-size: 25px;
-        }
-        .section-title span {
-            color: #777;
-            font-size: 14px;
-        }
-        .applications,
-        .reviews-list {
-            display: grid;
-            gap: 18px;
-        }
-        .application-card,
-        .review-card {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 5px 25px rgba(0,0,0,.06);
-        }
-        .application-top,
-        .review-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 20px;
-        }
-        .application-title,
-        .review-title {
-            margin: 0 0 7px;
-            color: #101c35;
-            font-size: 22px;
-        }
-        .application-meta,
-        .review-meta {
-            color: #777;
-            font-size: 14px;
-            line-height: 1.7;
-        }
-        .status {
-            display: inline-block;
-            padding: 7px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-        .approved-status {
-            background: #eaf7ee;
-            color: #176b35;
-        }
-        .pending-status {
-            background: #fff4d6;
-            color: #8a6200;
-        }
-        .application-details {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px 30px;
-        }
-        .detail strong {
-            display: block;
-            color: #101c35;
-            font-size: 13px;
-            margin-bottom: 4px;
-        }
-        .detail span {
-            color: #666;
-            font-size: 14px;
-        }
-        .application-actions,
-        .review-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 22px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
             flex-wrap: wrap;
         }
-        .action-button {
-            border: 0;
-            padding: 11px 17px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 700;
-            transition: .2s;
+        .admin-header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
-        .action-button:hover {
-            transform: translateY(-1px);
-            opacity: .92;
-        }
-        .approve-button {
-            background: #176b35;
-            color: white;
-        }
-        .reject-button {
-            background: #fff0f0;
-            color: #9d2020;
-        }
-        .featured-button {
-            background: #f4e8b8;
-            color: #765900;
-        }
-        .featured-remove-button {
-            background: #fff4d6;
-            color: #8a6200;
-        }
-        .delete-button {
-            background: #eee;
-            color: #333;
-        }
-        .review-comment {
-            margin-top: 18px;
-            padding: 18px;
-            background: #f8f9fb;
-            border-radius: 12px;
-            color: #444;
-            line-height: 1.7;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-        .review-rating {
-            margin-top: 12px;
-            font-size: 20px;
-            letter-spacing: 2px;
-        }
-        .review-business {
-            display: inline-block;
-            margin-top: 8px;
-            color: #7b1830;
-            font-weight: 700;
-        }
-        .review-date {
-            color: #999;
-            font-size: 13px;
-            margin-top: 8px;
-        }
-        .empty-state {
-            background: white;
-            padding: 50px 20px;
-            text-align: center;
-            border-radius: 16px;
-            color: #777;
-        }
-        .message {
-            display: none;
-            margin-bottom: 20px;
-            padding: 14px;
+        .admin-message {
+            margin: 15px 0;
+            padding: 12px 15px;
             border-radius: 10px;
+            display: none;
         }
-        .message.success {
-            display: block;
-            background: #eaf7ee;
-            color: #176b35;
+        .admin-message.success {
+            background: #e8f7ed;
+            color: #18743a;
         }
-        .message.error {
-            display: block;
-            background: #fff0f0;
-            color: #9d2020;
+        .admin-message.error {
+            background: #fdecec;
+            color: #a32121;
         }
-        .login-screen {
-            min-height: calc(100vh - 80px);
+        .admin-message.info {
+            background: #eef4ff;
+            color: #2457a6;
+        }
+        /* =========================
+           LOGIN
+        ========================= */
+        #loginScreen {
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 30px 20px;
+            padding: 20px;
         }
-        .login-card {
+        .login-box {
             width: 100%;
-            max-width: 430px;
-            background: white;
-            padding: 32px;
+            max-width: 420px;
+            padding: 30px;
             border-radius: 18px;
-            box-shadow: 0 10px 40px rgba(0,0,0,.08);
+            background: #fff;
+            box-shadow: 0 10px 40px rgba(0,0,0,.10);
         }
-        .login-card h1 {
-            margin: 0 0 8px;
-            color: #101c35;
+        .login-box h1 {
+            margin-bottom: 8px;
         }
-        .login-card p {
-            margin: 0 0 25px;
-            color: #777;
-            line-height: 1.6;
+        .login-box p {
+            margin-bottom: 25px;
+            opacity: .7;
         }
-        .login-field {
-            margin-bottom: 16px;
-        }
-        .login-field label {
+        .login-box label {
             display: block;
             margin-bottom: 7px;
-            color: #101c35;
-            font-size: 14px;
-            font-weight: 700;
+            font-weight: 600;
         }
-        .login-field input {
+        .login-box input {
             width: 100%;
             box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 9px;
             padding: 13px 14px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
             font-size: 15px;
-            outline: none;
         }
-        .login-field input:focus {
-            border-color: #7b1830;
-        }
-        .login-button {
+        .login-box button {
             width: 100%;
             border: 0;
-            border-radius: 9px;
-            padding: 14px;
-            background: #101c35;
-            color: white;
-            font-weight: 800;
+            padding: 13px;
+            border-radius: 10px;
             cursor: pointer;
+            font-weight: 700;
+            font-size: 15px;
         }
-        .login-error {
+        #loginError {
             display: none;
-            margin-top: 15px;
-            padding: 12px;
-            border-radius: 9px;
-            background: #fff0f0;
-            color: #9d2020;
-            font-size: 14px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #fdecec;
+            color: #a32121;
         }
-        .admin-user {
-            font-size: 13px;
-            color: #777;
-            margin-top: 5px;
+        /* =========================
+           İŞLETME KARTI
+        ========================= */
+        .application-card {
+            margin-bottom: 25px;
+            padding: 22px;
+            border-radius: 18px;
+            background: #fff;
+            box-shadow: 0 6px 25px rgba(0,0,0,.08);
         }
-        #adminApp {
-            display: none;
+        .application-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 18px;
         }
-        /* =====================================================
-           FOTOĞRAF GALERİSİ YÖNETİMİ
-           ===================================================== */
-        .gallery-admin {
-            margin-top: 22px;
-            padding-top: 22px;
+        .application-header h3 {
+            margin: 0 0 8px;
+            font-size: 21px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .status.approved {
+            background: #e8f7ed;
+            color: #18743a;
+        }
+        .status.pending {
+            background: #fff4d6;
+            color: #8a6100;
+        }
+        .business-rating {
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .application-info {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px 20px;
+            margin-bottom: 22px;
+        }
+        .application-info p {
+            margin: 0;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        /* =========================
+           GALERİ
+        ========================= */
+        .admin-gallery {
+            margin-top: 20px;
+            padding-top: 20px;
             border-top: 1px solid #eee;
         }
-        .gallery-admin-title {
+        .admin-gallery-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 10px;
             margin-bottom: 15px;
         }
-        .gallery-admin-title h3 {
+        .admin-gallery-header h4 {
             margin: 0;
-            color: #101c35;
-            font-size: 18px;
+            font-size: 17px;
         }
-        .gallery-admin-title span {
-            color: #777;
+        .admin-gallery-header span {
             font-size: 13px;
+            opacity: .65;
         }
-        .gallery-upload-area {
+        .admin-gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .admin-gallery-item {
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            background: #fafafa;
+        }
+        .admin-image-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: #eee;
+            overflow: hidden;
+        }
+        .admin-image-wrapper img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+        }
+        .cover-badge {
+            position: absolute;
+            left: 7px;
+            top: 7px;
+            padding: 5px 8px;
+            border-radius: 20px;
+            background: rgba(0,0,0,.75);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .admin-image-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            padding: 7px;
+        }
+        .admin-image-actions button {
+            flex: 1;
+            min-width: 35px;
+            border: 0;
+            padding: 7px 6px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 700;
+            background: #eee;
+        }
+        .admin-image-actions button:hover {
+            opacity: .85;
+        }
+        .admin-image-actions button:disabled {
+            cursor: not-allowed;
+            opacity: .4;
+        }
+        .admin-image-actions .image-delete-button {
+            background: #ffe8e8;
+            color: #a32121;
+        }
+        .admin-upload-area {
             display: flex;
             align-items: center;
             gap: 10px;
             flex-wrap: wrap;
-            padding: 15px;
-            background: #f8f9fb;
-            border-radius: 12px;
-            border: 1px dashed #d8dce3;
-        }
-        .gallery-file-input {
-            max-width: 100%;
-            font-size: 14px;
-        }
-        .gallery-upload-button {
-            border: 0;
-            padding: 10px 16px;
-            border-radius: 8px;
-            background: #101c35;
-            color: white;
-            font-weight: 700;
-            cursor: pointer;
-        }
-        .gallery-upload-button:disabled {
-            opacity: .6;
-            cursor: not-allowed;
-        }
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 12px;
             margin-top: 15px;
-        }
-        .gallery-item {
-            position: relative;
-            overflow: hidden;
-            background: #f1f2f5;
+            padding: 14px;
+            border: 1px dashed #ccc;
             border-radius: 12px;
-            min-height: 150px;
-            border: 1px solid #e5e7eb;
+            background: #fafafa;
         }
-        .gallery-item img {
-            display: block;
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-        }
-        .gallery-item-cover {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            padding: 5px 8px;
-            border-radius: 6px;
-            background: #f4e8b8;
-            color: #765900;
-            font-size: 11px;
-            font-weight: 800;
-        }
-        .gallery-item-actions {
-            display: flex;
-            gap: 6px;
-            padding: 8px;
-            background: white;
-        }
-        .gallery-item-button {
+        .admin-upload-area input[type="file"] {
             flex: 1;
+            min-width: 220px;
+            font-size: 13px;
+        }
+        .admin-upload-area button {
             border: 0;
-            padding: 7px 5px;
-            border-radius: 6px;
+            padding: 11px 15px;
+            border-radius: 9px;
             cursor: pointer;
-            font-size: 11px;
             font-weight: 700;
         }
-        .gallery-cover-button {
-            background: #f4e8b8;
-            color: #765900;
-        }
-        .gallery-delete-button {
-            background: #fff0f0;
-            color: #9d2020;
-        }
-        .gallery-item-button:disabled {
-            opacity: .5;
-            cursor: not-allowed;
-        }
-        .gallery-empty {
+        .admin-gallery-empty {
             padding: 20px;
-            margin-top: 12px;
-            border-radius: 10px;
-            background: #f8f9fb;
-            color: #777;
             text-align: center;
+            border: 1px dashed #ddd;
+            border-radius: 12px;
+            opacity: .65;
+            margin-bottom: 15px;
+        }
+        /* =========================
+           İŞLETME BUTONLARI
+        ========================= */
+        .application-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-top: 20px;
+        }
+        .application-actions button {
+            border: 0;
+            padding: 10px 13px;
+            border-radius: 9px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .approve-button {
+            background: #e8f7ed;
+            color: #18743a;
+        }
+        .reject-button {
+            background: #fff0e8;
+            color: #a34c16;
+        }
+        .delete-button {
+            background: #ffe8e8;
+            color: #a32121;
+        }
+        .featured-button {
+            background: #fff4d6;
+            color: #8a6100;
+        }
+        .featured-remove-button {
+            background: #f0eaff;
+            color: #6140a0;
+        }
+        /* =========================
+           YORUMLAR
+        ========================= */
+        .review-card {
+            margin-bottom: 15px;
+            padding: 18px;
+            border-radius: 14px;
+            background: #fff;
+            box-shadow: 0 4px 18px rgba(0,0,0,.06);
+        }
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .review-header strong {
+            display: block;
+        }
+        .review-header span {
+            display: block;
+            margin-top: 3px;
             font-size: 13px;
+            opacity: .65;
         }
-        .gallery-loading {
-            padding: 15px;
-            color: #777;
+        .review-card p {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        .review-card small {
+            opacity: .6;
+        }
+        .review-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .review-actions button {
+            border: 0;
+            padding: 9px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .approved-label {
+            padding: 8px 11px;
+            border-radius: 8px;
+            background: #e8f7ed;
+            color: #18743a;
             font-size: 13px;
+            font-weight: 700;
         }
-        @media (max-width: 900px) {
-            .gallery-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
+        /* =========================
+           YÜKLENİYOR / BOŞ
+        ========================= */
+        .loading,
+        .empty,
+        .error {
+            padding: 25px;
+            text-align: center;
+            border-radius: 12px;
+        }
+        .loading {
+            background: #f5f5f5;
+        }
+        .empty {
+            background: #fafafa;
+            opacity: .7;
+        }
+        .error {
+            background: #fdecec;
+            color: #a32121;
+        }
+        /* =========================
+           MOBİL
+        ========================= */
+        @media (max-width: 800px) {
+            .admin-gallery-grid {
+                grid-template-columns:
+                    repeat(3, minmax(0, 1fr));
             }
         }
-        @media (max-width: 700px) {
-            .admin-header {
-                flex-direction: column;
-                align-items: flex-start;
+        @media (max-width: 600px) {
+            .admin-container {
+                padding: 12px;
             }
-            .admin-actions {
-                width: 100%;
+            .application-card {
+                padding: 15px;
+                border-radius: 14px;
             }
-            .refresh-button,
-            .logout-button {
-                flex: 1;
-            }
-            .application-top,
-            .review-top {
-                flex-direction: column;
-            }
-            .application-details {
+            .application-info {
                 grid-template-columns: 1fr;
             }
-            .application-actions,
-            .review-actions {
+            .application-header {
                 flex-direction: column;
             }
-            .action-button {
-                width: 100%;
+            .admin-gallery-grid {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
             }
-            .login-card {
-                padding: 25px;
-            }
-            .gallery-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-            .gallery-upload-area {
-                flex-direction: column;
+            .admin-upload-area {
                 align-items: stretch;
             }
-            .gallery-upload-button {
+            .admin-upload-area input[type="file"],
+            .admin-upload-area button {
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .application-actions {
+                flex-direction: column;
+            }
+            .application-actions button {
                 width: 100%;
             }
         }
     </style>
 </head>
 <body>
-<header class="header">
-    <div class="container header-content">
-        <a
-            href="index.html"
-            class="logo"
-        >
-            <span>TRABZON</span>
-            <strong>ANLIK</strong>
-        </a>
-        <div class="admin-logo">
-            YÖNETİM PANELİ
-        </div>
-    </div>
-</header>
-<!-- ========================================================= -->
-<!-- GİRİŞ EKRANI -->
-<!-- ========================================================= -->
-<section
-    id="loginScreen"
-    class="login-screen"
->
-    <div class="login-card">
-        <h1>Yönetim Paneli</h1>
-        <p>
-            Trabzon Anlık yönetim paneline erişmek için
-            admin hesabınızla giriş yapın.
-        </p>
-        <form id="loginForm">
-            <div class="login-field">
+    <!-- =========================
+         LOGIN
+    ========================= -->
+    <section id="loginScreen">
+        <div class="login-box">
+            <h1>TRABZON ANLIK</h1>
+            <p>
+                Yönetim paneline giriş yap
+            </p>
+            <div id="loginError"></div>
+            <form id="loginForm">
                 <label for="loginEmail">
                     E-posta
                 </label>
                 <input
                     type="email"
                     id="loginEmail"
-                    placeholder="Admin e-posta adresi"
+                    placeholder="E-posta adresiniz"
                     autocomplete="email"
                     required
                 >
-            </div>
-            <div class="login-field">
                 <label for="loginPassword">
                     Şifre
                 </label>
@@ -531,111 +461,88 @@
                     autocomplete="current-password"
                     required
                 >
-            </div>
-            <button
-                type="submit"
-                class="login-button"
-            >
-                Giriş Yap
-            </button>
-        </form>
-        <div
-            id="loginError"
-            class="login-error"
-        ></div>
-    </div>
-</section>
-<!-- ========================================================= -->
-<!-- ADMIN UYGULAMASI -->
-<!-- ========================================================= -->
-<main
-    id="adminApp"
-    class="admin-page"
->
-    <div class="container">
-        <div class="admin-header">
-            <div>
-                <h1>
-                    Yönetim Paneli
-                </h1>
-                <p>
-                    İşletmeleri ve kullanıcı yorumlarını yönet.
-                </p>
-                <div
-                    id="adminUser"
-                    class="admin-user"
-                ></div>
-            </div>
-            <div class="admin-actions">
                 <button
-                    class="refresh-button"
-                    id="refreshButton"
-                    type="button"
+                    type="submit"
                 >
-                    ↻ Yenile
+                    Giriş Yap
                 </button>
-                <button
-                    class="logout-button"
-                    id="logoutButton"
-                    type="button"
-                >
-                    Çıkış Yap
-                </button>
-            </div>
+            </form>
         </div>
-        <div
-            id="adminMessage"
-            class="message"
-        ></div>
-        <!-- ================================================= -->
-        <!-- YORUMLAR -->
-        <!-- ================================================= -->
-        <section class="admin-section">
-            <div class="section-title">
+    </section>
+    <!-- =========================
+         ADMIN PANEL
+    ========================= -->
+    <section
+        id="adminApp"
+        style="display:none;"
+    >
+        <div class="admin-container">
+            <!-- HEADER -->
+            <header class="admin-header">
                 <div>
-                    <h2>
-                        💬 Yorum Yönetimi
-                    </h2>
-                    <span>
-                        Onay bekleyen ve yayınlanmış yorumlar
-                    </span>
+                    <h1>
+                        TRABZON ANLIK
+                    </h1>
+                    <p>
+                        YÖNETİM PANELİ
+                    </p>
                 </div>
-            </div>
+                <div class="admin-header-actions">
+                    <span id="adminUser"></span>
+                    <button
+                        id="refreshButton"
+                        type="button"
+                    >
+                        🔄 Yenile
+                    </button>
+                    <button
+                        id="logoutButton"
+                        type="button"
+                    >
+                        Çıkış Yap
+                    </button>
+                </div>
+            </header>
+            <!-- MESAJ -->
             <div
-                id="reviewsList"
-                class="reviews-list"
-            >
-                <div class="empty-state">
-                    Yorumlar yükleniyor...
+                id="adminMessage"
+                class="admin-message"
+            ></div>
+            <!-- =========================
+                 İŞLETMELER
+            ========================= -->
+            <section>
+                <h2>
+                    İşletmeler
+                </h2>
+                <div id="applications">
+                    <div class="loading">
+                        İşletmeler yükleniyor...
+                    </div>
                 </div>
-            </div>
-        </section>
-        <!-- ================================================= -->
-        <!-- İŞLETMELER -->
-        <!-- ================================================= -->
-        <section class="admin-section">
-            <div class="section-title">
-                <div>
-                    <h2>
-                        🏪 İşletme Başvuruları
-                    </h2>
-                    <span>
-                        İşletme kayıtlarını ve yayın durumlarını yönet
-                    </span>
+            </section>
+            <!-- =========================
+                 YORUMLAR
+            ========================= -->
+            <section>
+                <h2>
+                    Yorumlar
+                </h2>
+                <div id="reviewsList">
+                    <div class="loading">
+                        Yorumlar yükleniyor...
+                    </div>
                 </div>
-            </div>
-            <div
-                id="applications"
-                class="applications"
-            >
-                <div class="empty-state">
-                    Başvurular yükleniyor...
-                </div>
-            </div>
-        </section>
-    </div>
-</main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="admin.js?v=4"></script>
+            </section>
+        </div>
+    </section>
+    <!-- SUPABASE -->
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+    ></script>
+    <!-- ADMIN JS -->
+    <script
+        src="admin.js?v=4"
+    ></script>
 </body>
 </html>
