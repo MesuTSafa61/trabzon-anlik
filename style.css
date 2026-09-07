@@ -918,7 +918,7 @@ input {
 }
 
 /* =========================================
-   İŞLETME FOTOĞRAFLARI
+   İŞLETME KART FOTOĞRAFLARI
 ========================================= */
 
 .business-image {
@@ -934,7 +934,7 @@ input {
     width: 100%;
     height: 100%;
     display: block;
-    object-fit: contain;
+    object-fit: cover;
     object-position: center;
 }
 
@@ -943,4 +943,3 @@ input {
         height: 175px;
     }
 }
-
