@@ -1313,57 +1313,61 @@ input {
 
 
 /* =========================================
-   GALERİ - PREMIUM ZOOM & GEÇİŞ
+   GALERİ - GELİŞMİŞ ZOOM
 ========================================= */
 
-/* Galeri küçük fotoğraflarında hafif efekt */
-.business-gallery-item img {
-    transition:
-        transform 0.3s ease,
-        filter 0.3s ease !important;
-}
-
-.business-gallery-item:hover img {
-    transform: scale(1.04) !important;
-}
-
-/* Lightbox içeriği */
 .gallery-lightbox-content {
-    overflow: visible !important;
+    overflow: hidden !important;
+    touch-action: none !important;
 }
 
-/* Büyük fotoğraf */
 .gallery-lightbox-image {
+    max-width: 90vw !important;
+    max-height: 85vh !important;
+
     cursor: zoom-in !important;
+
+    user-select: none !important;
+    -webkit-user-select: none !important;
+
+    -webkit-user-drag: none !important;
+
+    transform-origin: 0 0 !important;
 
     transition:
         opacity 0.22s ease,
-        transform 0.22s ease !important;
+        transform 0.25s ease !important;
 
-    transform-origin: center center !important;
+    will-change: transform;
 }
 
-/* Fotoğraf değişirken */
 .gallery-lightbox-image.gallery-changing {
     opacity: 0 !important;
-    transform: scale(0.97) !important;
 }
 
-/* Zoom yapılmış fotoğraf */
 .gallery-lightbox-image.gallery-zoomed {
     max-width: none !important;
     max-height: none !important;
-    cursor: zoom-out !important;
-    transform: scale(2) !important;
+
+    cursor: grab !important;
+
+    transition:
+        opacity 0.2s ease,
+        transform 0.12s ease !important;
 }
 
-/* İçerik zoom sırasında */
+.gallery-lightbox-image.gallery-zoomed:active {
+    cursor: grabbing !important;
+}
+
 .gallery-lightbox-content.gallery-zoom-mode {
+    overflow: hidden !important;
     max-width: 100vw !important;
     max-height: 100vh !important;
+
+    touch-action: none !important;
 }
 
-/* Butonların daha premium görünümü */
 .gallery-lightbox-prev,
 .gallery-lightbox-next,
 .gallery-lightbox-close {
@@ -1373,11 +1377,16 @@ input {
         opacity 0.2s ease !important;
 }
 
-/* Mobilde zoom */
 @media (max-width: 600px) {
 
+    .gallery-lightbox-image {
+        max-width: 94vw !important;
+        max-height: 82vh !important;
+    }
+
     .gallery-lightbox-image.gallery-zoomed {
-        transform: scale(1.8) !important;
+        max-width: none !important;
+        max-height: none !important;
     }
 
     .gallery-lightbox-content.gallery-zoom-mode {
@@ -1386,5 +1395,4 @@ input {
         max-width: 100vw !important;
         max-height: 100vh !important;
     }
-
 }
