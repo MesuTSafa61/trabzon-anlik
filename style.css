@@ -943,3 +943,110 @@ input {
         height: 175px;
     }
 }
+
+
+/* İŞLETME DETAY GALERİ FOTOĞRAFLARI */
+
+.business-gallery {
+    width: 100%;
+    margin: 0 0 25px;
+    padding: 0;
+}
+
+.business-gallery-grid {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+}
+
+.business-gallery-item {
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
+    height: 105px !important;
+    min-height: 105px !important;
+    max-height: 105px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    background: #eef2f7 !important;
+    cursor: pointer;
+    box-sizing: border-box !important;
+}
+
+.business-gallery-item img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 100% !important;
+    min-height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    object-position: center !important;
+}
+
+.gallery-cover-badge {
+    position: absolute !important;
+    left: 6px !important;
+    bottom: 6px !important;
+    z-index: 2 !important;
+    padding: 4px 6px !important;
+    border-radius: 6px !important;
+    background: rgba(16, 28, 53, 0.88) !important;
+    color: #fff !important;
+    font-size: 9px !important;
+    font-weight: 700 !important;
+}
+
+.gallery-lightbox {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 15px !important;
+    background: rgba(0, 0, 0, 0.94) !important;
+}
+
+.gallery-lightbox img {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: 95vw !important;
+    max-height: 88vh !important;
+    object-fit: contain !important;
+    border-radius: 8px !important;
+}
+
+.gallery-lightbox-close {
+    position: absolute !important;
+    top: 15px !important;
+    right: 15px !important;
+    z-index: 3 !important;
+    width: 44px !important;
+    height: 44px !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background: rgba(255,255,255,0.16) !important;
+    color: white !important;
+    font-size: 30px !important;
+    cursor: pointer !important;
+}
+
+@media (max-width: 480px) {
+    .business-gallery-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 7px !important;
+    }
+
+    .business-gallery-item {
+        height: 95px !important;
+        min-height: 95px !important;
+        max-height: 95px !important;
+    }
+}
