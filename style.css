@@ -917,4 +917,30 @@ input {
     display: none; /* Kare formda temiz görünüm için alt metni gizledik */
 }
 
+/* =========================================
+   İŞLETME FOTOĞRAFLARI
+========================================= */
+
+.business-image {
+    height: 190px;
+    overflow: hidden;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.business-image img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+    object-position: center;
+}
+
+@media (max-width: 540px) {
+    .business-image {
+        height: 175px;
+    }
+}
 
