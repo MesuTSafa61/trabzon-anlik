@@ -808,6 +808,446 @@ function setupGalleryLightbox() {
         );
 
 
+    if (!galleryItems.length) {
+        return;
+    }
+
+
+    // Galerideki tüm fotoğraf URL'lerini al
+    const galleryImages =
+        Array.from(
+            galleryItems
+        )
+        .map(
+            item =>
+                item.dataset.galleryUrl
+        )
+        .filter(Boolean);
+
+
+    if (!galleryImages.length) {
+        return;
+    }
+
+
+    let currentIndex = 0;
+
+
+    function openLightbox(index) {
+
+        if (!galleryImages.length) {
+            return;
+        }
+
+
+        currentIndex =
+            (
+                index +
+                galleryImages.length
+            ) %
+            galleryImages.length;
+
+
+        // Daha önce açık lightbox varsa kapat
+        const oldOverlay =
+            document.querySelector(
+                ".gallery-lightbox"
+            );
+
+
+        if (oldOverlay) {
+            oldOverlay.remove();
+        }
+
+
+        const overlay =
+            document.createElement(
+                "div"
+            );
+
+
+        overlay.className =
+            "gallery-lightbox";
+
+
+        overlay.innerHTML = `
+
+            <button
+                type="button"
+                class="gallery-lightbox-close"
+                aria-label="Kapat"
+            >
+                ×
+            </button>
+
+
+            <button
+                type="button"
+                class="gallery-lightbox-prev"
+                aria-label="Önceki fotoğraf"
+            >
+                ‹
+            </button>
+
+
+            <div
+                class="gallery-lightbox-content"
+            >
+
+                <img
+                    class="gallery-lightbox-image"
+                    src=""
+                    alt="Büyük fotoğraf"
+                >
+
+
+                <div
+                    class="gallery-lightbox-counter"
+                >
+                    1 / ${galleryImages.length}
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="gallery-lightbox-next"
+                aria-label="Sonraki fotoğraf"
+            >
+                ›
+            </button>
+
+        `;
+
+
+        document.body.appendChild(
+            overlay
+        );
+
+
+        document.body.style.overflow =
+            "hidden";
+
+
+        const image =
+            overlay.querySelector(
+                ".gallery-lightbox-image"
+            );
+
+
+        const counter =
+            overlay.querySelector(
+                ".gallery-lightbox-counter"
+            );
+
+
+        const closeButton =
+            overlay.querySelector(
+                ".gallery-lightbox-close"
+            );
+
+
+        const prevButton =
+            overlay.querySelector(
+                ".gallery-lightbox-prev"
+            );
+
+
+        const nextButton =
+            overlay.querySelector(
+                ".gallery-lightbox-next"
+            );
+
+
+        function updateImage() {
+
+            const url =
+                galleryImages[
+                    currentIndex
+                ];
+
+
+            image.src =
+                url;
+
+
+            counter.textContent =
+                `${currentIndex + 1} / ${galleryImages.length}`;
+
+        }
+
+
+        function showNext() {
+
+            currentIndex =
+                (
+                    currentIndex + 1
+                ) %
+                galleryImages.length;
+
+
+            updateImage();
+
+        }
+
+
+        function showPrevious() {
+
+            currentIndex =
+                (
+                    currentIndex -
+                    1 +
+                    galleryImages.length
+                ) %
+                galleryImages.length;
+
+
+            updateImage();
+
+        }
+
+
+        function close() {
+
+            document.removeEventListener(
+                "keydown",
+                handleKeydown
+            );
+
+
+            overlay.remove();
+
+
+            document.body.style.overflow =
+                "";
+
+        }
+
+
+        function handleKeydown(
+            event
+        ) {
+
+            if (
+                event.key ===
+                "Escape"
+            ) {
+
+                close();
+
+                return;
+            }
+
+
+            if (
+                event.key ===
+                "ArrowRight"
+            ) {
+
+                event.preventDefault();
+
+                showNext();
+
+                return;
+            }
+
+
+            if (
+                event.key ===
+                "ArrowLeft"
+            ) {
+
+                event.preventDefault();
+
+                showPrevious();
+
+                return;
+            }
+
+        }
+
+
+        closeButton.addEventListener(
+            "click",
+            close
+        );
+
+
+        prevButton.addEventListener(
+            "click",
+            function(event) {
+
+                event.stopPropagation();
+
+                showPrevious();
+
+            }
+        );
+
+
+        nextButton.addEventListener(
+            "click",
+            function(event) {
+
+                event.stopPropagation();
+
+                showNext();
+
+            }
+        );
+
+
+        overlay.addEventListener(
+            "click",
+            function(event) {
+
+                if (
+                    event.target ===
+                    overlay
+                ) {
+
+                    close();
+
+                }
+
+            }
+        );
+
+
+        image.addEventListener(
+            "click",
+            function(event) {
+
+                event.stopPropagation();
+
+            }
+        );
+
+
+        document.addEventListener(
+            "keydown",
+            handleKeydown
+        );
+
+
+        // ====================================================
+        // TELEFONDA SAĞA / SOLA KAYDIRMA
+        // ====================================================
+
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+
+        overlay.addEventListener(
+            "touchstart",
+            function(event) {
+
+                if (
+                    event.touches &&
+                    event.touches.length
+                ) {
+
+                    touchStartX =
+                        event.touches[0].clientX;
+
+                }
+
+            },
+            {
+                passive: true
+            }
+        );
+
+
+        overlay.addEventListener(
+            "touchend",
+            function(event) {
+
+                if (
+                    event.changedTouches &&
+                    event.changedTouches.length
+                ) {
+
+                    touchEndX =
+                        event.changedTouches[0].clientX;
+
+                }
+
+
+                const swipeDistance =
+                    touchEndX -
+                    touchStartX;
+
+
+                const minimumSwipe =
+                    50;
+
+
+                if (
+                    Math.abs(
+                        swipeDistance
+                    ) <
+                    minimumSwipe
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    swipeDistance < 0
+                ) {
+
+                    showNext();
+
+                } else {
+
+                    showPrevious();
+
+                }
+
+            },
+            {
+                passive: true
+            }
+        );
+
+
+        updateImage();
+
+    }
+
+
+    galleryItems.forEach(
+        (
+            item,
+            index
+        ) => {
+
+            item.addEventListener(
+                "click",
+                function() {
+
+                    openLightbox(
+                        index
+                    );
+
+                }
+            );
+
+        }
+    );
+
+}
+
+    const galleryItems =
+        document.querySelectorAll(
+            ".business-gallery-item"
+        );
+
+
     galleryItems.forEach(
         item => {
 
