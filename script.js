@@ -128,17 +128,9 @@ function showGlobalError(message) {
 
         categoriesContainer.innerHTML = `
             <div class="category-card">
-
                 <span>⚠️</span>
-
-                <strong>
-                    Bağlantı hatası
-                </strong>
-
-                <small>
-                    ${escapeHtml(message)}
-                </small>
-
+                <strong>Bağlantı hatası</strong>
+                <small>${escapeHtml(message)}</small>
             </div>
         `;
     }
@@ -225,13 +217,10 @@ async function loadCategories() {
             data,
             error
         } = await supabaseClient
-
             .from("categories")
-
             .select(
                 "id, name, slug, icon, description"
             )
-
             .order(
                 "id",
                 {
@@ -456,7 +445,7 @@ async function loadFeaturedBusinesses() {
 
 
         // ----------------------------------------------------
-        // KATEGORİLERİ AYRI ÇEK
+        // KATEGORİLER
         // ----------------------------------------------------
 
         const {
@@ -476,7 +465,7 @@ async function loadFeaturedBusinesses() {
 
 
         // ----------------------------------------------------
-        // KATEGORİLERİ EŞLEŞTİR
+        // KATEGORİ EŞLEŞTİR
         // ----------------------------------------------------
 
         const categoryMap =
@@ -492,8 +481,22 @@ async function loadFeaturedBusinesses() {
             );
 
 
-        const businessesWithCategories =
-            businesses.map(
+        // ----------------------------------------------------
+        // FOTOĞRAFLARI ÇEK
+        // ----------------------------------------------------
+
+        const businessesWithImages =
+            await attachBusinessImages(
+                businesses
+            );
+
+
+        // ----------------------------------------------------
+        // KATEGORİ + FOTOĞRAF
+        // ----------------------------------------------------
+
+        const finalBusinesses =
+            businessesWithImages.map(
                 business => {
 
                     const category =
@@ -519,7 +522,7 @@ async function loadFeaturedBusinesses() {
         // ----------------------------------------------------
 
         businessContainer.innerHTML =
-            businessesWithCategories
+            finalBusinesses
                 .map(
                     renderBusinessCard
                 )
@@ -557,6 +560,168 @@ async function loadFeaturedBusinesses() {
 
             </article>
         `;
+    }
+}
+
+
+// ============================================================
+// İŞLETME FOTOĞRAFLARINI GETİR
+// ============================================================
+
+async function attachBusinessImages(
+    businesses
+) {
+
+    if (
+        !businesses ||
+        businesses.length === 0
+    ) {
+        return [];
+    }
+
+    const businessIds =
+        businesses.map(
+            business => business.id
+        );
+
+    try {
+
+        const {
+            data: images,
+            error
+        } = await supabaseClient
+
+            .from("business_images")
+
+            .select(`
+                id,
+                business_id,
+                image_url,
+                is_cover,
+                sort_order,
+                created_at
+            `)
+
+            .in(
+                "business_id",
+                businessIds
+            )
+
+            // Önce kapak fotoğrafı
+            .order(
+                "is_cover",
+                {
+                    ascending: false
+                }
+            )
+
+            // Sonra sıra
+            .order(
+                "sort_order",
+                {
+                    ascending: true
+                }
+            )
+
+            // Son olarak yüklenme tarihi
+            .order(
+                "created_at",
+                {
+                    ascending: true
+                }
+            );
+
+
+        if (error) {
+
+            console.warn(
+                "business_images okunamadı. Eski image_url kullanılacak:",
+                error
+            );
+
+            return businesses;
+        }
+
+
+        // ----------------------------------------------------
+        // HER İŞLETME İÇİN İLK FOTOĞRAFI AL
+        // ----------------------------------------------------
+
+        const imageMap =
+            new Map();
+
+        (images || []).forEach(
+            image => {
+
+                const businessId =
+                    String(
+                        image.business_id
+                    );
+
+                if (
+                    !imageMap.has(
+                        businessId
+                    )
+                ) {
+
+                    imageMap.set(
+                        businessId,
+                        image
+                    );
+                }
+            }
+        );
+
+
+        // ----------------------------------------------------
+        // FOTOĞRAFI İŞLETMEYE EKLE
+        // ----------------------------------------------------
+
+        return businesses.map(
+            business => {
+
+                const galleryImage =
+                    imageMap.get(
+                        String(
+                            business.id
+                        )
+                    );
+
+
+                if (
+                    galleryImage &&
+                    galleryImage.image_url
+                ) {
+
+                    return {
+
+                        ...business,
+
+                        image_url:
+                            galleryImage.image_url,
+
+                        gallery_cover_url:
+                            galleryImage.image_url,
+
+                        gallery_image_id:
+                            galleryImage.id
+                    };
+                }
+
+
+                // Galeri yoksa eski fotoğraf
+                return business;
+            }
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "İşletme fotoğrafları alınamadı:",
+            error
+        );
+
+        return businesses;
     }
 }
 
@@ -662,7 +827,7 @@ function renderBusinessCard(business) {
 
 
     // --------------------------------------------------------
-    // GERÇEK SLUG
+    // SLUG
     // --------------------------------------------------------
 
     const businessSlug =
@@ -1108,9 +1273,18 @@ async function searchBusinesses(
             return;
         }
 
+
+        // Fotoğrafları ekle
+        const businessesWithImages =
+            await attachBusinessImages(
+                businesses
+            );
+
+
+        // Kategorileri ekle
         const businessesWithCategories =
             await attachCategories(
-                businesses
+                businessesWithImages
             );
 
         renderSearchResults(
@@ -1291,8 +1465,16 @@ async function searchByCategory(
             throw businessError;
         }
 
+
+        // Fotoğrafları ekle
+        const businessesWithImages =
+            await attachBusinessImages(
+                businesses || []
+            );
+
+
         const businessesWithCategories =
-            (businesses || []).map(
+            (businessesWithImages || []).map(
                 business => ({
 
                     ...business,
