@@ -1050,3 +1050,263 @@ input {
         max-height: 95px !important;
     }
 }
+
+/* =========================================
+   GALERİ LIGHTBOX - FOTOĞRAF GEÇİŞİ
+========================================= */
+
+.gallery-lightbox-content {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+}
+
+.gallery-lightbox-image {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: 95vw !important;
+    max-height: 88vh !important;
+    object-fit: contain !important;
+    border-radius: 8px !important;
+    user-select: none !important;
+    -webkit-user-drag: none !important;
+}
+
+
+/* SOL BUTON */
+
+.gallery-lightbox-prev,
+.gallery-lightbox-next {
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+
+    z-index: 5 !important;
+
+    width: 52px !important;
+    height: 52px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border: 0 !important;
+    border-radius: 50% !important;
+
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+
+    font-size: 42px !important;
+    font-weight: 300 !important;
+    line-height: 1 !important;
+
+    cursor: pointer !important;
+
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease !important;
+}
+
+
+/* SOL */
+
+.gallery-lightbox-prev {
+    left: 20px !important;
+}
+
+
+/* SAĞ */
+
+.gallery-lightbox-next {
+    right: 20px !important;
+}
+
+
+/* HOVER */
+
+.gallery-lightbox-prev:hover,
+.gallery-lightbox-next:hover {
+    background: rgba(255, 255, 255, 0.32) !important;
+}
+
+
+/* TIKLAMA */
+
+.gallery-lightbox-prev:active {
+    transform: translateY(-50%) scale(0.92) !important;
+}
+
+.gallery-lightbox-next:active {
+    transform: translateY(-50%) scale(0.92) !important;
+}
+
+
+/* FOTOĞRAF SAYACI */
+
+.gallery-lightbox-counter {
+    position: absolute !important;
+
+    left: 50% !important;
+    bottom: -38px !important;
+
+    transform: translateX(-50%) !important;
+
+    padding: 5px 12px !important;
+
+    border-radius: 20px !important;
+
+    background: rgba(0, 0, 0, 0.55) !important;
+    color: #ffffff !important;
+
+    font-size: 13px !important;
+    font-weight: 700 !important;
+
+    white-space: nowrap !important;
+
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+}
+
+
+/* KAPATMA BUTONU */
+
+.gallery-lightbox-close {
+    position: absolute !important;
+
+    top: 15px !important;
+    right: 15px !important;
+
+    z-index: 10 !important;
+
+    width: 44px !important;
+    height: 44px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    border: 0 !important;
+    border-radius: 50% !important;
+
+    background: rgba(255,255,255,0.16) !important;
+    color: white !important;
+
+    font-size: 30px !important;
+    line-height: 1 !important;
+
+    cursor: pointer !important;
+
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+
+
+/* KAPAT HOVER */
+
+.gallery-lightbox-close:hover {
+    background: rgba(255,255,255,0.28) !important;
+}
+
+
+/* =========================================
+   TELEFON
+========================================= */
+
+@media (max-width: 600px) {
+
+    .gallery-lightbox {
+        padding: 10px !important;
+        touch-action: pan-y !important;
+    }
+
+    .gallery-lightbox-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 88vh !important;
+    }
+
+    .gallery-lightbox-image {
+        max-width: 94vw !important;
+        max-height: 82vh !important;
+        border-radius: 6px !important;
+    }
+
+
+    .gallery-lightbox-prev,
+    .gallery-lightbox-next {
+
+        width: 42px !important;
+        height: 42px !important;
+
+        font-size: 34px !important;
+
+        background: rgba(255,255,255,0.20) !important;
+    }
+
+
+    .gallery-lightbox-prev {
+        left: 8px !important;
+    }
+
+
+    .gallery-lightbox-next {
+        right: 8px !important;
+    }
+
+
+    .gallery-lightbox-close {
+
+        top: 10px !important;
+        right: 10px !important;
+
+        width: 40px !important;
+        height: 40px !important;
+
+        font-size: 27px !important;
+    }
+
+
+    .gallery-lightbox-counter {
+
+        bottom: -32px !important;
+
+        font-size: 12px !important;
+
+        padding: 4px 10px !important;
+    }
+}
+
+
+/* =========================================
+   ÇOK KÜÇÜK TELEFON
+========================================= */
+
+@media (max-width: 380px) {
+
+    .gallery-lightbox-prev,
+    .gallery-lightbox-next {
+
+        width: 38px !important;
+        height: 38px !important;
+
+        font-size: 30px !important;
+    }
+
+
+    .gallery-lightbox-prev {
+        left: 5px !important;
+    }
+
+
+    .gallery-lightbox-next {
+        right: 5px !important;
+    }
+
+}
