@@ -1310,3 +1310,81 @@ input {
     }
 
 }
+
+
+/* =========================================
+   GALERİ - PREMIUM ZOOM & GEÇİŞ
+========================================= */
+
+/* Galeri küçük fotoğraflarında hafif efekt */
+.business-gallery-item img {
+    transition:
+        transform 0.3s ease,
+        filter 0.3s ease !important;
+}
+
+.business-gallery-item:hover img {
+    transform: scale(1.04) !important;
+}
+
+/* Lightbox içeriği */
+.gallery-lightbox-content {
+    overflow: visible !important;
+}
+
+/* Büyük fotoğraf */
+.gallery-lightbox-image {
+    cursor: zoom-in !important;
+
+    transition:
+        opacity 0.22s ease,
+        transform 0.22s ease !important;
+
+    transform-origin: center center !important;
+}
+
+/* Fotoğraf değişirken */
+.gallery-lightbox-image.gallery-changing {
+    opacity: 0 !important;
+    transform: scale(0.97) !important;
+}
+
+/* Zoom yapılmış fotoğraf */
+.gallery-lightbox-image.gallery-zoomed {
+    max-width: none !important;
+    max-height: none !important;
+    cursor: zoom-out !important;
+    transform: scale(2) !important;
+}
+
+/* İçerik zoom sırasında */
+.gallery-lightbox-content.gallery-zoom-mode {
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+}
+
+/* Butonların daha premium görünümü */
+.gallery-lightbox-prev,
+.gallery-lightbox-next,
+.gallery-lightbox-close {
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        opacity 0.2s ease !important;
+}
+
+/* Mobilde zoom */
+@media (max-width: 600px) {
+
+    .gallery-lightbox-image.gallery-zoomed {
+        transform: scale(1.8) !important;
+    }
+
+    .gallery-lightbox-content.gallery-zoom-mode {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+    }
+
+}
