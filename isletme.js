@@ -3,18 +3,16 @@ const SUPABASE_URL =
 
 const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_0h5ycfDBJjgdf6bXlZ9OEg_K45u2b2v";
-    
+
 const supabaseClient =
     window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_PUBLISHABLE_KEY
     );
 
-
 // ============================================================
 // YARDIMCI FONKSİYONLAR
 // ============================================================
-
 function escapeHtml(value) {
     return String(value ?? "")
         .replace(/&/g, "&amp;")
@@ -24,70 +22,45 @@ function escapeHtml(value) {
         .replace(/'/g, "&#039;");
 }
 
-
 function getSlug() {
     return new URLSearchParams(
         window.location.search
     ).get("slug");
 }
 
-
 function normalizePhone(phone) {
+    if (!phone) return "";
 
-    if (!phone) {
-        return "";
-    }
-
-    let number =
-        String(phone).replace(/\D/g, "");
+    let number = String(phone).replace(/\D/g, "");
 
     if (number.startsWith("0")) {
-        number =
-            "90" + number.substring(1);
+        number = "90" + number.substring(1);
     }
 
     if (!number.startsWith("90")) {
-        number =
-            "90" + number;
+        number = "90" + number;
     }
 
     return number;
 }
 
-
 function starsHtml(rating) {
-
-    const value =
-        Math.round(
-            Number(rating || 0)
-        );
-
+    const value = Math.round(Number(rating || 0));
     let html = "";
 
     for (let i = 1; i <= 5; i++) {
-
-        html +=
-            i <= value
-                ? "★"
-                : "☆";
+        html += i <= value ? "★" : "☆";
     }
 
     return html;
 }
 
-
 // ============================================================
 // GALERİ FOTOĞRAFLARINI YÜKLE
 // ============================================================
-
 async function loadBusinessImages(businessId) {
-
     try {
-
-        const {
-            data: images,
-            error
-        } =
+        const { data: images, error } =
             await supabaseClient
                 .from("business_images")
                 .select(`
@@ -98,43 +71,22 @@ async function loadBusinessImages(businessId) {
                     sort_order,
                     created_at
                 `)
-                .eq(
-                    "business_id",
-                    businessId
-                )
-                .order(
-                    "is_cover",
-                    {
-                        ascending: false
-                    }
-                )
-                .order(
-                    "sort_order",
-                    {
-                        ascending: true
-                    }
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending: true
-                    }
-                );
+                .eq("business_id", businessId)
+                .order("is_cover", { ascending: false })
+                .order("sort_order", { ascending: true })
+                .order("created_at", { ascending: true });
 
         if (error) {
-
             console.warn(
                 "İşletme galerisi okunamadı:",
                 error
             );
-
             return [];
         }
 
         return images || [];
 
     } catch (error) {
-
         console.warn(
             "Galeri yükleme hatası:",
             error
@@ -144,31 +96,21 @@ async function loadBusinessImages(businessId) {
     }
 }
 
-
 // ============================================================
 // İŞLETMEYİ YÜKLE
 // ============================================================
-
 async function loadBusiness() {
-
-    const slug =
-        getSlug();
+    const slug = getSlug();
 
     if (!slug) {
-
         showError(
             "İşletme bağlantısı bulunamadı."
         );
-
         return;
     }
 
     try {
-
-        const {
-            data: business,
-            error
-        } =
+        const { data: business, error } =
             await supabaseClient
                 .from("businesses")
                 .select(`
@@ -188,19 +130,11 @@ async function loadBusiness() {
                     review_count,
                     category_id
                 `)
-                .eq(
-                    "slug",
-                    slug
-                )
-                .eq(
-                    "is_approved",
-                    true
-                )
+                .eq("slug", slug)
+                .eq("is_approved", true)
                 .maybeSingle();
 
-
         if (error) {
-
             console.error(
                 "İşletme yükleme hatası:",
                 error
@@ -213,9 +147,7 @@ async function loadBusiness() {
             return;
         }
 
-
         if (!business) {
-
             showError(
                 "Bu işletme bulunamadı veya henüz onaylanmadı."
             );
@@ -223,33 +155,18 @@ async function loadBusiness() {
             return;
         }
 
-
-        // ====================================================
-        // GALERİ
-        // ====================================================
-
         const images =
             await loadBusinessImages(
                 business.id
             );
 
-
-        // ====================================================
-        // KATEGORİ
-        // ====================================================
-
         let category = null;
 
         if (business.category_id) {
-
-            const {
-                data: categoryData
-            } =
+            const { data: categoryData } =
                 await supabaseClient
                     .from("categories")
-                    .select(
-                        "name, icon"
-                    )
+                    .select("name, icon")
                     .eq(
                         "id",
                         business.category_id
@@ -260,31 +177,25 @@ async function loadBusiness() {
                 categoryData || null;
         }
 
-
         renderBusiness(
             business,
             category,
             images
         );
 
-
         await loadReviews(
             business.id
         );
-
 
         setupReviewForm(
             business.id
         );
 
-
         setupShareButtons();
-
 
         setupGalleryLightbox();
 
     } catch (error) {
-
         console.error(
             "İşletme genel hata:",
             error
@@ -296,61 +207,41 @@ async function loadBusiness() {
     }
 }
 
-
 // ============================================================
 // İŞLETME DETAYI
 // ============================================================
-
 function renderBusiness(
     business,
     category,
     images = []
 ) {
-
     const container =
         document.querySelector(
             "#businessContainer"
         );
 
-    if (!container) {
-        return;
-    }
-
+    if (!container) return;
 
     document.title =
         `${business.name} | Trabzon Anlık`;
 
-
     const categoryName =
-        category?.name ||
-        "İŞLETME";
-
+        category?.name || "İŞLETME";
 
     const categoryIcon =
-        category?.icon ||
-        "🏪";
-
+        category?.icon || "🏪";
 
     const rating =
-        Number(
-            business.rating || 0
-        );
-
+        Number(business.rating || 0);
 
     const reviewCount =
         Number(
             business.review_count || 0
         );
 
-
-    // ========================================================
-    // KAPAK FOTOĞRAFI
-    // ========================================================
-
     let coverImage = null;
 
     if (images.length > 0) {
-
         coverImage =
             images.find(
                 image =>
@@ -358,28 +249,19 @@ function renderBusiness(
             ) || images[0];
     }
 
-
     const coverUrl =
         coverImage?.image_url ||
         business.image_url ||
         "";
 
-
     let imageHtml;
 
-
     if (coverUrl) {
-
         imageHtml = `
-
             <img
                 class="business-detail-image"
-                src="${escapeHtml(
-                    coverUrl
-                )}"
-                alt="${escapeHtml(
-                    business.name
-                )}"
+                src="${escapeHtml(coverUrl)}"
+                alt="${escapeHtml(business.name)}"
                 onerror="
                     this.style.display='none';
                     const fallback=this.parentElement.querySelector('.business-detail-image-fallback');
@@ -401,13 +283,9 @@ function renderBusiness(
             >
                 ${escapeHtml(categoryIcon)}
             </div>
-
         `;
-
     } else {
-
         imageHtml = `
-
             <div
                 class="business-detail-image-fallback"
                 style="
@@ -422,38 +300,22 @@ function renderBusiness(
             >
                 ${escapeHtml(categoryIcon)}
             </div>
-
         `;
     }
 
-
-    // ========================================================
-    // GALERİ
-    // ========================================================
-
     let galleryHtml = "";
 
-
     if (images.length > 0) {
-
         galleryHtml = `
-
             <div class="business-gallery">
 
                 <div class="business-gallery-title">
-
                     <span>📷</span>
-
-                    <strong>
-                        Fotoğraflar
-                    </strong>
-
+                    <strong>Fotoğraflar</strong>
                     <small>
                         ${images.length} fotoğraf
                     </small>
-
                 </div>
-
 
                 <div class="business-gallery-grid">
 
@@ -461,102 +323,68 @@ function renderBusiness(
                         images
                             .map(
                                 image => `
-
                                     <button
                                         type="button"
                                         class="business-gallery-item"
-                                        data-gallery-url="${escapeHtml(
-                                            image.image_url
-                                        )}"
+                                        data-gallery-url="${escapeHtml(image.image_url)}"
                                         aria-label="Fotoğrafı büyüt"
                                     >
 
                                         <img
-                                            src="${escapeHtml(
-                                                image.image_url
-                                            )}"
-                                            alt="${escapeHtml(
-                                                business.name
-                                            )} fotoğrafı"
+                                            src="${escapeHtml(image.image_url)}"
+                                            alt="${escapeHtml(business.name)} fotoğrafı"
                                             loading="lazy"
                                         >
 
                                         ${
                                             image.is_cover
                                                 ? `
-
                                                     <span class="gallery-cover-badge">
                                                         ⭐ Kapak
                                                     </span>
-
                                                 `
                                                 : ""
                                         }
 
                                     </button>
-
                                 `
                             )
                             .join("")
                     }
 
                 </div>
-
             </div>
-
         `;
     }
 
-
-    // ========================================================
-    // SAYFA
-    // ========================================================
-
     container.innerHTML = `
-
         <article class="business-detail-card">
-
 
             <div class="business-detail-image-wrap">
 
                 ${imageHtml}
 
-
                 <div class="business-image-overlay"></div>
 
-
                 <div class="business-image-category">
-
                     ${escapeHtml(categoryIcon)}
-
                     ${escapeHtml(categoryName)}
-
                 </div>
 
             </div>
 
-
             ${galleryHtml}
-
 
             <div class="business-detail-content">
 
-
                 <h1 class="business-detail-title">
-
-                    ${escapeHtml(
-                        business.name
-                    )}
-
+                    ${escapeHtml(business.name)}
                 </h1>
-
 
                 <div class="business-detail-rating">
 
                     <span class="detail-rating-stars">
-
                         ${starsHtml(rating)}
-
                     </span>
 
                     <strong>
@@ -569,96 +397,74 @@ function renderBusiness(
 
                 </div>
 
-
                 <p class="business-detail-description">
-
                     ${escapeHtml(
                         business.description ||
                         "Bu işletme hakkında henüz açıklama eklenmemiş."
                     )}
-
                 </p>
 
-
                 <div class="business-info">
-
 
                     <div class="business-info-item">
 
                         <span>📍</span>
 
                         <div>
-
                             <strong>İlçe</strong>
-
                             <br>
 
                             ${escapeHtml(
                                 business.district ||
                                 "Belirtilmemiş"
                             )}
-
                         </div>
 
                     </div>
-
 
                     <div class="business-info-item">
 
                         <span>🏠</span>
 
                         <div>
-
                             <strong>Adres</strong>
-
                             <br>
 
                             ${escapeHtml(
                                 business.address ||
                                 "Belirtilmemiş"
                             )}
-
                         </div>
 
                     </div>
 
-
                     ${
                         business.phone
                             ? `
-
                                 <div class="business-info-item">
 
                                     <span>📞</span>
 
                                     <div>
-
                                         <strong>Telefon</strong>
-
                                         <br>
-
                                         ${escapeHtml(
                                             business.phone
                                         )}
-
                                     </div>
 
                                 </div>
-
                             `
                             : ""
                     }
 
                 </div>
 
-
                 <div class="business-actions">
-
 
                     ${
                         business.phone
                             ? `
-
                                 <a
                                     class="business-action phone"
                                     href="tel:${escapeHtml(
@@ -667,16 +473,13 @@ function renderBusiness(
                                 >
                                     📞 Ara
                                 </a>
-
                             `
                             : ""
                     }
 
-
                     ${
                         business.phone
                             ? `
-
                                 <a
                                     class="business-action whatsapp"
                                     href="https://wa.me/${normalizePhone(
@@ -687,16 +490,13 @@ function renderBusiness(
                                 >
                                     💬 WhatsApp
                                 </a>
-
                             `
                             : ""
                     }
 
-
                     ${
                         business.instagram
                             ? `
-
                                 <a
                                     class="business-action instagram"
                                     href="${formatInstagram(
@@ -707,16 +507,13 @@ function renderBusiness(
                                 >
                                     📷 Instagram
                                 </a>
-
                             `
                             : ""
                     }
 
-
                     ${
                         business.website
                             ? `
-
                                 <a
                                     class="business-action website"
                                     href="${formatWebsite(
@@ -727,11 +524,9 @@ function renderBusiness(
                                 >
                                     🌐 Web Sitesi
                                 </a>
-
                             `
                             : ""
                     }
-
 
                     ${
                         business.address ||
@@ -740,7 +535,6 @@ function renderBusiness(
                             business.longitude
                         )
                             ? `
-
                                 <a
                                     class="business-action map"
                                     href="${getMapUrl(
@@ -751,16 +545,13 @@ function renderBusiness(
                                 >
                                     📍 Yol Tarifi
                                 </a>
-
                             `
                             : ""
                     }
 
                 </div>
 
-
                 <div class="share-actions">
-
 
                     <button
                         type="button"
@@ -769,7 +560,6 @@ function renderBusiness(
                     >
                         📤 Paylaş
                     </button>
-
 
                     <button
                         type="button"
@@ -781,25 +571,19 @@ function renderBusiness(
 
                 </div>
 
-
                 <div class="business-map">
-
                     ${renderMap(business)}
-
                 </div>
 
             </div>
 
         </article>
-
     `;
 }
-
 
 // ============================================================
 // GALERİ LIGHTBOX
 // ============================================================
-
 function setupGalleryLightbox() {
 
     const galleryItems =
@@ -807,38 +591,25 @@ function setupGalleryLightbox() {
             ".business-gallery-item"
         );
 
-
     if (!galleryItems.length) {
         return;
     }
 
-
-    // Galerideki tüm fotoğraf URL'lerini al
     const galleryImages =
-        Array.from(
-            galleryItems
-        )
-        .map(
-            item =>
-                item.dataset.galleryUrl
-        )
-        .filter(Boolean);
-
+        Array.from(galleryItems)
+            .map(
+                item =>
+                    item.dataset.galleryUrl
+            )
+            .filter(Boolean);
 
     if (!galleryImages.length) {
         return;
     }
 
-
     let currentIndex = 0;
 
-
     function openLightbox(index) {
-
-        if (!galleryImages.length) {
-            return;
-        }
-
 
         currentIndex =
             (
@@ -847,28 +618,22 @@ function setupGalleryLightbox() {
             ) %
             galleryImages.length;
 
-
-        // Daha önce açık lightbox varsa kapat
         const oldOverlay =
             document.querySelector(
                 ".gallery-lightbox"
             );
 
-
         if (oldOverlay) {
             oldOverlay.remove();
         }
-
 
         const overlay =
             document.createElement(
                 "div"
             );
 
-
         overlay.className =
             "gallery-lightbox";
-
 
         overlay.innerHTML = `
 
@@ -880,7 +645,6 @@ function setupGalleryLightbox() {
                 ×
             </button>
 
-
             <button
                 type="button"
                 class="gallery-lightbox-prev"
@@ -889,10 +653,7 @@ function setupGalleryLightbox() {
                 ‹
             </button>
 
-
-            <div
-                class="gallery-lightbox-content"
-            >
+            <div class="gallery-lightbox-content">
 
                 <img
                     class="gallery-lightbox-image"
@@ -900,15 +661,11 @@ function setupGalleryLightbox() {
                     alt="Büyük fotoğraf"
                 >
 
-
-                <div
-                    class="gallery-lightbox-counter"
-                >
+                <div class="gallery-lightbox-counter">
                     1 / ${galleryImages.length}
                 </div>
 
             </div>
-
 
             <button
                 type="button"
@@ -920,45 +677,37 @@ function setupGalleryLightbox() {
 
         `;
 
-
         document.body.appendChild(
             overlay
         );
 
-
         document.body.style.overflow =
             "hidden";
-
 
         const image =
             overlay.querySelector(
                 ".gallery-lightbox-image"
             );
 
-
         const counter =
             overlay.querySelector(
                 ".gallery-lightbox-counter"
             );
-
 
         const closeButton =
             overlay.querySelector(
                 ".gallery-lightbox-close"
             );
 
-
         const prevButton =
             overlay.querySelector(
                 ".gallery-lightbox-prev"
             );
 
-
         const nextButton =
             overlay.querySelector(
                 ".gallery-lightbox-next"
             );
-
 
         function updateImage() {
 
@@ -967,16 +716,11 @@ function setupGalleryLightbox() {
                     currentIndex
                 ];
 
-
-            image.src =
-                url;
-
+            image.src = url;
 
             counter.textContent =
                 `${currentIndex + 1} / ${galleryImages.length}`;
-
         }
-
 
         function showNext() {
 
@@ -986,11 +730,8 @@ function setupGalleryLightbox() {
                 ) %
                 galleryImages.length;
 
-
             updateImage();
-
         }
-
 
         function showPrevious() {
 
@@ -1002,11 +743,8 @@ function setupGalleryLightbox() {
                 ) %
                 galleryImages.length;
 
-
             updateImage();
-
         }
-
 
         function close() {
 
@@ -1015,64 +753,45 @@ function setupGalleryLightbox() {
                 handleKeydown
             );
 
-
             overlay.remove();
-
 
             document.body.style.overflow =
                 "";
-
         }
 
-
-        function handleKeydown(
-            event
-        ) {
+        function handleKeydown(event) {
 
             if (
                 event.key ===
                 "Escape"
             ) {
-
                 close();
-
                 return;
             }
-
 
             if (
                 event.key ===
                 "ArrowRight"
             ) {
-
                 event.preventDefault();
-
                 showNext();
-
                 return;
             }
-
 
             if (
                 event.key ===
                 "ArrowLeft"
             ) {
-
                 event.preventDefault();
-
                 showPrevious();
-
                 return;
             }
-
         }
-
 
         closeButton.addEventListener(
             "click",
             close
         );
-
 
         prevButton.addEventListener(
             "click",
@@ -1081,10 +800,8 @@ function setupGalleryLightbox() {
                 event.stopPropagation();
 
                 showPrevious();
-
             }
         );
-
 
         nextButton.addEventListener(
             "click",
@@ -1093,10 +810,8 @@ function setupGalleryLightbox() {
                 event.stopPropagation();
 
                 showNext();
-
             }
         );
-
 
         overlay.addEventListener(
             "click",
@@ -1106,38 +821,28 @@ function setupGalleryLightbox() {
                     event.target ===
                     overlay
                 ) {
-
                     close();
-
                 }
-
             }
         );
-
 
         image.addEventListener(
             "click",
             function(event) {
-
                 event.stopPropagation();
-
             }
         );
-
 
         document.addEventListener(
             "keydown",
             handleKeydown
         );
 
-
         // ====================================================
-        // TELEFONDA SAĞA / SOLA KAYDIRMA
+        // MOBİL SWIPE
         // ====================================================
-
         let touchStartX = 0;
-        let touchEndX = 0;
-
+        let touchStartY = 0;
 
         overlay.addEventListener(
             "touchstart",
@@ -1149,8 +854,12 @@ function setupGalleryLightbox() {
                 ) {
 
                     touchStartX =
-                        event.touches[0].clientX;
+                        event.touches[0]
+                            .clientX;
 
+                    touchStartY =
+                        event.touches[0]
+                            .clientY;
                 }
 
             },
@@ -1158,54 +867,65 @@ function setupGalleryLightbox() {
                 passive: true
             }
         );
-
 
         overlay.addEventListener(
             "touchend",
             function(event) {
 
                 if (
-                    event.changedTouches &&
-                    event.changedTouches.length
+                    !event.changedTouches ||
+                    !event.changedTouches.length
                 ) {
-
-                    touchEndX =
-                        event.changedTouches[0].clientX;
-
+                    return;
                 }
 
+                const touchEndX =
+                    event.changedTouches[0]
+                        .clientX;
 
-                const swipeDistance =
+                const touchEndY =
+                    event.changedTouches[0]
+                        .clientY;
+
+                const swipeDistanceX =
                     touchEndX -
                     touchStartX;
 
+                const swipeDistanceY =
+                    touchEndY -
+                    touchStartY;
 
                 const minimumSwipe =
                     50;
 
+                // Dikey hareket yataydan büyükse
+                // swipe olarak kabul etme
+                if (
+                    Math.abs(
+                        swipeDistanceX
+                    ) <
+                    Math.abs(
+                        swipeDistanceY
+                    )
+                ) {
+                    return;
+                }
 
                 if (
                     Math.abs(
-                        swipeDistance
+                        swipeDistanceX
                     ) <
                     minimumSwipe
                 ) {
-
                     return;
-
                 }
 
-
                 if (
-                    swipeDistance < 0
+                    swipeDistanceX < 0
                 ) {
-
                     showNext();
-
                 } else {
-
                     showPrevious();
-
                 }
 
             },
@@ -1214,149 +934,17 @@ function setupGalleryLightbox() {
             }
         );
 
-
         updateImage();
-
     }
 
-
     galleryItems.forEach(
-        (
-            item,
-            index
-        ) => {
+        (item, index) => {
 
             item.addEventListener(
                 "click",
                 function() {
 
-                    openLightbox(
-                        index
-                    );
-
-                }
-            );
-
-        }
-    );
-
-}
-
-    const galleryItems =
-        document.querySelectorAll(
-            ".business-gallery-item"
-        );
-
-
-    galleryItems.forEach(
-        item => {
-
-            item.addEventListener(
-                "click",
-                function() {
-
-                    const url =
-                        this.dataset.galleryUrl;
-
-
-                    if (!url) {
-                        return;
-                    }
-
-
-                    const overlay =
-                        document.createElement(
-                            "div"
-                        );
-
-
-                    overlay.className =
-                        "gallery-lightbox";
-
-
-                    overlay.innerHTML = `
-
-                        <button
-                            type="button"
-                            class="gallery-lightbox-close"
-                            aria-label="Kapat"
-                        >
-                            ×
-                        </button>
-
-                        <img
-                            src="${escapeHtml(url)}"
-                            alt="Büyük fotoğraf"
-                        >
-
-                    `;
-
-
-                    document.body.appendChild(
-                        overlay
-                    );
-
-
-                    document.body.style.overflow =
-                        "hidden";
-
-
-                    const close =
-                        () => {
-
-                            overlay.remove();
-
-                            document.body.style.overflow =
-                                "";
-
-                        };
-
-
-                    overlay
-                        .querySelector(
-                            ".gallery-lightbox-close"
-                        )
-                        ?.addEventListener(
-                            "click",
-                            close
-                        );
-
-
-                    overlay.addEventListener(
-                        "click",
-                        function(event) {
-
-                            if (
-                                event.target ===
-                                overlay
-                            ) {
-
-                                close();
-                            }
-
-                        }
-                    );
-
-
-                    document.addEventListener(
-                        "keydown",
-                        function handleKey(event) {
-
-                            if (
-                                event.key ===
-                                "Escape"
-                            ) {
-
-                                close();
-
-                                document.removeEventListener(
-                                    "keydown",
-                                    handleKey
-                                );
-                            }
-
-                        }
-                    );
+                    openLightbox(index);
 
                 }
             );
@@ -1364,37 +952,35 @@ function setupGalleryLightbox() {
         }
     );
 }
-
 
 // ============================================================
 // INSTAGRAM
 // ============================================================
-
 function formatInstagram(value) {
 
     let instagram =
         String(value || "").trim();
 
-
     if (!instagram) {
         return "#";
     }
 
-
     if (
-        instagram.startsWith("http://") ||
-        instagram.startsWith("https://")
+        instagram.startsWith(
+            "http://"
+        ) ||
+        instagram.startsWith(
+            "https://"
+        )
     ) {
         return instagram;
     }
-
 
     instagram =
         instagram.replace(
             /^@/,
             ""
         );
-
 
     return (
         "https://instagram.com/" +
@@ -1404,41 +990,39 @@ function formatInstagram(value) {
     );
 }
 
-
 // ============================================================
 // WEB SİTESİ
 // ============================================================
-
 function formatWebsite(value) {
 
     let website =
         String(value || "").trim();
 
-
     if (!website) {
         return "#";
     }
 
-
     if (
-        website.startsWith("http://") ||
-        website.startsWith("https://")
+        website.startsWith(
+            "http://"
+        ) ||
+        website.startsWith(
+            "https://"
+        )
     ) {
         return website;
     }
 
-
-    return "https://" + website;
+    return (
+        "https://" +
+        website
+    );
 }
-
 
 // ============================================================
 // HARİTA
 // ============================================================
-
-function getMapUrl(
-    business
-) {
+function getMapUrl(business) {
 
     if (
         business.latitude &&
@@ -1451,7 +1035,6 @@ function getMapUrl(
         );
     }
 
-
     const address =
         encodeURIComponent(
             [
@@ -1463,21 +1046,16 @@ function getMapUrl(
                 .join(", ")
         );
 
-
     return (
         "https://www.google.com/maps/search/?api=1" +
         `&query=${address}`
     );
 }
 
-
 // ============================================================
 // HARİTA GÖSTER
 // ============================================================
-
-function renderMap(
-    business
-) {
+function renderMap(business) {
 
     if (
         business.latitude &&
@@ -1485,7 +1063,6 @@ function renderMap(
     ) {
 
         return `
-
             <iframe
                 src="https://www.google.com/maps?q=${Number(
                     business.latitude
@@ -1495,15 +1072,12 @@ function renderMap(
                 loading="lazy"
                 allowfullscreen
             ></iframe>
-
         `;
     }
-
 
     if (business.address) {
 
         return `
-
             <div class="map-placeholder">
 
                 <div class="map-placeholder-icon">
@@ -1521,13 +1095,10 @@ function renderMap(
                 </p>
 
             </div>
-
         `;
     }
 
-
     return `
-
         <div class="map-placeholder">
 
             <div class="map-placeholder-icon">
@@ -1543,15 +1114,12 @@ function renderMap(
             </p>
 
         </div>
-
     `;
 }
-
 
 // ============================================================
 // YORUMLARI YÜKLE
 // ============================================================
-
 async function loadReviews(
     businessId
 ) {
@@ -1561,20 +1129,15 @@ async function loadReviews(
             "#reviews-list"
         );
 
-
     if (!container) {
         return;
     }
 
-
     container.innerHTML = `
-
         <div class="reviews-loading">
             Yorumlar yükleniyor...
         </div>
-
     `;
-
 
     const {
         data: reviews,
@@ -1604,7 +1167,6 @@ async function loadReviews(
                 }
             );
 
-
     if (error) {
 
         console.error(
@@ -1612,31 +1174,22 @@ async function loadReviews(
             error
         );
 
-
         container.innerHTML = `
-
             <div class="review-error">
-
                 Yorumlar şu anda yüklenemiyor.
-
             </div>
-
         `;
 
         return;
     }
 
-
     const reviewList =
         reviews || [];
-
 
     const count =
         reviewList.length;
 
-
     let average = 0;
-
 
     if (count > 0) {
 
@@ -1650,7 +1203,8 @@ async function loadReviews(
                     return (
                         sum +
                         Number(
-                            review.rating || 0
+                            review.rating ||
+                            0
                         )
                     );
 
@@ -1658,17 +1212,14 @@ async function loadReviews(
                 0
             );
 
-
         average =
             total / count;
     }
-
 
     const averageElement =
         document.querySelector(
             "#review-average"
         );
-
 
     if (averageElement) {
 
@@ -1676,12 +1227,10 @@ async function loadReviews(
             average.toFixed(1);
     }
 
-
     const countElement =
         document.querySelector(
             "#review-count"
         );
-
 
     if (countElement) {
 
@@ -1689,26 +1238,20 @@ async function loadReviews(
             count;
     }
 
-
     const starsElement =
         document.querySelector(
             "#review-stars-summary"
         );
 
-
     if (starsElement) {
 
         starsElement.textContent =
-            starsHtml(
-                average
-            );
+            starsHtml(average);
     }
-
 
     if (reviewList.length === 0) {
 
         container.innerHTML = `
-
             <div class="no-reviews">
 
                 <div>💬</div>
@@ -1722,12 +1265,10 @@ async function loadReviews(
                 </p>
 
             </div>
-
         `;
 
         return;
     }
-
 
     container.innerHTML =
         reviewList
@@ -1737,11 +1278,9 @@ async function loadReviews(
             .join("");
 }
 
-
 // ============================================================
 // YORUM KARTI
 // ============================================================
-
 function renderReview(
     review
 ) {
@@ -1760,14 +1299,11 @@ function renderReview(
             )
             : "";
 
-
     const name =
         review.name ||
         "Misafir";
 
-
     return `
-
         <article class="review-card">
 
             <div class="review-top">
@@ -1775,68 +1311,58 @@ function renderReview(
                 <div class="review-user">
 
                     <div class="review-avatar">
-
                         ${escapeHtml(
                             name
                                 .charAt(0)
                                 .toUpperCase()
                         )}
-
                     </div>
-
 
                     <div>
 
                         <strong>
-                            ${escapeHtml(name)}
+                            ${escapeHtml(
+                                name
+                            )}
                         </strong>
 
                         <small>
-                            ${escapeHtml(date)}
+                            ${escapeHtml(
+                                date
+                            )}
                         </small>
 
                     </div>
 
                 </div>
 
-
                 <div class="review-stars">
-
                     ${starsHtml(
                         review.rating
                     )}
-
                 </div>
 
             </div>
 
-
             ${
                 review.comment
                     ? `
-
                         <p class="review-comment">
-
                             ${escapeHtml(
                                 review.comment
                             )}
-
                         </p>
-
                     `
                     : ""
             }
 
         </article>
-
     `;
 }
-
 
 // ============================================================
 // YORUM FORMU
 // ============================================================
-
 function setupReviewForm(
     businessId
 ) {
@@ -1845,7 +1371,6 @@ function setupReviewForm(
         document.querySelector(
             "#review-form"
         );
-
 
     if (!form) {
 
@@ -1856,24 +1381,20 @@ function setupReviewForm(
         return;
     }
 
-
     const stars =
         form.querySelectorAll(
             ".star-input"
         );
-
 
     const ratingInput =
         form.querySelector(
             "#review-rating"
         );
 
-
     const ratingText =
         form.querySelector(
             "#selected-rating"
         );
-
 
     stars.forEach(
         star => {
@@ -1887,10 +1408,8 @@ function setupReviewForm(
                             this.dataset.rating
                         );
 
-
                     ratingInput.value =
                         rating;
-
 
                     stars.forEach(
                         item => {
@@ -1900,21 +1419,19 @@ function setupReviewForm(
                                     item.dataset.rating
                                 );
 
-
                             item.classList.toggle(
                                 "active",
-                                itemRating <= rating
+                                itemRating <=
+                                rating
                             );
 
                         }
                     );
 
-
                     if (ratingText) {
 
                         ratingText.textContent =
                             `${rating} / 5`;
-
                     }
 
                 }
@@ -1923,50 +1440,43 @@ function setupReviewForm(
         }
     );
 
-
     form.addEventListener(
         "submit",
         async function(event) {
 
             event.preventDefault();
-            event.stopPropagation();
 
+            event.stopPropagation();
 
             const nameInput =
                 form.querySelector(
                     "#review-name"
                 );
 
-
             const commentInput =
                 form.querySelector(
                     "#review-comment"
                 );
-
 
             const submitButton =
                 form.querySelector(
                     ".review-submit"
                 );
 
-
             const name =
                 nameInput
                     ? nameInput.value.trim()
                     : "";
-
 
             const comment =
                 commentInput
                     ? commentInput.value.trim()
                     : "";
 
-
             const rating =
                 Number(
                     ratingInput.value
                 );
-
 
             if (name.length < 2) {
 
@@ -1980,7 +1490,6 @@ function setupReviewForm(
                 return;
             }
 
-
             if (name.length > 50) {
 
                 showReviewMessage(
@@ -1990,7 +1499,6 @@ function setupReviewForm(
 
                 return;
             }
-
 
             if (
                 rating < 1 ||
@@ -2005,8 +1513,9 @@ function setupReviewForm(
                 return;
             }
 
-
-            if (comment.length > 1000) {
+            if (
+                comment.length > 1000
+            ) {
 
                 showReviewMessage(
                     "Yorumunuz en fazla 1000 karakter olabilir.",
@@ -2016,9 +1525,7 @@ function setupReviewForm(
                 return;
             }
 
-
             clearReviewMessage();
-
 
             if (submitButton) {
 
@@ -2029,33 +1536,24 @@ function setupReviewForm(
                     "Gönderiliyor...";
             }
 
-
             try {
 
-                const {
-                    error
-                } =
+                const { error } =
                     await supabaseClient
                         .from("reviews")
                         .insert({
-
                             business_id:
                                 businessId,
-
                             name:
                                 name,
-
                             rating:
                                 rating,
-
                             comment:
-                                comment || null,
-
+                                comment ||
+                                null,
                             is_approved:
                                 false
-
                         });
-
 
                 if (error) {
 
@@ -2063,7 +1561,6 @@ function setupReviewForm(
                         "Yorum gönderme hatası:",
                         error
                     );
-
 
                     showReviewMessage(
                         "Yorum gönderilemedi. Lütfen tekrar deneyin.",
@@ -2073,13 +1570,10 @@ function setupReviewForm(
                     return;
                 }
 
-
                 form.reset();
-
 
                 ratingInput.value =
                     "";
-
 
                 stars.forEach(
                     star => {
@@ -2091,25 +1585,21 @@ function setupReviewForm(
                     }
                 );
 
-
                 if (ratingText) {
 
                     ratingText.textContent =
                         "Puan seçin";
                 }
 
-
                 showReviewMessage(
                     "Yorumunuz gönderildi! ⭐ Onaylandıktan sonra yayınlanacaktır.",
                     "success"
                 );
 
-
                 const message =
                     document.querySelector(
                         "#review-message"
                     );
-
 
                 if (message) {
 
@@ -2117,8 +1607,10 @@ function setupReviewForm(
                         () => {
 
                             message.scrollIntoView({
-                                behavior: "smooth",
-                                block: "center"
+                                behavior:
+                                    "smooth",
+                                block:
+                                    "center"
                             });
 
                         },
@@ -2132,7 +1624,6 @@ function setupReviewForm(
                     "Beklenmeyen yorum hatası:",
                     error
                 );
-
 
                 showReviewMessage(
                     "Bir hata oluştu. Lütfen tekrar deneyin.",
@@ -2149,18 +1640,14 @@ function setupReviewForm(
                     submitButton.textContent =
                         "Yorumu Gönder";
                 }
-
             }
-
         }
     );
 }
 
-
 // ============================================================
 // YORUM MESAJI
 // ============================================================
-
 function showReviewMessage(
     message,
     type
@@ -2171,24 +1658,19 @@ function showReviewMessage(
             "#review-message"
         );
 
-
     if (!element) {
         return;
     }
 
-
     element.textContent =
         message;
-
 
     element.className =
         `review-message ${type}`;
 
-
     element.style.display =
         "block";
 }
-
 
 function clearReviewMessage() {
 
@@ -2197,25 +1679,20 @@ function clearReviewMessage() {
             "#review-message"
         );
 
-
     if (!element) {
         return;
     }
 
-
     element.textContent =
         "";
-
 
     element.style.display =
         "none";
 }
 
-
 // ============================================================
 // HATA
 // ============================================================
-
 function showError(
     message
 ) {
@@ -2225,14 +1702,11 @@ function showError(
             "#businessContainer"
         );
 
-
     if (!container) {
         return;
     }
 
-
     container.innerHTML = `
-
         <div class="business-error">
 
             <div>
@@ -2240,7 +1714,9 @@ function showError(
             </div>
 
             <h2>
-                ${escapeHtml(message)}
+                ${escapeHtml(
+                    message
+                )}
             </h2>
 
             <a href="index.html">
@@ -2248,15 +1724,12 @@ function showError(
             </a>
 
         </div>
-
     `;
 }
-
 
 // ============================================================
 // PAYLAŞ
 // ============================================================
-
 function setupShareButtons() {
 
     const shareButton =
@@ -2264,12 +1737,10 @@ function setupShareButtons() {
             "#share-business"
         );
 
-
     const copyButton =
         document.querySelector(
             "#copy-business-link"
         );
-
 
     if (shareButton) {
 
@@ -2279,19 +1750,17 @@ function setupShareButtons() {
 
                 try {
 
-                    if (navigator.share) {
+                    if (
+                        navigator.share
+                    ) {
 
                         await navigator.share({
-
                             title:
                                 document.title,
-
                             text:
                                 "Trabzon Anlık'ta bu işletmeye göz at!",
-
                             url:
                                 window.location.href
-
                         });
 
                     } else {
@@ -2300,10 +1769,8 @@ function setupShareButtons() {
                             window.location.href
                         );
 
-
                         shareButton.textContent =
                             "✓ Link Kopyalandı";
-
 
                         setTimeout(
                             () => {
@@ -2321,13 +1788,10 @@ function setupShareButtons() {
                     console.log(
                         "Paylaşım iptal edildi."
                     );
-
                 }
-
             }
         );
     }
-
 
     if (copyButton) {
 
@@ -2341,10 +1805,8 @@ function setupShareButtons() {
                         window.location.href
                     );
 
-
                     copyButton.textContent =
                         "✓ Kopyalandı";
-
 
                     setTimeout(
                         () => {
@@ -2361,19 +1823,15 @@ function setupShareButtons() {
                     alert(
                         "Link kopyalanamadı."
                     );
-
                 }
-
             }
         );
     }
 }
 
-
 // ============================================================
 // BAŞLAT
 // ============================================================
-
 document.addEventListener(
     "DOMContentLoaded",
     function() {
