@@ -2,8 +2,7 @@ const SUPABASE_URL =
     "https://yhunhkzsecppbnhjewrt.supabase.co";
 
 const SUPABASE_PUBLISHABLE_KEY =
-    "sb_publishable_0h5ycfDBJjgdf6bXlZ9OEg_K45u2b2v";
-
+    "sb_publishable_0h5ycfDBJjgdf6bXl9OEg_K45u2b2v";
 
 const supabaseClient =
     window.supabase.createClient(
@@ -17,7 +16,6 @@ const supabaseClient =
 // ============================================================
 
 function escapeHtml(value) {
-
     return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -28,7 +26,6 @@ function escapeHtml(value) {
 
 
 function getSlug() {
-
     return new URLSearchParams(
         window.location.search
     ).get("slug");
@@ -44,20 +41,15 @@ function normalizePhone(phone) {
     let number =
         String(phone).replace(/\D/g, "");
 
-
     if (number.startsWith("0")) {
-
         number =
             "90" + number.substring(1);
     }
 
-
     if (!number.startsWith("90")) {
-
         number =
             "90" + number;
     }
-
 
     return number;
 }
@@ -70,15 +62,9 @@ function starsHtml(rating) {
             Number(rating || 0)
         );
 
-
     let html = "";
 
-
-    for (
-        let i = 1;
-        i <= 5;
-        i++
-    ) {
+    for (let i = 1; i <= 5; i++) {
 
         html +=
             i <= value
@@ -86,8 +72,76 @@ function starsHtml(rating) {
                 : "☆";
     }
 
-
     return html;
+}
+
+
+// ============================================================
+// GALERİ FOTOĞRAFLARINI YÜKLE
+// ============================================================
+
+async function loadBusinessImages(businessId) {
+
+    try {
+
+        const {
+            data: images,
+            error
+        } =
+            await supabaseClient
+                .from("business_images")
+                .select(`
+                    id,
+                    business_id,
+                    image_url,
+                    is_cover,
+                    sort_order,
+                    created_at
+                `)
+                .eq(
+                    "business_id",
+                    businessId
+                )
+                .order(
+                    "is_cover",
+                    {
+                        ascending: false
+                    }
+                )
+                .order(
+                    "sort_order",
+                    {
+                        ascending: true
+                    }
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: true
+                    }
+                );
+
+        if (error) {
+
+            console.warn(
+                "İşletme galerisi okunamadı:",
+                error
+            );
+
+            return [];
+        }
+
+        return images || [];
+
+    } catch (error) {
+
+        console.warn(
+            "Galeri yükleme hatası:",
+            error
+        );
+
+        return [];
+    }
 }
 
 
@@ -100,7 +154,6 @@ async function loadBusiness() {
     const slug =
         getSlug();
 
-
     if (!slug) {
 
         showError(
@@ -109,7 +162,6 @@ async function loadBusiness() {
 
         return;
     }
-
 
     try {
 
@@ -172,8 +224,21 @@ async function loadBusiness() {
         }
 
 
-        let category = null;
+        // ====================================================
+        // GALERİ
+        // ====================================================
 
+        const images =
+            await loadBusinessImages(
+                business.id
+            );
+
+
+        // ====================================================
+        // KATEGORİ
+        // ====================================================
+
+        let category = null;
 
         if (business.category_id) {
 
@@ -191,7 +256,6 @@ async function loadBusiness() {
                     )
                     .maybeSingle();
 
-
             category =
                 categoryData || null;
         }
@@ -199,7 +263,8 @@ async function loadBusiness() {
 
         renderBusiness(
             business,
-            category
+            category,
+            images
         );
 
 
@@ -214,6 +279,9 @@ async function loadBusiness() {
 
 
         setupShareButtons();
+
+
+        setupGalleryLightbox();
 
     } catch (error) {
 
@@ -235,14 +303,14 @@ async function loadBusiness() {
 
 function renderBusiness(
     business,
-    category
+    category,
+    images = []
 ) {
 
     const container =
         document.querySelector(
             "#businessContainer"
         );
-
 
     if (!container) {
         return;
@@ -275,17 +343,39 @@ function renderBusiness(
         );
 
 
+    // ========================================================
+    // KAPAK FOTOĞRAFI
+    // ========================================================
+
+    let coverImage = null;
+
+    if (images.length > 0) {
+
+        coverImage =
+            images.find(
+                image =>
+                    image.is_cover === true
+            ) || images[0];
+    }
+
+
+    const coverUrl =
+        coverImage?.image_url ||
+        business.image_url ||
+        "";
+
+
     let imageHtml;
 
 
-    if (business.image_url) {
+    if (coverUrl) {
 
         imageHtml = `
 
             <img
                 class="business-detail-image"
                 src="${escapeHtml(
-                    business.image_url
+                    coverUrl
                 )}"
                 alt="${escapeHtml(
                     business.name
@@ -337,15 +427,103 @@ function renderBusiness(
     }
 
 
+    // ========================================================
+    // GALERİ
+    // ========================================================
+
+    let galleryHtml = "";
+
+
+    if (images.length > 0) {
+
+        galleryHtml = `
+
+            <div class="business-gallery">
+
+                <div class="business-gallery-title">
+
+                    <span>📷</span>
+
+                    <strong>
+                        Fotoğraflar
+                    </strong>
+
+                    <small>
+                        ${images.length} fotoğraf
+                    </small>
+
+                </div>
+
+
+                <div class="business-gallery-grid">
+
+                    ${
+                        images
+                            .map(
+                                image => `
+
+                                    <button
+                                        type="button"
+                                        class="business-gallery-item"
+                                        data-gallery-url="${escapeHtml(
+                                            image.image_url
+                                        )}"
+                                        aria-label="Fotoğrafı büyüt"
+                                    >
+
+                                        <img
+                                            src="${escapeHtml(
+                                                image.image_url
+                                            )}"
+                                            alt="${escapeHtml(
+                                                business.name
+                                            )} fotoğrafı"
+                                            loading="lazy"
+                                        >
+
+                                        ${
+                                            image.is_cover
+                                                ? `
+
+                                                    <span class="gallery-cover-badge">
+                                                        ⭐ Kapak
+                                                    </span>
+
+                                                `
+                                                : ""
+                                        }
+
+                                    </button>
+
+                                `
+                            )
+                            .join("")
+                    }
+
+                </div>
+
+            </div>
+
+        `;
+    }
+
+
+    // ========================================================
+    // SAYFA
+    // ========================================================
+
     container.innerHTML = `
 
         <article class="business-detail-card">
+
 
             <div class="business-detail-image-wrap">
 
                 ${imageHtml}
 
+
                 <div class="business-image-overlay"></div>
+
 
                 <div class="business-image-category">
 
@@ -358,7 +536,11 @@ function renderBusiness(
             </div>
 
 
+            ${galleryHtml}
+
+
             <div class="business-detail-content">
+
 
                 <h1 class="business-detail-title">
 
@@ -399,6 +581,7 @@ function renderBusiness(
 
 
                 <div class="business-info">
+
 
                     <div class="business-info-item">
 
@@ -470,6 +653,7 @@ function renderBusiness(
 
 
                 <div class="business-actions">
+
 
                     ${
                         business.phone
@@ -577,6 +761,7 @@ function renderBusiness(
 
                 <div class="share-actions">
 
+
                     <button
                         type="button"
                         id="share-business"
@@ -612,6 +797,136 @@ function renderBusiness(
 
 
 // ============================================================
+// GALERİ LIGHTBOX
+// ============================================================
+
+function setupGalleryLightbox() {
+
+    const galleryItems =
+        document.querySelectorAll(
+            ".business-gallery-item"
+        );
+
+
+    galleryItems.forEach(
+        item => {
+
+            item.addEventListener(
+                "click",
+                function() {
+
+                    const url =
+                        this.dataset.galleryUrl;
+
+
+                    if (!url) {
+                        return;
+                    }
+
+
+                    const overlay =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    overlay.className =
+                        "gallery-lightbox";
+
+
+                    overlay.innerHTML = `
+
+                        <button
+                            type="button"
+                            class="gallery-lightbox-close"
+                            aria-label="Kapat"
+                        >
+                            ×
+                        </button>
+
+                        <img
+                            src="${escapeHtml(url)}"
+                            alt="Büyük fotoğraf"
+                        >
+
+                    `;
+
+
+                    document.body.appendChild(
+                        overlay
+                    );
+
+
+                    document.body.style.overflow =
+                        "hidden";
+
+
+                    const close =
+                        () => {
+
+                            overlay.remove();
+
+                            document.body.style.overflow =
+                                "";
+
+                        };
+
+
+                    overlay
+                        .querySelector(
+                            ".gallery-lightbox-close"
+                        )
+                        ?.addEventListener(
+                            "click",
+                            close
+                        );
+
+
+                    overlay.addEventListener(
+                        "click",
+                        function(event) {
+
+                            if (
+                                event.target ===
+                                overlay
+                            ) {
+
+                                close();
+                            }
+
+                        }
+                    );
+
+
+                    document.addEventListener(
+                        "keydown",
+                        function handleKey(event) {
+
+                            if (
+                                event.key ===
+                                "Escape"
+                            ) {
+
+                                close();
+
+                                document.removeEventListener(
+                                    "keydown",
+                                    handleKey
+                                );
+                            }
+
+                        }
+                    );
+
+                }
+            );
+
+        }
+    );
+}
+
+
+// ============================================================
 // INSTAGRAM
 // ============================================================
 
@@ -630,7 +945,6 @@ function formatInstagram(value) {
         instagram.startsWith("http://") ||
         instagram.startsWith("https://")
     ) {
-
         return instagram;
     }
 
@@ -670,7 +984,6 @@ function formatWebsite(value) {
         website.startsWith("http://") ||
         website.startsWith("https://")
     ) {
-
         return website;
     }
 
@@ -1122,10 +1435,6 @@ function setupReviewForm(
         );
 
 
-    // ========================================================
-    // YILDIZ
-    // ========================================================
-
     stars.forEach(
         star => {
 
@@ -1175,10 +1484,6 @@ function setupReviewForm(
     );
 
 
-    // ========================================================
-    // FORM
-    // ========================================================
-
     form.addEventListener(
         "submit",
         async function(event) {
@@ -1223,13 +1528,7 @@ function setupReviewForm(
                 );
 
 
-            // =================================================
-            // KONTROLLER
-            // =================================================
-
-            if (
-                name.length < 2
-            ) {
+            if (name.length < 2) {
 
                 showReviewMessage(
                     "Lütfen adınızı yazın.",
@@ -1242,9 +1541,7 @@ function setupReviewForm(
             }
 
 
-            if (
-                name.length > 50
-            ) {
+            if (name.length > 50) {
 
                 showReviewMessage(
                     "Adınız en fazla 50 karakter olabilir.",
@@ -1269,9 +1566,7 @@ function setupReviewForm(
             }
 
 
-            if (
-                comment.length > 1000
-            ) {
+            if (comment.length > 1000) {
 
                 showReviewMessage(
                     "Yorumunuz en fazla 1000 karakter olabilir.",
@@ -1296,12 +1591,6 @@ function setupReviewForm(
 
 
             try {
-
-                // =================================================
-                // ÖNEMLİ:
-                // .select() KULLANMIYORUZ.
-                // Çünkü yeni yorum henüz onaylanmadı.
-                // =================================================
 
                 const {
                     error
@@ -1341,14 +1630,9 @@ function setupReviewForm(
                         "error"
                     );
 
-
                     return;
                 }
 
-
-                // =================================================
-                // BAŞARILI
-                // =================================================
 
                 form.reset();
 
@@ -1555,9 +1839,7 @@ function setupShareButtons() {
 
                 try {
 
-                    if (
-                        navigator.share
-                    ) {
+                    if (navigator.share) {
 
                         await navigator.share({
 
