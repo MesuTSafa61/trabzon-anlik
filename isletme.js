@@ -81,6 +81,7 @@ async function loadBusinessImages(businessId) {
                 "İşletme galerisi okunamadı:",
                 error
             );
+
             return [];
         }
 
@@ -100,16 +101,20 @@ async function loadBusinessImages(businessId) {
 // İŞLETMEYİ YÜKLE
 // ============================================================
 async function loadBusiness() {
+
     const slug = getSlug();
 
     if (!slug) {
+
         showError(
             "İşletme bağlantısı bulunamadı."
         );
+
         return;
     }
 
     try {
+
         const { data: business, error } =
             await supabaseClient
                 .from("businesses")
@@ -135,6 +140,7 @@ async function loadBusiness() {
                 .maybeSingle();
 
         if (error) {
+
             console.error(
                 "İşletme yükleme hatası:",
                 error
@@ -148,6 +154,7 @@ async function loadBusiness() {
         }
 
         if (!business) {
+
             showError(
                 "Bu işletme bulunamadı veya henüz onaylanmadı."
             );
@@ -163,6 +170,7 @@ async function loadBusiness() {
         let category = null;
 
         if (business.category_id) {
+
             const { data: categoryData } =
                 await supabaseClient
                     .from("categories")
@@ -196,6 +204,7 @@ async function loadBusiness() {
         setupGalleryLightbox();
 
     } catch (error) {
+
         console.error(
             "İşletme genel hata:",
             error
@@ -215,6 +224,7 @@ function renderBusiness(
     category,
     images = []
 ) {
+
     const container =
         document.querySelector(
             "#businessContainer"
@@ -242,6 +252,7 @@ function renderBusiness(
     let coverImage = null;
 
     if (images.length > 0) {
+
         coverImage =
             images.find(
                 image =>
@@ -257,6 +268,7 @@ function renderBusiness(
     let imageHtml;
 
     if (coverUrl) {
+
         imageHtml = `
             <img
                 class="business-detail-image"
@@ -284,7 +296,9 @@ function renderBusiness(
                 ${escapeHtml(categoryIcon)}
             </div>
         `;
+
     } else {
+
         imageHtml = `
             <div
                 class="business-detail-image-fallback"
@@ -306,15 +320,22 @@ function renderBusiness(
     let galleryHtml = "";
 
     if (images.length > 0) {
+
         galleryHtml = `
             <div class="business-gallery">
 
                 <div class="business-gallery-title">
+
                     <span>📷</span>
-                    <strong>Fotoğraflar</strong>
+
+                    <strong>
+                        Fotoğraflar
+                    </strong>
+
                     <small>
                         ${images.length} fotoğraf
                     </small>
+
                 </div>
 
                 <div class="business-gallery-grid">
@@ -354,6 +375,7 @@ function renderBusiness(
                     }
 
                 </div>
+
             </div>
         `;
     }
@@ -412,13 +434,18 @@ function renderBusiness(
                         <span>📍</span>
 
                         <div>
-                            <strong>İlçe</strong>
+
+                            <strong>
+                                İlçe
+                            </strong>
+
                             <br>
 
                             ${escapeHtml(
                                 business.district ||
                                 "Belirtilmemiş"
                             )}
+
                         </div>
 
                     </div>
@@ -428,13 +455,18 @@ function renderBusiness(
                         <span>🏠</span>
 
                         <div>
-                            <strong>Adres</strong>
+
+                            <strong>
+                                Adres
+                            </strong>
+
                             <br>
 
                             ${escapeHtml(
                                 business.address ||
                                 "Belirtilmemiş"
                             )}
+
                         </div>
 
                     </div>
@@ -447,11 +479,17 @@ function renderBusiness(
                                     <span>📞</span>
 
                                     <div>
-                                        <strong>Telefon</strong>
+
+                                        <strong>
+                                            Telefon
+                                        </strong>
+
                                         <br>
+
                                         ${escapeHtml(
                                             business.phone
                                         )}
+
                                     </div>
 
                                 </div>
@@ -583,7 +621,8 @@ function renderBusiness(
 }
 
 // ============================================================
-// GALERİ LIGHTBOX - PREMIUM ZOOM + SLIDE + SWIPE
+// GALERİ LIGHTBOX
+// PREMIUM ZOOM + NOKTAYA ZOOM + PAN + PINCH + SWIPE
 // ============================================================
 function setupGalleryLightbox() {
 
@@ -716,16 +755,246 @@ function setupGalleryLightbox() {
                 ".gallery-lightbox-next"
             );
 
+        // ====================================================
+        // ZOOM DEĞİŞKENLERİ
+        // ====================================================
+
+        let zoomScale = 1;
+
+        const MIN_ZOOM =
+            1;
+
+        const MAX_ZOOM =
+            4;
+
+        const DOUBLE_TAP_ZOOM =
+            2.5;
+
+        let translateX = 0;
+        let translateY = 0;
+
         let isZoomed = false;
         let isAnimating = false;
+
+        let zoomOriginX = 0.5;
+        let zoomOriginY = 0.5;
+
+        // ====================================================
+        // MOUSE PAN
+        // ====================================================
+
+        let isMouseDragging = false;
+
+        let mouseStartX = 0;
+        let mouseStartY = 0;
+
+        let mouseStartTranslateX = 0;
+        let mouseStartTranslateY = 0;
+
+        // ====================================================
+        // TOUCH
+        // ====================================================
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        let touchStartTime = 0;
+
+        let touchStartTranslateX = 0;
+        let touchStartTranslateY = 0;
+
+        let isTouchDragging = false;
+
+        // ====================================================
+        // PINCH
+        // ====================================================
+
+        let pinchStartDistance = 0;
+        let pinchStartScale = 1;
+
+        // ====================================================
+        // DOUBLE TAP
+        // ====================================================
+
         let lastTapTime = 0;
+
+        // ====================================================
+        // YARDIMCI
+        // ====================================================
+
+        function getTouchDistance(
+            touch1,
+            touch2
+        ) {
+
+            const dx =
+                touch2.clientX -
+                touch1.clientX;
+
+            const dy =
+                touch2.clientY -
+                touch1.clientY;
+
+            return Math.sqrt(
+                dx * dx +
+                dy * dy
+            );
+        }
+
+        // ====================================================
+        // GÖRSEL ÖLÇÜSÜ
+        // ====================================================
+
+        function getBaseImageSize() {
+
+            const rect =
+                image.getBoundingClientRect();
+
+            const currentScale =
+                zoomScale || 1;
+
+            return {
+                width:
+                    rect.width /
+                    currentScale,
+                height:
+                    rect.height /
+                    currentScale
+            };
+        }
+
+        // ====================================================
+        // PAN SINIRLAMA
+        // ====================================================
+
+        function clampPan() {
+
+            if (!isZoomed || zoomScale <= 1) {
+
+                translateX = 0;
+                translateY = 0;
+
+                return;
+            }
+
+            const containerRect =
+                content.getBoundingClientRect();
+
+            const imageRect =
+                image.getBoundingClientRect();
+
+            const baseWidth =
+                imageRect.width /
+                zoomScale;
+
+            const baseHeight =
+                imageRect.height /
+                zoomScale;
+
+            const scaledWidth =
+                baseWidth *
+                zoomScale;
+
+            const scaledHeight =
+                baseHeight *
+                zoomScale;
+
+            const maxX =
+                Math.max(
+                    0,
+                    (
+                        scaledWidth -
+                        containerRect.width
+                    ) / 2
+                );
+
+            const maxY =
+                Math.max(
+                    0,
+                    (
+                        scaledHeight -
+                        containerRect.height
+                    ) / 2
+                );
+
+            translateX =
+                Math.max(
+                    -maxX,
+                    Math.min(
+                        maxX,
+                        translateX
+                    )
+                );
+
+            translateY =
+                Math.max(
+                    -maxY,
+                    Math.min(
+                        maxY,
+                        translateY
+                    )
+                );
+        }
+
+        // ====================================================
+        // TRANSFORM UYGULA
+        // ====================================================
+
+        function applyTransform(
+            animate = false
+        ) {
+
+            if (!isZoomed) {
+
+                image.style.transition =
+                    animate
+                        ? "transform 0.25s ease"
+                        : "none";
+
+                image.style.transform =
+                    "translate3d(0, 0, 0) scale(1)";
+
+                return;
+            }
+
+            clampPan();
+
+            image.style.transition =
+                animate
+                    ? "transform 0.25s cubic-bezier(.2,.8,.2,1)"
+                    : "none";
+
+            image.style.transform =
+                `
+                    translate3d(
+                        ${translateX}px,
+                        ${translateY}px,
+                        0
+                    )
+                    scale(${zoomScale})
+                `;
+        }
 
         // ====================================================
         // ZOOM SIFIRLA
         // ====================================================
-        function resetZoom() {
+
+        function resetZoom(
+            animate = false
+        ) {
 
             isZoomed = false;
+
+            zoomScale = 1;
+
+            translateX = 0;
+            translateY = 0;
+
+            zoomOriginX = 0.5;
+            zoomOriginY = 0.5;
+
+            isMouseDragging = false;
+            isTouchDragging = false;
 
             image.classList.remove(
                 "gallery-zoomed"
@@ -735,37 +1004,295 @@ function setupGalleryLightbox() {
                 "gallery-zoom-mode"
             );
 
-            image.style.transform = "";
-            image.style.opacity = "";
-            image.style.transition = "";
+            image.style.transformOrigin =
+                "50% 50%";
+
+            image.style.cursor =
+                "zoom-in";
+
+            if (animate) {
+
+                image.style.transition =
+                    "transform 0.25s ease";
+
+                image.style.transform =
+                    "translate3d(0,0,0) scale(1)";
+
+            } else {
+
+                image.style.transition =
+                    "";
+
+                image.style.transform =
+                    "";
+            }
         }
 
         // ====================================================
-        // ZOOM AÇ / KAPAT
+        // NOKTAYA ZOOM
         // ====================================================
-        function toggleZoom() {
+
+        function zoomToPoint(
+            clientX,
+            clientY,
+            targetScale = DOUBLE_TAP_ZOOM
+        ) {
 
             if (isAnimating) {
                 return;
             }
 
-            isZoomed =
-                !isZoomed;
+            const rect =
+                image.getBoundingClientRect();
 
-            image.classList.toggle(
-                "gallery-zoomed",
-                isZoomed
+            if (
+                rect.width <= 0 ||
+                rect.height <= 0
+            ) {
+                return;
+            }
+
+            const oldScale =
+                zoomScale || 1;
+
+            const pointX =
+                (
+                    clientX -
+                    rect.left
+                ) /
+                rect.width;
+
+            const pointY =
+                (
+                    clientY -
+                    rect.top
+                ) /
+                rect.height;
+
+            const clampedX =
+                Math.max(
+                    0,
+                    Math.min(
+                        1,
+                        pointX
+                    )
+                );
+
+            const clampedY =
+                Math.max(
+                    0,
+                    Math.min(
+                        1,
+                        pointY
+                    )
+                );
+
+            if (!isZoomed) {
+
+                isZoomed = true;
+
+                zoomScale =
+                    Math.max(
+                        1.01,
+                        Math.min(
+                            MAX_ZOOM,
+                            targetScale
+                        )
+                    );
+
+                image.classList.add(
+                    "gallery-zoomed"
+                );
+
+                content.classList.add(
+                    "gallery-zoom-mode"
+                );
+
+                image.style.cursor =
+                    "grab";
+
+                /*
+                 * Tıklanan noktanın ekran üzerindeki
+                 * konumunu koruyarak zoom yapıyoruz.
+                 */
+                const containerRect =
+                    content.getBoundingClientRect();
+
+                const containerCenterX =
+                    containerRect.left +
+                    containerRect.width / 2;
+
+                const containerCenterY =
+                    containerRect.top +
+                    containerRect.height / 2;
+
+                const offsetX =
+                    clientX -
+                    containerCenterX;
+
+                const offsetY =
+                    clientY -
+                    containerCenterY;
+
+                translateX =
+                    offsetX -
+                    offsetX *
+                    (
+                        zoomScale /
+                        oldScale
+                    );
+
+                translateY =
+                    offsetY -
+                    offsetY *
+                    (
+                        zoomScale /
+                        oldScale
+                    );
+
+                clampPan();
+
+                image.style.transformOrigin =
+                    "50% 50%";
+
+                applyTransform(true);
+
+                return;
+            }
+
+            const oldTranslateX =
+                translateX;
+
+            const oldTranslateY =
+                translateY;
+
+            const containerRect =
+                content.getBoundingClientRect();
+
+            const centerX =
+                containerRect.left +
+                containerRect.width / 2;
+
+            const centerY =
+                containerRect.top +
+                containerRect.height / 2;
+
+            const relativeX =
+                clientX -
+                centerX -
+                oldTranslateX;
+
+            const relativeY =
+                clientY -
+                centerY -
+                oldTranslateY;
+
+            const newScale =
+                zoomScale >= 3.5
+                    ? 1
+                    : zoomScale >= 2.5
+                        ? 3.5
+                        : 2.5;
+
+            if (newScale <= 1.01) {
+
+                resetZoom(true);
+
+                return;
+            }
+
+            zoomScale =
+                Math.min(
+                    MAX_ZOOM,
+                    newScale
+                );
+
+            translateX =
+                (
+                    clientX -
+                    centerX
+                ) -
+                relativeX *
+                (
+                    zoomScale /
+                    oldScale
+                );
+
+            translateY =
+                (
+                    clientY -
+                    centerY
+                ) -
+                relativeY *
+                (
+                    zoomScale /
+                    oldScale
+                );
+
+            isZoomed = true;
+
+            image.classList.add(
+                "gallery-zoomed"
             );
 
-            content.classList.toggle(
-                "gallery-zoom-mode",
-                isZoomed
+            content.classList.add(
+                "gallery-zoom-mode"
             );
+
+            image.style.cursor =
+                "grab";
+
+            clampPan();
+
+            applyTransform(true);
         }
 
         // ====================================================
-        // FOTOĞRAF GÜNCELLE
+        // ZOOM TOGGLE
         // ====================================================
+
+        function toggleZoom(
+            clientX = null,
+            clientY = null
+        ) {
+
+            if (isAnimating) {
+                return;
+            }
+
+            if (!isZoomed) {
+
+                const rect =
+                    image.getBoundingClientRect();
+
+                const x =
+                    clientX !== null
+                        ? clientX
+                        : rect.left +
+                          rect.width / 2;
+
+                const y =
+                    clientY !== null
+                        ? clientY
+                        : rect.top +
+                          rect.height / 2;
+
+                zoomToPoint(
+                    x,
+                    y,
+                    DOUBLE_TAP_ZOOM
+                );
+
+                return;
+            }
+
+            resetZoom(true);
+        }
+
+        // ====================================================
+        // FOTOĞRAF DEĞİŞTİR
+        // ====================================================
+
         function updateImage(
             withAnimation = false,
             direction = 1
@@ -780,7 +1307,8 @@ function setupGalleryLightbox() {
 
             if (!withAnimation) {
 
-                image.src = url;
+                image.src =
+                    url;
 
                 counter.textContent =
                     `${currentIndex + 1} / ${galleryImages.length}`;
@@ -796,16 +1324,16 @@ function setupGalleryLightbox() {
 
             const outgoingTransform =
                 direction > 0
-                    ? "translateX(-45px) scale(0.98)"
-                    : "translateX(45px) scale(0.98)";
+                    ? "translate3d(-55px,0,0) scale(.97)"
+                    : "translate3d(55px,0,0) scale(.97)";
 
             const incomingTransform =
                 direction > 0
-                    ? "translateX(45px) scale(0.98)"
-                    : "translateX(-45px) scale(0.98)";
+                    ? "translate3d(55px,0,0) scale(.97)"
+                    : "translate3d(-55px,0,0) scale(.97)";
 
             image.style.transition =
-                "opacity 0.18s ease, transform 0.18s ease";
+                "opacity .18s ease, transform .18s ease";
 
             image.style.opacity =
                 "0";
@@ -816,7 +1344,8 @@ function setupGalleryLightbox() {
             setTimeout(
                 function() {
 
-                    image.src = url;
+                    image.src =
+                        url;
 
                     counter.textContent =
                         `${currentIndex + 1} / ${galleryImages.length}`;
@@ -837,13 +1366,13 @@ function setupGalleryLightbox() {
                                 function() {
 
                                     image.style.transition =
-                                        "opacity 0.24s ease, transform 0.24s ease";
+                                        "opacity .25s ease, transform .25s cubic-bezier(.2,.8,.2,1)";
 
                                     image.style.opacity =
                                         "1";
 
                                     image.style.transform =
-                                        "translateX(0) scale(1)";
+                                        "translate3d(0,0,0) scale(1)";
 
                                     setTimeout(
                                         function() {
@@ -861,12 +1390,10 @@ function setupGalleryLightbox() {
                                                 false;
 
                                         },
-                                        250
+                                        270
                                     );
-
                                 }
                             );
-
                         }
                     );
 
@@ -876,17 +1403,23 @@ function setupGalleryLightbox() {
         }
 
         // ====================================================
-        // SONRAKİ FOTOĞRAF
+        // SONRAKİ
         // ====================================================
+
         function showNext() {
 
             if (isAnimating) {
                 return;
             }
 
+            if (isZoomed) {
+                return;
+            }
+
             currentIndex =
                 (
-                    currentIndex + 1
+                    currentIndex +
+                    1
                 ) %
                 galleryImages.length;
 
@@ -897,11 +1430,16 @@ function setupGalleryLightbox() {
         }
 
         // ====================================================
-        // ÖNCEKİ FOTOĞRAF
+        // ÖNCEKİ
         // ====================================================
+
         function showPrevious() {
 
             if (isAnimating) {
+                return;
+            }
+
+            if (isZoomed) {
                 return;
             }
 
@@ -922,6 +1460,7 @@ function setupGalleryLightbox() {
         // ====================================================
         // KAPAT
         // ====================================================
+
         function close() {
 
             document.removeEventListener(
@@ -938,7 +1477,10 @@ function setupGalleryLightbox() {
         // ====================================================
         // KLAVYE
         // ====================================================
-        function handleKeydown(event) {
+
+        function handleKeydown(
+            event
+        ) {
 
             if (
                 event.key ===
@@ -957,7 +1499,9 @@ function setupGalleryLightbox() {
 
                 event.preventDefault();
 
-                showNext();
+                if (!isZoomed) {
+                    showNext();
+                }
 
                 return;
             }
@@ -969,7 +1513,9 @@ function setupGalleryLightbox() {
 
                 event.preventDefault();
 
-                showPrevious();
+                if (!isZoomed) {
+                    showPrevious();
+                }
 
                 return;
             }
@@ -988,40 +1534,48 @@ function setupGalleryLightbox() {
         // ====================================================
         // KAPAT BUTONU
         // ====================================================
+
         closeButton.addEventListener(
             "click",
             close
         );
 
         // ====================================================
-        // ÖNCEKİ
+        // ÖNCEKİ BUTON
         // ====================================================
+
         prevButton.addEventListener(
             "click",
             function(event) {
 
                 event.stopPropagation();
 
-                showPrevious();
+                if (!isZoomed) {
+                    showPrevious();
+                }
             }
         );
 
         // ====================================================
-        // SONRAKİ
+        // SONRAKİ BUTON
         // ====================================================
+
         nextButton.addEventListener(
             "click",
             function(event) {
 
                 event.stopPropagation();
 
-                showNext();
+                if (!isZoomed) {
+                    showNext();
+                }
             }
         );
 
         // ====================================================
-        // ARKA PLANA TIKLAYINCA KAPAT
+        // ARKA PLAN
         // ====================================================
+
         overlay.addEventListener(
             "click",
             function(event) {
@@ -1037,46 +1591,32 @@ function setupGalleryLightbox() {
         );
 
         // ====================================================
-        // FOTOĞRAFA TIKLAMA / ZOOM
+        // MASAÜSTÜ CLICK
         // ====================================================
+
         image.addEventListener(
             "click",
             function(event) {
 
                 event.stopPropagation();
 
-                const now =
-                    Date.now();
-
-                const doubleTap =
-                    now -
-                    lastTapTime <
-                    300;
-
-                if (doubleTap) {
-
-                    lastTapTime = 0;
-
-                    toggleZoom();
-
+                if (
+                    "ontouchstart" in window
+                ) {
                     return;
                 }
 
-                lastTapTime = now;
-
-                // Masaüstünde tek tıklama ile zoom
-                if (
-                    !("ontouchstart" in window)
-                ) {
-
-                    toggleZoom();
-                }
+                toggleZoom(
+                    event.clientX,
+                    event.clientY
+                );
             }
         );
 
         // ====================================================
         // DOUBLE CLICK
         // ====================================================
+
         image.addEventListener(
             "dblclick",
             function(event) {
@@ -1085,13 +1625,114 @@ function setupGalleryLightbox() {
 
                 event.stopPropagation();
 
-                toggleZoom();
+                toggleZoom(
+                    event.clientX,
+                    event.clientY
+                );
             }
         );
 
         // ====================================================
-        // FOTOĞRAF SÜRÜKLENMESİN
+        // MOUSE DOWN - PAN
         // ====================================================
+
+        image.addEventListener(
+            "mousedown",
+            function(event) {
+
+                if (!isZoomed) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                isMouseDragging =
+                    true;
+
+                mouseStartX =
+                    event.clientX;
+
+                mouseStartY =
+                    event.clientY;
+
+                mouseStartTranslateX =
+                    translateX;
+
+                mouseStartTranslateY =
+                    translateY;
+
+                image.style.cursor =
+                    "grabbing";
+            }
+        );
+
+        // ====================================================
+        // MOUSE MOVE
+        // ====================================================
+
+        document.addEventListener(
+            "mousemove",
+            function(event) {
+
+                if (
+                    !isMouseDragging ||
+                    !isZoomed
+                ) {
+                    return;
+                }
+
+                translateX =
+                    mouseStartTranslateX +
+                    (
+                        event.clientX -
+                        mouseStartX
+                    );
+
+                translateY =
+                    mouseStartTranslateY +
+                    (
+                        event.clientY -
+                        mouseStartY
+                    );
+
+                applyTransform(
+                    false
+                );
+            }
+        );
+
+        // ====================================================
+        // MOUSE UP
+        // ====================================================
+
+        document.addEventListener(
+            "mouseup",
+            function() {
+
+                if (
+                    !isMouseDragging
+                ) {
+                    return;
+                }
+
+                isMouseDragging =
+                    false;
+
+                image.style.cursor =
+                    "grab";
+
+                clampPan();
+
+                applyTransform(
+                    false
+                );
+            }
+        );
+
+        // ====================================================
+        // DRAG KAPAT
+        // ====================================================
+
         image.addEventListener(
             "dragstart",
             function(event) {
@@ -1101,19 +1742,8 @@ function setupGalleryLightbox() {
         );
 
         // ====================================================
-        // KLAVYEYİ DİNLE
+        // TOUCH START
         // ====================================================
-        document.addEventListener(
-            "keydown",
-            handleKeydown
-        );
-
-        // ====================================================
-        // MOBİL SWIPE
-        // ====================================================
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchStartTime = 0;
 
         overlay.addEventListener(
             "touchstart",
@@ -1126,22 +1756,194 @@ function setupGalleryLightbox() {
                     return;
                 }
 
+                // ------------------------------
+                // PINCH BAŞLANGICI
+                // ------------------------------
+
+                if (
+                    event.touches.length === 2
+                ) {
+
+                    pinchStartDistance =
+                        getTouchDistance(
+                            event.touches[0],
+                            event.touches[1]
+                        );
+
+                    pinchStartScale =
+                        zoomScale;
+
+                    if (!isZoomed) {
+
+                        const centerX =
+                            (
+                                event.touches[0].clientX +
+                                event.touches[1].clientX
+                            ) / 2;
+
+                        const centerY =
+                            (
+                                event.touches[0].clientY +
+                                event.touches[1].clientY
+                            ) / 2;
+
+                        zoomToPoint(
+                            centerX,
+                            centerY,
+                            2
+                        );
+
+                        pinchStartScale =
+                            zoomScale;
+                    }
+
+                    return;
+                }
+
+                const touch =
+                    event.touches[0];
+
                 touchStartX =
-                    event.touches[0]
-                        .clientX;
+                    touch.clientX;
 
                 touchStartY =
-                    event.touches[0]
-                        .clientY;
+                    touch.clientY;
 
                 touchStartTime =
                     Date.now();
+
+                if (isZoomed) {
+
+                    isTouchDragging =
+                        true;
+
+                    touchStartTranslateX =
+                        translateX;
+
+                    touchStartTranslateY =
+                        translateY;
+                }
 
             },
             {
                 passive: true
             }
         );
+
+        // ====================================================
+        // TOUCH MOVE
+        // ====================================================
+
+        overlay.addEventListener(
+            "touchmove",
+            function(event) {
+
+                if (
+                    !event.touches ||
+                    !event.touches.length
+                ) {
+                    return;
+                }
+
+                // ------------------------------
+                // PINCH ZOOM
+                // ------------------------------
+
+                if (
+                    event.touches.length === 2
+                ) {
+
+                    const distance =
+                        getTouchDistance(
+                            event.touches[0],
+                            event.touches[1]
+                        );
+
+                    if (
+                        pinchStartDistance <= 0
+                    ) {
+                        return;
+                    }
+
+                    const ratio =
+                        distance /
+                        pinchStartDistance;
+
+                    zoomScale =
+                        Math.max(
+                            MIN_ZOOM,
+                            Math.min(
+                                MAX_ZOOM,
+                                pinchStartScale *
+                                ratio
+                            )
+                        );
+
+                    isZoomed =
+                        zoomScale >
+                        1.01;
+
+                    image.classList.toggle(
+                        "gallery-zoomed",
+                        isZoomed
+                    );
+
+                    content.classList.toggle(
+                        "gallery-zoom-mode",
+                        isZoomed
+                    );
+
+                    image.style.cursor =
+                        "grab";
+
+                    applyTransform(
+                        false
+                    );
+
+                    return;
+                }
+
+                // ------------------------------
+                // PAN
+                // ------------------------------
+
+                if (
+                    isZoomed &&
+                    event.touches.length === 1 &&
+                    isTouchDragging
+                ) {
+
+                    const touch =
+                        event.touches[0];
+
+                    translateX =
+                        touchStartTranslateX +
+                        (
+                            touch.clientX -
+                            touchStartX
+                        );
+
+                    translateY =
+                        touchStartTranslateY +
+                        (
+                            touch.clientY -
+                            touchStartY
+                        );
+
+                    applyTransform(
+                        false
+                    );
+                }
+
+            },
+            {
+                passive: true
+            }
+        );
+
+        // ====================================================
+        // TOUCH END
+        // ====================================================
 
         overlay.addEventListener(
             "touchend",
@@ -1154,28 +1956,90 @@ function setupGalleryLightbox() {
                     return;
                 }
 
-                // Zoom açıkken swipe ile fotoğraf değiştirme
-                if (isZoomed) {
+                // ------------------------------
+                // PINCH BİTTİ
+                // ------------------------------
+
+                if (
+                    pinchStartDistance > 0
+                ) {
+
+                    pinchStartDistance =
+                        0;
+
+                    isTouchDragging =
+                        false;
+
+                    if (
+                        zoomScale <=
+                        1.05
+                    ) {
+
+                        resetZoom(true);
+
+                    } else {
+
+                        isZoomed =
+                            true;
+
+                        image.classList.add(
+                            "gallery-zoomed"
+                        );
+
+                        content.classList.add(
+                            "gallery-zoom-mode"
+                        );
+
+                        clampPan();
+
+                        applyTransform(
+                            false
+                        );
+                    }
+
                     return;
                 }
 
-                const touchEndX =
-                    event.changedTouches[0]
-                        .clientX;
+                // ------------------------------
+                // ZOOMED PAN BİTTİ
+                // ------------------------------
 
-                const touchEndY =
-                    event.changedTouches[0]
-                        .clientY;
+                if (isZoomed) {
 
-                const swipeDistanceX =
-                    touchEndX -
+                    isTouchDragging =
+                        false;
+
+                    clampPan();
+
+                    applyTransform(
+                        false
+                    );
+
+                    return;
+                }
+
+                // ------------------------------
+                // SWIPE
+                // ------------------------------
+
+                const touch =
+                    event.changedTouches[0];
+
+                const endX =
+                    touch.clientX;
+
+                const endY =
+                    touch.clientY;
+
+                const distanceX =
+                    endX -
                     touchStartX;
 
-                const swipeDistanceY =
-                    touchEndY -
+                const distanceY =
+                    endY -
                     touchStartY;
 
-                const touchDuration =
+                const duration =
                     Date.now() -
                     touchStartTime;
 
@@ -1183,35 +2047,28 @@ function setupGalleryLightbox() {
                     50;
 
                 if (
-                    touchDuration >
+                    duration >
                     700
                 ) {
                     return;
                 }
 
-                // Dikey hareket daha fazlaysa swipe kabul etme
                 if (
-                    Math.abs(
-                        swipeDistanceX
-                    ) <
-                    Math.abs(
-                        swipeDistanceY
-                    )
+                    Math.abs(distanceX) <
+                    Math.abs(distanceY)
                 ) {
                     return;
                 }
 
                 if (
-                    Math.abs(
-                        swipeDistanceX
-                    ) <
+                    Math.abs(distanceX) <
                     minimumSwipe
                 ) {
                     return;
                 }
 
                 if (
-                    swipeDistanceX < 0
+                    distanceX < 0
                 ) {
 
                     showNext();
@@ -1219,6 +2076,64 @@ function setupGalleryLightbox() {
                 } else {
 
                     showPrevious();
+                }
+            },
+            {
+                passive: true
+            }
+        );
+
+        // ====================================================
+        // DOUBLE TAP - MOBİL
+        // ====================================================
+
+        overlay.addEventListener(
+            "touchend",
+            function(event) {
+
+                if (
+                    !event.changedTouches ||
+                    !event.changedTouches.length
+                ) {
+                    return;
+                }
+
+                if (pinchStartDistance > 0) {
+                    return;
+                }
+
+                if (isZoomed) {
+                    return;
+                }
+
+                const touch =
+                    event.changedTouches[0];
+
+                const now =
+                    Date.now();
+
+                const difference =
+                    now -
+                    lastTapTime;
+
+                if (
+                    difference <
+                    320
+                ) {
+
+                    lastTapTime =
+                        0;
+
+                    zoomToPoint(
+                        touch.clientX,
+                        touch.clientY,
+                        DOUBLE_TAP_ZOOM
+                    );
+
+                } else {
+
+                    lastTapTime =
+                        now;
                 }
 
             },
@@ -1228,14 +2143,25 @@ function setupGalleryLightbox() {
         );
 
         // ====================================================
-        // İLK FOTOĞRAFI GÖSTER
+        // KLAVYE
         // ====================================================
+
+        document.addEventListener(
+            "keydown",
+            handleKeydown
+        );
+
+        // ====================================================
+        // İLK FOTOĞRAF
+        // ====================================================
+
         updateImage();
     }
 
     // ========================================================
-    // GALERİ KÜÇÜK FOTOĞRAFLARINA TIKLAMA
+    // GALERİ KÜÇÜK FOTOĞRAFLARI
     // ========================================================
+
     galleryItems.forEach(
         (item, index) => {
 
@@ -1243,7 +2169,9 @@ function setupGalleryLightbox() {
                 "click",
                 function() {
 
-                    openLightbox(index);
+                    openLightbox(
+                        index
+                    );
 
                 }
             );
@@ -1553,7 +2481,9 @@ async function loadReviews(
         container.innerHTML = `
             <div class="no-reviews">
 
-                <div>💬</div>
+                <div>
+                    💬
+                </div>
 
                 <strong>
                     Henüz yorum yok
@@ -1610,11 +2540,13 @@ function renderReview(
                 <div class="review-user">
 
                     <div class="review-avatar">
+
                         ${escapeHtml(
                             name
                                 .charAt(0)
                                 .toUpperCase()
                         )}
+
                     </div>
 
                     <div>
