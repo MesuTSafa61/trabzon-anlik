@@ -8,9 +8,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>
-        Yönetim Paneli | Trabzon Anlık
-    </title>
+    <title>Yönetim Paneli | Trabzon Anlık</title>
 
     <link
         rel="stylesheet"
@@ -18,9 +16,9 @@
     >
 
     <style>
-        /* =========================================================
+        /* =========================
            ADMIN GENEL
-        ========================================================= */
+        ========================= */
 
         .admin-container {
             max-width: 1200px;
@@ -65,204 +63,9 @@
             color: #2457a6;
         }
 
-
-        /* =========================================================
-           DASHBOARD
-        ========================================================= */
-
-        .dashboard-section {
-            margin: 25px 0 35px;
-        }
-
-        .dashboard-title {
-            margin: 0 0 6px;
-            font-size: 26px;
-        }
-
-        .dashboard-subtitle {
-            margin: 0 0 20px;
-            opacity: .65;
-        }
-
-        .dashboard-stats {
-            display: grid;
-            grid-template-columns:
-                repeat(3, minmax(0, 1fr));
-            gap: 15px;
-        }
-
-        .stat-card {
-            position: relative;
-            overflow: hidden;
-            padding: 20px;
-            border-radius: 18px;
-            background: #fff;
-            box-shadow:
-                0 6px 25px rgba(0,0,0,.07);
-        }
-
-        .stat-card::after {
-            content: "";
-            position: absolute;
-            width: 80px;
-            height: 80px;
-            right: -25px;
-            bottom: -25px;
-            border-radius: 50%;
-            background: rgba(0,0,0,.025);
-        }
-
-        .stat-icon {
-            font-size: 27px;
-            margin-bottom: 10px;
-        }
-
-        .stat-label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 13px;
-            opacity: .65;
-        }
-
-        .stat-number {
-            display: block;
-            font-size: 30px;
-            line-height: 1;
-            font-weight: 800;
-        }
-
-        .stat-card.pending {
-            border-left: 4px solid #e6b400;
-        }
-
-        .stat-card.approved {
-            border-left: 4px solid #2b9a55;
-        }
-
-        .stat-card.featured {
-            border-left: 4px solid #7b55c7;
-        }
-
-        .stat-card.reviews {
-            border-left: 4px solid #e19a21;
-        }
-
-        .stat-card.events {
-            border-left: 4px solid #3478d4;
-        }
-
-        .dashboard-lower {
-            display: grid;
-            grid-template-columns:
-                minmax(0, 1fr)
-                minmax(0, 1fr);
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .dashboard-box {
-            padding: 20px;
-            border-radius: 18px;
-            background: #fff;
-            box-shadow:
-                0 6px 25px rgba(0,0,0,.07);
-        }
-
-        .dashboard-box h3 {
-            margin: 0 0 15px;
-            font-size: 18px;
-        }
-
-        .dashboard-progress {
-            margin-top: 12px;
-        }
-
-        .dashboard-progress-row {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            margin-bottom: 6px;
-            font-size: 13px;
-        }
-
-        .dashboard-progress-track {
-            width: 100%;
-            height: 9px;
-            overflow: hidden;
-            border-radius: 20px;
-            background: #eee;
-        }
-
-        .dashboard-progress-fill {
-            height: 100%;
-            width: 0;
-            border-radius: 20px;
-            background: #333;
-            transition: width .35s ease;
-        }
-
-        .dashboard-recent-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .dashboard-recent-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 11px;
-            border-radius: 12px;
-            background: #fafafa;
-        }
-
-        .dashboard-recent-image {
-            width: 48px;
-            height: 48px;
-            flex: 0 0 48px;
-            overflow: hidden;
-            border-radius: 10px;
-            background: #eee;
-        }
-
-        .dashboard-recent-image img {
-            width: 100%;
-            height: 100%;
-            display: block;
-            object-fit: cover;
-        }
-
-        .dashboard-recent-info {
-            min-width: 0;
-            flex: 1;
-        }
-
-        .dashboard-recent-info strong {
-            display: block;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .dashboard-recent-info span {
-            display: block;
-            margin-top: 3px;
-            font-size: 12px;
-            opacity: .6;
-        }
-
-        .dashboard-empty {
-            padding: 15px;
-            text-align: center;
-            border-radius: 10px;
-            background: #fafafa;
-            opacity: .65;
-        }
-
-
-        /* =========================================================
+        /* =========================
            LOGIN
-        ========================================================= */
+        ========================= */
 
         #loginScreen {
             min-height: 100vh;
@@ -278,8 +81,7 @@
             padding: 30px;
             border-radius: 18px;
             background: #fff;
-            box-shadow:
-                0 10px 40px rgba(0,0,0,.10);
+            box-shadow: 0 10px 40px rgba(0,0,0,.10);
         }
 
         .login-box h1 {
@@ -326,18 +128,116 @@
             color: #a32121;
         }
 
+        /* =========================
+           DASHBOARD
+        ========================= */
 
-        /* =========================================================
+        .admin-dashboard {
+            display: grid;
+            grid-template-columns:
+                repeat(5, minmax(0, 1fr));
+            gap: 14px;
+            margin: 25px 0;
+        }
+
+        .dashboard-card {
+            padding: 18px;
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 6px 25px rgba(0,0,0,.07);
+            border: 1px solid #eee;
+        }
+
+        .dashboard-icon {
+            font-size: 25px;
+            margin-bottom: 10px;
+        }
+
+        .dashboard-number {
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 7px;
+        }
+
+        .dashboard-label {
+            font-size: 13px;
+            opacity: .65;
+            font-weight: 600;
+        }
+
+        .dashboard-card.pending-stat {
+            border-left: 4px solid #e3a900;
+        }
+
+        .dashboard-card.approved-stat {
+            border-left: 4px solid #28a745;
+        }
+
+        .dashboard-card.featured-stat {
+            border-left: 4px solid #7653c7;
+        }
+
+        /* =========================
+           FİLTRELER
+        ========================= */
+
+        .admin-filters {
+            margin: 20px 0 25px;
+            padding: 18px;
+            border-radius: 16px;
+            background: #fff;
+            border: 1px solid #eee;
+            box-shadow: 0 5px 20px rgba(0,0,0,.05);
+        }
+
+        .admin-filters-title {
+            margin: 0 0 13px;
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .admin-filter-grid {
+            display: grid;
+            grid-template-columns:
+                minmax(220px, 2fr)
+                repeat(3, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .admin-filter-input,
+        .admin-filter-select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 11px 12px;
+            border: 1px solid #ddd;
+            border-radius: 9px;
+            background: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .admin-filter-input:focus,
+        .admin-filter-select:focus {
+            border-color: #888;
+        }
+
+        .filter-result-count {
+            margin-top: 12px;
+            font-size: 13px;
+            opacity: .65;
+        }
+
+        /* =========================
            İŞLETME KARTI
-        ========================================================= */
+        ========================= */
 
         .application-card {
             margin-bottom: 25px;
             padding: 22px;
             border-radius: 18px;
             background: #fff;
-            box-shadow:
-                0 6px 25px rgba(0,0,0,.08);
+            box-shadow: 0 6px 25px rgba(0,0,0,.08);
         }
 
         .application-header {
@@ -390,10 +290,9 @@
             word-break: break-word;
         }
 
-
-        /* =========================================================
+        /* =========================
            GALERİ
-        ========================================================= */
+        ========================= */
 
         .admin-gallery {
             margin-top: 20px;
@@ -529,10 +428,9 @@
             margin-bottom: 15px;
         }
 
-
-        /* =========================================================
+        /* =========================
            İŞLETME BUTONLARI
-        ========================================================= */
+        ========================= */
 
         .application-actions {
             display: flex;
@@ -574,18 +472,16 @@
             color: #6140a0;
         }
 
-
-        /* =========================================================
+        /* =========================
            YORUMLAR
-        ========================================================= */
+        ========================= */
 
         .review-card {
             margin-bottom: 15px;
             padding: 18px;
             border-radius: 14px;
             background: #fff;
-            box-shadow:
-                0 4px 18px rgba(0,0,0,.06);
+            box-shadow: 0 4px 18px rgba(0,0,0,.06);
         }
 
         .review-header {
@@ -639,10 +535,9 @@
             font-weight: 700;
         }
 
-
-        /* =========================================================
+        /* =========================
            YÜKLENİYOR / BOŞ
-        ========================================================= */
+        ========================= */
 
         .loading,
         .empty,
@@ -666,25 +561,33 @@
             color: #a32121;
         }
 
-
-        /* =========================================================
+        /* =========================
            MOBİL
-        ========================================================= */
+        ========================= */
 
-        @media (max-width: 900px) {
+        @media (max-width: 1000px) {
 
-            .dashboard-stats {
+            .admin-dashboard {
+                grid-template-columns:
+                    repeat(3, minmax(0, 1fr));
+            }
+
+            .admin-filter-grid {
                 grid-template-columns:
                     repeat(2, minmax(0, 1fr));
             }
+        }
 
-            .dashboard-lower {
-                grid-template-columns: 1fr;
-            }
+        @media (max-width: 800px) {
 
             .admin-gallery-grid {
                 grid-template-columns:
                     repeat(3, minmax(0, 1fr));
+            }
+
+            .admin-dashboard {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
             }
         }
 
@@ -692,32 +595,6 @@
 
             .admin-container {
                 padding: 12px;
-            }
-
-            .dashboard-section {
-                margin-top: 15px;
-            }
-
-            .dashboard-title {
-                font-size: 22px;
-            }
-
-            .dashboard-stats {
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-            }
-
-            .stat-card {
-                padding: 15px;
-                border-radius: 14px;
-            }
-
-            .stat-icon {
-                font-size: 23px;
-            }
-
-            .stat-number {
-                font-size: 25px;
             }
 
             .application-card {
@@ -756,16 +633,22 @@
                 width: 100%;
             }
 
-            .admin-header {
-                align-items: flex-start;
+            .admin-dashboard {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+                gap: 10px;
             }
 
-            .admin-header-actions {
-                width: 100%;
+            .dashboard-card {
+                padding: 14px;
             }
 
-            .admin-header-actions button {
-                flex: 1;
+            .dashboard-number {
+                font-size: 23px;
+            }
+
+            .admin-filter-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -773,17 +656,15 @@
 
 <body>
 
-    <!-- =========================================================
+    <!-- =========================
          LOGIN
-    ========================================================= -->
+    ========================= -->
 
     <section id="loginScreen">
 
         <div class="login-box">
 
-            <h1>
-                TRABZON ANLIK
-            </h1>
+            <h1>TRABZON ANLIK</h1>
 
             <p>
                 Yönetim paneline giriş yap
@@ -817,9 +698,7 @@
                     required
                 >
 
-                <button
-                    type="submit"
-                >
+                <button type="submit">
                     Giriş Yap
                 </button>
 
@@ -830,9 +709,9 @@
     </section>
 
 
-    <!-- =========================================================
+    <!-- =========================
          ADMIN PANEL
-    ========================================================= -->
+    ========================= -->
 
     <section
         id="adminApp"
@@ -841,13 +720,12 @@
 
         <div class="admin-container">
 
-            <!-- =================================================
-                 HEADER
-            ================================================= -->
+            <!-- HEADER -->
 
             <header class="admin-header">
 
                 <div>
+
                     <h1>
                         TRABZON ANLIK
                     </h1>
@@ -855,6 +733,7 @@
                     <p>
                         YÖNETİM PANELİ
                     </p>
+
                 </div>
 
                 <div class="admin-header-actions">
@@ -880,9 +759,7 @@
             </header>
 
 
-            <!-- =================================================
-                 MESAJ
-            ================================================= -->
+            <!-- MESAJ -->
 
             <div
                 id="adminMessage"
@@ -890,186 +767,113 @@
             ></div>
 
 
-            <!-- =================================================
+            <!-- =========================
                  DASHBOARD
-            ================================================= -->
+            ========================= -->
 
-            <section
-                id="dashboardSection"
-                class="dashboard-section"
-            >
+            <section>
 
-                <h2 class="dashboard-title">
+                <h2>
                     📊 Genel Bakış
                 </h2>
 
-                <p class="dashboard-subtitle">
-                    Trabzon Anlık platformunun genel durumu
-                </p>
+                <div class="admin-dashboard">
 
+                    <div class="dashboard-card">
 
-                <div class="dashboard-stats">
-
-                    <div class="stat-card">
-
-                        <div class="stat-icon">
+                        <div class="dashboard-icon">
                             🏪
                         </div>
 
-                        <span class="stat-label">
-                            Toplam İşletme
-                        </span>
-
-                        <strong
+                        <div
                             id="statTotalBusinesses"
-                            class="stat-number"
+                            class="dashboard-number"
                         >
-                            —
-                        </strong>
+                            0
+                        </div>
+
+                        <div class="dashboard-label">
+                            Toplam İşletme
+                        </div>
 
                     </div>
 
 
-                    <div class="stat-card pending">
+                    <div class="dashboard-card pending-stat">
 
-                        <div class="stat-icon">
+                        <div class="dashboard-icon">
                             ⏳
                         </div>
 
-                        <span class="stat-label">
-                            Onay Bekleyen
-                        </span>
-
-                        <strong
+                        <div
                             id="statPendingBusinesses"
-                            class="stat-number"
+                            class="dashboard-number"
                         >
-                            —
-                        </strong>
+                            0
+                        </div>
+
+                        <div class="dashboard-label">
+                            Onay Bekleyen
+                        </div>
 
                     </div>
 
 
-                    <div class="stat-card approved">
+                    <div class="dashboard-card approved-stat">
 
-                        <div class="stat-icon">
+                        <div class="dashboard-icon">
                             ✅
                         </div>
 
-                        <span class="stat-label">
-                            Onaylı İşletme
-                        </span>
-
-                        <strong
+                        <div
                             id="statApprovedBusinesses"
-                            class="stat-number"
+                            class="dashboard-number"
                         >
-                            —
-                        </strong>
+                            0
+                        </div>
+
+                        <div class="dashboard-label">
+                            Onaylı İşletme
+                        </div>
 
                     </div>
 
 
-                    <div class="stat-card featured">
+                    <div class="dashboard-card featured-stat">
 
-                        <div class="stat-icon">
+                        <div class="dashboard-icon">
                             ⭐
                         </div>
 
-                        <span class="stat-label">
-                            Öne Çıkarılan
-                        </span>
-
-                        <strong
+                        <div
                             id="statFeaturedBusinesses"
-                            class="stat-number"
+                            class="dashboard-number"
                         >
-                            —
-                        </strong>
+                            0
+                        </div>
+
+                        <div class="dashboard-label">
+                            Öne Çıkan
+                        </div>
 
                     </div>
 
 
-                    <div class="stat-card reviews">
+                    <div class="dashboard-card">
 
-                        <div class="stat-icon">
+                        <div class="dashboard-icon">
                             💬
                         </div>
 
-                        <span class="stat-label">
+                        <div
+                            id="statReviews"
+                            class="dashboard-number"
+                        >
+                            0
+                        </div>
+
+                        <div class="dashboard-label">
                             Toplam Yorum
-                        </span>
-
-                        <strong
-                            id="statTotalReviews"
-                            class="stat-number"
-                        >
-                            —
-                        </strong>
-
-                    </div>
-
-
-                    <div class="stat-card events">
-
-                        <div class="stat-icon">
-                            📅
-                        </div>
-
-                        <span class="stat-label">
-                            Toplam Etkinlik
-                        </span>
-
-                        <strong
-                            id="statTotalEvents"
-                            class="stat-number"
-                        >
-                            —
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <!-- ALT DASHBOARD -->
-
-                <div class="dashboard-lower">
-
-                    <!-- DURUM -->
-
-                    <div class="dashboard-box">
-
-                        <h3>
-                            📈 İşletme Durumu
-                        </h3>
-
-                        <div
-                            id="businessStatusDashboard"
-                        >
-                            <div class="loading">
-                                Hesaplanıyor...
-                            </div>
-                        </div>
-
-                    </div>
-
-
-                    <!-- SON İŞLETMELER -->
-
-                    <div class="dashboard-box">
-
-                        <h3>
-                            🕐 Son Eklenen İşletmeler
-                        </h3>
-
-                        <div
-                            id="recentBusinessesDashboard"
-                            class="dashboard-recent-list"
-                        >
-                            <div class="loading">
-                                Yükleniyor...
-                            </div>
                         </div>
 
                     </div>
@@ -1079,15 +883,93 @@
             </section>
 
 
-            <!-- =================================================
-                 İŞLETMELER
-            ================================================= -->
+            <!-- =========================
+                 İŞLETME FİLTRELERİ
+            ========================= -->
 
             <section>
 
                 <h2>
-                    İşletmeler
+                    🏪 İşletmeler
                 </h2>
+
+                <div class="admin-filters">
+
+                    <div class="admin-filters-title">
+                        🔎 İşletme Ara ve Filtrele
+                    </div>
+
+                    <div class="admin-filter-grid">
+
+                        <input
+                            type="search"
+                            id="businessSearch"
+                            class="admin-filter-input"
+                            placeholder="İşletme adı, telefon, adres..."
+                        >
+
+                        <select
+                            id="businessCategoryFilter"
+                            class="admin-filter-select"
+                        >
+
+                            <option value="">
+                                📂 Tüm Kategoriler
+                            </option>
+
+                        </select>
+
+
+                        <select
+                            id="businessStatusFilter"
+                            class="admin-filter-select"
+                        >
+
+                            <option value="">
+                                📌 Tüm Durumlar
+                            </option>
+
+                            <option value="pending">
+                                ⏳ Onay Bekleyen
+                            </option>
+
+                            <option value="approved">
+                                ✅ Onaylı
+                            </option>
+
+                        </select>
+
+
+                        <select
+                            id="businessFeaturedFilter"
+                            class="admin-filter-select"
+                        >
+
+                            <option value="">
+                                ⭐ Öne Çıkan Durumu
+                            </option>
+
+                            <option value="featured">
+                                ⭐ Öne Çıkanlar
+                            </option>
+
+                            <option value="normal">
+                                ☆ Normal İşletmeler
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div
+                        id="filterResultCount"
+                        class="filter-result-count"
+                    >
+                        İşletmeler yükleniyor...
+                    </div>
+
+                </div>
+
 
                 <div id="applications">
 
@@ -1100,14 +982,14 @@
             </section>
 
 
-            <!-- =================================================
+            <!-- =========================
                  YORUMLAR
-            ================================================= -->
+            ========================= -->
 
             <section>
 
                 <h2>
-                    Yorumlar
+                    💬 Yorumlar
                 </h2>
 
                 <div id="reviewsList">
@@ -1125,18 +1007,14 @@
     </section>
 
 
-    <!-- =========================================================
-         SUPABASE
-    ========================================================= -->
+    <!-- SUPABASE -->
 
     <script
         src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
     ></script>
 
 
-    <!-- =========================================================
-         ADMIN JS
-    ========================================================= -->
+    <!-- ADMIN JS -->
 
     <script
         src="admin.js?v=5"
