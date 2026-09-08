@@ -2,24 +2,32 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-    <title>Yönetim Paneli | Trabzon Anlık</title>
+
+    <title>
+        Yönetim Paneli | Trabzon Anlık
+    </title>
+
     <link
         rel="stylesheet"
         href="style.css"
     >
+
     <style>
-        /* =========================
+        /* =========================================================
            ADMIN GENEL
-        ========================= */
+        ========================================================= */
+
         .admin-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
+
         .admin-header {
             display: flex;
             align-items: center;
@@ -27,32 +35,235 @@
             gap: 15px;
             flex-wrap: wrap;
         }
+
         .admin-header-actions {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: center;
         }
+
         .admin-message {
             margin: 15px 0;
             padding: 12px 15px;
             border-radius: 10px;
             display: none;
         }
+
         .admin-message.success {
             background: #e8f7ed;
             color: #18743a;
         }
+
         .admin-message.error {
             background: #fdecec;
             color: #a32121;
         }
+
         .admin-message.info {
             background: #eef4ff;
             color: #2457a6;
         }
-        /* =========================
+
+
+        /* =========================================================
+           DASHBOARD
+        ========================================================= */
+
+        .dashboard-section {
+            margin: 25px 0 35px;
+        }
+
+        .dashboard-title {
+            margin: 0 0 6px;
+            font-size: 26px;
+        }
+
+        .dashboard-subtitle {
+            margin: 0 0 20px;
+            opacity: .65;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns:
+                repeat(3, minmax(0, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+            padding: 20px;
+            border-radius: 18px;
+            background: #fff;
+            box-shadow:
+                0 6px 25px rgba(0,0,0,.07);
+        }
+
+        .stat-card::after {
+            content: "";
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            right: -25px;
+            bottom: -25px;
+            border-radius: 50%;
+            background: rgba(0,0,0,.025);
+        }
+
+        .stat-icon {
+            font-size: 27px;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            opacity: .65;
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 30px;
+            line-height: 1;
+            font-weight: 800;
+        }
+
+        .stat-card.pending {
+            border-left: 4px solid #e6b400;
+        }
+
+        .stat-card.approved {
+            border-left: 4px solid #2b9a55;
+        }
+
+        .stat-card.featured {
+            border-left: 4px solid #7b55c7;
+        }
+
+        .stat-card.reviews {
+            border-left: 4px solid #e19a21;
+        }
+
+        .stat-card.events {
+            border-left: 4px solid #3478d4;
+        }
+
+        .dashboard-lower {
+            display: grid;
+            grid-template-columns:
+                minmax(0, 1fr)
+                minmax(0, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .dashboard-box {
+            padding: 20px;
+            border-radius: 18px;
+            background: #fff;
+            box-shadow:
+                0 6px 25px rgba(0,0,0,.07);
+        }
+
+        .dashboard-box h3 {
+            margin: 0 0 15px;
+            font-size: 18px;
+        }
+
+        .dashboard-progress {
+            margin-top: 12px;
+        }
+
+        .dashboard-progress-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .dashboard-progress-track {
+            width: 100%;
+            height: 9px;
+            overflow: hidden;
+            border-radius: 20px;
+            background: #eee;
+        }
+
+        .dashboard-progress-fill {
+            height: 100%;
+            width: 0;
+            border-radius: 20px;
+            background: #333;
+            transition: width .35s ease;
+        }
+
+        .dashboard-recent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .dashboard-recent-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px;
+            border-radius: 12px;
+            background: #fafafa;
+        }
+
+        .dashboard-recent-image {
+            width: 48px;
+            height: 48px;
+            flex: 0 0 48px;
+            overflow: hidden;
+            border-radius: 10px;
+            background: #eee;
+        }
+
+        .dashboard-recent-image img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+        }
+
+        .dashboard-recent-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .dashboard-recent-info strong {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dashboard-recent-info span {
+            display: block;
+            margin-top: 3px;
+            font-size: 12px;
+            opacity: .6;
+        }
+
+        .dashboard-empty {
+            padding: 15px;
+            text-align: center;
+            border-radius: 10px;
+            background: #fafafa;
+            opacity: .65;
+        }
+
+
+        /* =========================================================
            LOGIN
-        ========================= */
+        ========================================================= */
+
         #loginScreen {
             min-height: 100vh;
             display: flex;
@@ -60,26 +271,32 @@
             justify-content: center;
             padding: 20px;
         }
+
         .login-box {
             width: 100%;
             max-width: 420px;
             padding: 30px;
             border-radius: 18px;
             background: #fff;
-            box-shadow: 0 10px 40px rgba(0,0,0,.10);
+            box-shadow:
+                0 10px 40px rgba(0,0,0,.10);
         }
+
         .login-box h1 {
             margin-bottom: 8px;
         }
+
         .login-box p {
             margin-bottom: 25px;
             opacity: .7;
         }
+
         .login-box label {
             display: block;
             margin-bottom: 7px;
             font-weight: 600;
         }
+
         .login-box input {
             width: 100%;
             box-sizing: border-box;
@@ -89,6 +306,7 @@
             border-radius: 10px;
             font-size: 15px;
         }
+
         .login-box button {
             width: 100%;
             border: 0;
@@ -98,6 +316,7 @@
             font-weight: 700;
             font-size: 15px;
         }
+
         #loginError {
             display: none;
             margin-bottom: 15px;
@@ -106,16 +325,21 @@
             background: #fdecec;
             color: #a32121;
         }
-        /* =========================
+
+
+        /* =========================================================
            İŞLETME KARTI
-        ========================= */
+        ========================================================= */
+
         .application-card {
             margin-bottom: 25px;
             padding: 22px;
             border-radius: 18px;
             background: #fff;
-            box-shadow: 0 6px 25px rgba(0,0,0,.08);
+            box-shadow:
+                0 6px 25px rgba(0,0,0,.08);
         }
+
         .application-header {
             display: flex;
             justify-content: space-between;
@@ -123,10 +347,12 @@
             gap: 15px;
             margin-bottom: 18px;
         }
+
         .application-header h3 {
             margin: 0 0 8px;
             font-size: 21px;
         }
+
         .status {
             display: inline-block;
             padding: 5px 9px;
@@ -134,37 +360,47 @@
             font-size: 12px;
             font-weight: 700;
         }
+
         .status.approved {
             background: #e8f7ed;
             color: #18743a;
         }
+
         .status.pending {
             background: #fff4d6;
             color: #8a6100;
         }
+
         .business-rating {
             font-weight: 700;
             white-space: nowrap;
         }
+
         .application-info {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
             gap: 8px 20px;
             margin-bottom: 22px;
         }
+
         .application-info p {
             margin: 0;
             line-height: 1.5;
             word-break: break-word;
         }
-        /* =========================
+
+
+        /* =========================================================
            GALERİ
-        ========================= */
+        ========================================================= */
+
         .admin-gallery {
             margin-top: 20px;
             padding-top: 20px;
             border-top: 1px solid #eee;
         }
+
         .admin-gallery-header {
             display: flex;
             justify-content: space-between;
@@ -172,19 +408,24 @@
             gap: 10px;
             margin-bottom: 15px;
         }
+
         .admin-gallery-header h4 {
             margin: 0;
             font-size: 17px;
         }
+
         .admin-gallery-header span {
             font-size: 13px;
             opacity: .65;
         }
+
         .admin-gallery-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns:
+                repeat(4, minmax(0, 1fr));
             gap: 12px;
         }
+
         .admin-gallery-item {
             min-width: 0;
             overflow: hidden;
@@ -192,6 +433,7 @@
             border-radius: 12px;
             background: #fafafa;
         }
+
         .admin-image-wrapper {
             position: relative;
             width: 100%;
@@ -199,12 +441,14 @@
             background: #eee;
             overflow: hidden;
         }
+
         .admin-image-wrapper img {
             width: 100%;
             height: 100%;
             display: block;
             object-fit: cover;
         }
+
         .cover-badge {
             position: absolute;
             left: 7px;
@@ -216,12 +460,14 @@
             font-size: 11px;
             font-weight: 700;
         }
+
         .admin-image-actions {
             display: flex;
             flex-wrap: wrap;
             gap: 5px;
             padding: 7px;
         }
+
         .admin-image-actions button {
             flex: 1;
             min-width: 35px;
@@ -233,17 +479,21 @@
             font-weight: 700;
             background: #eee;
         }
+
         .admin-image-actions button:hover {
             opacity: .85;
         }
+
         .admin-image-actions button:disabled {
             cursor: not-allowed;
             opacity: .4;
         }
+
         .admin-image-actions .image-delete-button {
             background: #ffe8e8;
             color: #a32121;
         }
+
         .admin-upload-area {
             display: flex;
             align-items: center;
@@ -255,11 +505,13 @@
             border-radius: 12px;
             background: #fafafa;
         }
+
         .admin-upload-area input[type="file"] {
             flex: 1;
             min-width: 220px;
             font-size: 13px;
         }
+
         .admin-upload-area button {
             border: 0;
             padding: 11px 15px;
@@ -267,6 +519,7 @@
             cursor: pointer;
             font-weight: 700;
         }
+
         .admin-gallery-empty {
             padding: 20px;
             text-align: center;
@@ -275,15 +528,19 @@
             opacity: .65;
             margin-bottom: 15px;
         }
-        /* =========================
+
+
+        /* =========================================================
            İŞLETME BUTONLARI
-        ========================= */
+        ========================================================= */
+
         .application-actions {
             display: flex;
             flex-wrap: wrap;
             gap: 9px;
             margin-top: 20px;
         }
+
         .application-actions button {
             border: 0;
             padding: 10px 13px;
@@ -291,64 +548,80 @@
             cursor: pointer;
             font-weight: 700;
         }
+
         .approve-button {
             background: #e8f7ed;
             color: #18743a;
         }
+
         .reject-button {
             background: #fff0e8;
             color: #a34c16;
         }
+
         .delete-button {
             background: #ffe8e8;
             color: #a32121;
         }
+
         .featured-button {
             background: #fff4d6;
             color: #8a6100;
         }
+
         .featured-remove-button {
             background: #f0eaff;
             color: #6140a0;
         }
-        /* =========================
+
+
+        /* =========================================================
            YORUMLAR
-        ========================= */
+        ========================================================= */
+
         .review-card {
             margin-bottom: 15px;
             padding: 18px;
             border-radius: 14px;
             background: #fff;
-            box-shadow: 0 4px 18px rgba(0,0,0,.06);
+            box-shadow:
+                0 4px 18px rgba(0,0,0,.06);
         }
+
         .review-header {
             display: flex;
             justify-content: space-between;
             gap: 15px;
             margin-bottom: 10px;
         }
+
         .review-header strong {
             display: block;
         }
+
         .review-header span {
             display: block;
             margin-top: 3px;
             font-size: 13px;
             opacity: .65;
         }
+
         .review-card p {
             margin: 10px 0;
             line-height: 1.6;
         }
+
         .review-card small {
             opacity: .6;
         }
+
         .review-actions {
             display: flex;
             align-items: center;
             gap: 8px;
             margin-top: 12px;
         }
+
         .review-actions button {
             border: 0;
             padding: 9px 12px;
@@ -356,6 +629,7 @@
             cursor: pointer;
             font-weight: 700;
         }
+
         .approved-label {
             padding: 8px 11px;
             border-radius: 8px;
@@ -364,9 +638,12 @@
             font-size: 13px;
             font-weight: 700;
         }
-        /* =========================
+
+
+        /* =========================================================
            YÜKLENİYOR / BOŞ
-        ========================= */
+        ========================================================= */
+
         .loading,
         .empty,
         .error {
@@ -374,76 +651,152 @@
             text-align: center;
             border-radius: 12px;
         }
+
         .loading {
             background: #f5f5f5;
         }
+
         .empty {
             background: #fafafa;
             opacity: .7;
         }
+
         .error {
             background: #fdecec;
             color: #a32121;
         }
-        /* =========================
+
+
+        /* =========================================================
            MOBİL
-        ========================= */
-        @media (max-width: 800px) {
+        ========================================================= */
+
+        @media (max-width: 900px) {
+
+            .dashboard-stats {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            }
+
+            .dashboard-lower {
+                grid-template-columns: 1fr;
+            }
+
             .admin-gallery-grid {
                 grid-template-columns:
                     repeat(3, minmax(0, 1fr));
             }
         }
+
         @media (max-width: 600px) {
+
             .admin-container {
                 padding: 12px;
             }
+
+            .dashboard-section {
+                margin-top: 15px;
+            }
+
+            .dashboard-title {
+                font-size: 22px;
+            }
+
+            .dashboard-stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 15px;
+                border-radius: 14px;
+            }
+
+            .stat-icon {
+                font-size: 23px;
+            }
+
+            .stat-number {
+                font-size: 25px;
+            }
+
             .application-card {
                 padding: 15px;
                 border-radius: 14px;
             }
+
             .application-info {
                 grid-template-columns: 1fr;
             }
+
             .application-header {
                 flex-direction: column;
             }
+
             .admin-gallery-grid {
                 grid-template-columns:
                     repeat(2, minmax(0, 1fr));
             }
+
             .admin-upload-area {
                 align-items: stretch;
             }
+
             .admin-upload-area input[type="file"],
             .admin-upload-area button {
                 width: 100%;
                 box-sizing: border-box;
             }
+
             .application-actions {
                 flex-direction: column;
             }
+
             .application-actions button {
                 width: 100%;
+            }
+
+            .admin-header {
+                align-items: flex-start;
+            }
+
+            .admin-header-actions {
+                width: 100%;
+            }
+
+            .admin-header-actions button {
+                flex: 1;
             }
         }
     </style>
 </head>
+
 <body>
-    <!-- =========================
+
+    <!-- =========================================================
          LOGIN
-    ========================= -->
+    ========================================================= -->
+
     <section id="loginScreen">
+
         <div class="login-box">
-            <h1>TRABZON ANLIK</h1>
+
+            <h1>
+                TRABZON ANLIK
+            </h1>
+
             <p>
                 Yönetim paneline giriş yap
             </p>
+
             <div id="loginError"></div>
+
             <form id="loginForm">
+
                 <label for="loginEmail">
                     E-posta
                 </label>
+
                 <input
                     type="email"
                     id="loginEmail"
@@ -451,9 +804,11 @@
                     autocomplete="email"
                     required
                 >
+
                 <label for="loginPassword">
                     Şifre
                 </label>
+
                 <input
                     type="password"
                     id="loginPassword"
@@ -461,88 +816,331 @@
                     autocomplete="current-password"
                     required
                 >
+
                 <button
                     type="submit"
                 >
                     Giriş Yap
                 </button>
+
             </form>
+
         </div>
+
     </section>
-    <!-- =========================
+
+
+    <!-- =========================================================
          ADMIN PANEL
-    ========================= -->
+    ========================================================= -->
+
     <section
         id="adminApp"
         style="display:none;"
     >
+
         <div class="admin-container">
-            <!-- HEADER -->
+
+            <!-- =================================================
+                 HEADER
+            ================================================= -->
+
             <header class="admin-header">
+
                 <div>
                     <h1>
                         TRABZON ANLIK
                     </h1>
+
                     <p>
                         YÖNETİM PANELİ
                     </p>
                 </div>
+
                 <div class="admin-header-actions">
+
                     <span id="adminUser"></span>
+
                     <button
                         id="refreshButton"
                         type="button"
                     >
                         🔄 Yenile
                     </button>
+
                     <button
                         id="logoutButton"
                         type="button"
                     >
                         Çıkış Yap
                     </button>
+
                 </div>
+
             </header>
-            <!-- MESAJ -->
+
+
+            <!-- =================================================
+                 MESAJ
+            ================================================= -->
+
             <div
                 id="adminMessage"
                 class="admin-message"
             ></div>
-            <!-- =========================
+
+
+            <!-- =================================================
+                 DASHBOARD
+            ================================================= -->
+
+            <section
+                id="dashboardSection"
+                class="dashboard-section"
+            >
+
+                <h2 class="dashboard-title">
+                    📊 Genel Bakış
+                </h2>
+
+                <p class="dashboard-subtitle">
+                    Trabzon Anlık platformunun genel durumu
+                </p>
+
+
+                <div class="dashboard-stats">
+
+                    <div class="stat-card">
+
+                        <div class="stat-icon">
+                            🏪
+                        </div>
+
+                        <span class="stat-label">
+                            Toplam İşletme
+                        </span>
+
+                        <strong
+                            id="statTotalBusinesses"
+                            class="stat-number"
+                        >
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="stat-card pending">
+
+                        <div class="stat-icon">
+                            ⏳
+                        </div>
+
+                        <span class="stat-label">
+                            Onay Bekleyen
+                        </span>
+
+                        <strong
+                            id="statPendingBusinesses"
+                            class="stat-number"
+                        >
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="stat-card approved">
+
+                        <div class="stat-icon">
+                            ✅
+                        </div>
+
+                        <span class="stat-label">
+                            Onaylı İşletme
+                        </span>
+
+                        <strong
+                            id="statApprovedBusinesses"
+                            class="stat-number"
+                        >
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="stat-card featured">
+
+                        <div class="stat-icon">
+                            ⭐
+                        </div>
+
+                        <span class="stat-label">
+                            Öne Çıkarılan
+                        </span>
+
+                        <strong
+                            id="statFeaturedBusinesses"
+                            class="stat-number"
+                        >
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="stat-card reviews">
+
+                        <div class="stat-icon">
+                            💬
+                        </div>
+
+                        <span class="stat-label">
+                            Toplam Yorum
+                        </span>
+
+                        <strong
+                            id="statTotalReviews"
+                            class="stat-number"
+                        >
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="stat-card events">
+
+                        <div class="stat-icon">
+                            📅
+                        </div>
+
+                        <span class="stat-label">
+                            Toplam Etkinlik
+                        </span>
+
+                        <strong
+                            id="statTotalEvents"
+                            class="stat-number"
+                        >
+                            —
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ALT DASHBOARD -->
+
+                <div class="dashboard-lower">
+
+                    <!-- DURUM -->
+
+                    <div class="dashboard-box">
+
+                        <h3>
+                            📈 İşletme Durumu
+                        </h3>
+
+                        <div
+                            id="businessStatusDashboard"
+                        >
+                            <div class="loading">
+                                Hesaplanıyor...
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <!-- SON İŞLETMELER -->
+
+                    <div class="dashboard-box">
+
+                        <h3>
+                            🕐 Son Eklenen İşletmeler
+                        </h3>
+
+                        <div
+                            id="recentBusinessesDashboard"
+                            class="dashboard-recent-list"
+                        >
+                            <div class="loading">
+                                Yükleniyor...
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
                  İŞLETMELER
-            ========================= -->
+            ================================================= -->
+
             <section>
+
                 <h2>
                     İşletmeler
                 </h2>
+
                 <div id="applications">
+
                     <div class="loading">
                         İşletmeler yükleniyor...
                     </div>
+
                 </div>
+
             </section>
-            <!-- =========================
+
+
+            <!-- =================================================
                  YORUMLAR
-            ========================= -->
+            ================================================= -->
+
             <section>
+
                 <h2>
                     Yorumlar
                 </h2>
+
                 <div id="reviewsList">
+
                     <div class="loading">
                         Yorumlar yükleniyor...
                     </div>
+
                 </div>
+
             </section>
+
         </div>
+
     </section>
-    <!-- SUPABASE -->
+
+
+    <!-- =========================================================
+         SUPABASE
+    ========================================================= -->
+
     <script
         src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
     ></script>
-    <!-- ADMIN JS -->
+
+
+    <!-- =========================================================
+         ADMIN JS
+    ========================================================= -->
+
     <script
-        src="admin.js?v=4"
+        src="admin.js?v=5"
     ></script>
+
 </body>
 </html>
