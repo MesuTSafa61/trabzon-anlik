@@ -447,6 +447,11 @@
             font-weight: 700;
         }
 
+        .edit-button {
+            background: #eef4ff;
+            color: #2457a6;
+        }
+
         .approve-button {
             background: #e8f7ed;
             color: #18743a;
@@ -533,6 +538,174 @@
             color: #18743a;
             font-size: 13px;
             font-weight: 700;
+        }
+
+        /* =========================
+           DÜZENLEME MODALI
+        ========================= */
+
+        .edit-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0,0,0,.65);
+            overflow-y: auto;
+        }
+
+        .edit-modal.show {
+            display: flex;
+        }
+
+        .edit-modal-box {
+            width: 100%;
+            max-width: 700px;
+            max-height: 92vh;
+            overflow-y: auto;
+            padding: 25px;
+            border-radius: 18px;
+            background: #fff;
+            box-shadow: 0 20px 70px rgba(0,0,0,.25);
+        }
+
+        .edit-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 22px;
+        }
+
+        .edit-modal-header h2 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .edit-modal-close {
+            width: 38px;
+            height: 38px;
+            border: 0;
+            border-radius: 50%;
+            background: #f1f1f1;
+            cursor: pointer;
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .edit-modal-close:hover {
+            background: #e5e5e5;
+        }
+
+        .edit-form-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .edit-form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .edit-form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .edit-form-group label {
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .edit-form-group input,
+        .edit-form-group textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 11px 12px;
+            border: 1px solid #ddd;
+            border-radius: 9px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            background: #fff;
+        }
+
+        .edit-form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .edit-form-group input:focus,
+        .edit-form-group textarea:focus {
+            border-color: #777;
+        }
+
+        .edit-category-info {
+            padding: 11px 12px;
+            border: 1px solid #ddd;
+            border-radius: 9px;
+            background: #f8f8f8;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .edit-form-checks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 5px;
+        }
+
+        .edit-form-check {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .edit-form-check input {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+        }
+
+        .edit-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid #eee;
+        }
+
+        .edit-cancel-button,
+        .edit-save-button {
+            border: 0;
+            padding: 11px 18px;
+            border-radius: 9px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .edit-cancel-button {
+            background: #eee;
+        }
+
+        .edit-save-button {
+            background: #e8f7ed;
+            color: #18743a;
+        }
+
+        .edit-save-button:disabled,
+        .edit-cancel-button:disabled {
+            opacity: .5;
+            cursor: not-allowed;
         }
 
         /* =========================
@@ -650,6 +823,32 @@
             .admin-filter-grid {
                 grid-template-columns: 1fr;
             }
+
+            .edit-modal {
+                padding: 10px;
+            }
+
+            .edit-modal-box {
+                padding: 18px;
+                max-height: 94vh;
+            }
+
+            .edit-form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .edit-form-group.full {
+                grid-column: auto;
+            }
+
+            .edit-modal-actions {
+                flex-direction: column;
+            }
+
+            .edit-cancel-button,
+            .edit-save-button {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -720,8 +919,6 @@
 
         <div class="admin-container">
 
-            <!-- HEADER -->
-
             <header class="admin-header">
 
                 <div>
@@ -758,8 +955,6 @@
 
             </header>
 
-
-            <!-- MESAJ -->
 
             <div
                 id="adminMessage"
@@ -1007,6 +1202,256 @@
     </section>
 
 
+    <!-- =========================
+         İŞLETME DÜZENLEME MODALI
+    ========================= -->
+
+    <div
+        id="editBusinessModal"
+        class="edit-modal"
+    >
+
+        <div class="edit-modal-box">
+
+            <div class="edit-modal-header">
+
+                <h2>
+                    ✏️ İşletmeyi Düzenle
+                </h2>
+
+                <button
+                    type="button"
+                    class="edit-modal-close"
+                    onclick="closeEditBusinessModal()"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="editBusinessForm">
+
+                <input
+                    type="hidden"
+                    id="editBusinessId"
+                >
+
+
+                <div class="edit-form-grid">
+
+                    <div class="edit-form-group full">
+
+                        <label for="editBusinessName">
+                            İşletme Adı
+                        </label>
+
+                        <input
+                            type="text"
+                            id="editBusinessName"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="edit-form-group">
+
+                        <label>
+                            Kategori
+                        </label>
+
+                        <div
+                            id="editBusinessCategory"
+                            class="edit-category-info"
+                        >
+                            -
+                        </div>
+
+                    </div>
+
+
+                    <div class="edit-form-group">
+
+                        <label for="editBusinessDistrict">
+                            İlçe
+                        </label>
+
+                        <input
+                            type="text"
+                            id="editBusinessDistrict"
+                        >
+
+                    </div>
+
+
+                    <div class="edit-form-group full">
+
+                        <label for="editBusinessAddress">
+                            Adres
+                        </label>
+
+                        <input
+                            type="text"
+                            id="editBusinessAddress"
+                        >
+
+                    </div>
+
+
+                    <div class="edit-form-group">
+
+                        <label for="editBusinessPhone">
+                            Telefon
+                        </label>
+
+                        <input
+                            type="text"
+                            id="editBusinessPhone"
+                        >
+
+                    </div>
+
+
+                    <div class="edit-form-group">
+
+                        <label for="editOwnerName">
+                            İşletme Sahibi
+                        </label>
+
+                        <input
+                            type="text"
+                            id="editOwnerName"
+                        >
+
+                    </div>
+
+
+                    <div class="edit-form-group">
+
+                        <label for="editOwnerPhone">
+                            Sahibi Telefon
+                        </label>
+
+                        <input
+                            type="text"
+                            id="editOwnerPhone"
+                        >
+
+                    </div>
+
+
+                    <div class="edit-form-group">
+
+                        <label for="editOwnerEmail">
+                            Sahibi E-posta
+                        </label>
+
+                        <input
+                            type="email"
+                            id="editOwnerEmail"
+                        >
+
+                    </div>
+
+
+                    <div class="edit-form-group">
+
+                        <label for="editInstagram">
+                            Instagram
+                        </label>
+
+                        <input
+                            type="text"
+                            id="editInstagram"
+                            placeholder="@kullaniciadi"
+                        >
+
+                    </div>
+
+
+                    <div class="edit-form-group full">
+
+                        <label for="editDescription">
+                            İşletme Açıklaması
+                        </label>
+
+                        <textarea
+                            id="editDescription"
+                        ></textarea>
+
+                    </div>
+
+
+                    <div class="edit-form-group full">
+
+                        <label>
+                            Durum
+                        </label>
+
+                        <div class="edit-form-checks">
+
+                            <label class="edit-form-check">
+
+                                <input
+                                    type="checkbox"
+                                    id="editApproved"
+                                >
+
+                                <span>
+                                    İşletme onaylı
+                                </span>
+
+                            </label>
+
+
+                            <label class="edit-form-check">
+
+                                <input
+                                    type="checkbox"
+                                    id="editFeatured"
+                                >
+
+                                <span>
+                                    ⭐ Öne çıkar
+                                </span>
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="edit-modal-actions">
+
+                    <button
+                        type="button"
+                        class="edit-cancel-button"
+                        onclick="closeEditBusinessModal()"
+                    >
+                        Vazgeç
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="edit-save-button"
+                        id="editBusinessSaveButton"
+                    >
+                        💾 Değişiklikleri Kaydet
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
     <!-- SUPABASE -->
 
     <script
@@ -1017,7 +1462,7 @@
     <!-- ADMIN JS -->
 
     <script
-        src="admin.js?v=5"
+        src="admin.js?v=6"
     ></script>
 
 </body>
