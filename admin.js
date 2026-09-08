@@ -142,6 +142,896 @@ let isInitializing = false;
 
 
 // ============================================================
+// FOTOĞRAF LIGHTBOX GLOBAL
+// ============================================================
+
+let photoGallery = [];
+
+let photoGalleryIndex = 0;
+
+let photoTouchStartX = 0;
+
+let photoTouchStartY = 0;
+
+
+// ============================================================
+// FOTOĞRAF LIGHTBOX OLUŞTUR
+// ============================================================
+
+function createPhotoLightbox() {
+
+    if (
+        document.getElementById(
+            "photoLightbox"
+        )
+    ) {
+        return;
+    }
+
+
+    const style =
+        document.createElement("style");
+
+
+    style.id =
+        "photoLightboxStyles";
+
+
+    style.textContent = `
+
+        /* =====================================================
+           PHOTO LIGHTBOX
+        ===================================================== */
+
+        .photo-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, .94);
+            z-index: 5000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            touch-action: none;
+        }
+
+        .photo-lightbox.open {
+            display: flex;
+        }
+
+        .photo-lightbox-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .photo-lightbox-image {
+            max-width: 90vw;
+            max-height: 90vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 10px;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-user-drag: none;
+            touch-action: none;
+            box-shadow: 0 20px 60px rgba(0,0,0,.4);
+            transition: opacity .15s ease;
+        }
+
+        .photo-lightbox-close,
+        .photo-lightbox-prev,
+        .photo-lightbox-next {
+            position: absolute;
+            border: 0;
+            color: #fff;
+            background: rgba(255,255,255,.15);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background .2s ease, transform .2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .photo-lightbox-close:hover,
+        .photo-lightbox-prev:hover,
+        .photo-lightbox-next:hover {
+            background: rgba(255,255,255,.28);
+        }
+
+        .photo-lightbox-close {
+            top: 15px;
+            right: 20px;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            font-size: 31px;
+            line-height: 1;
+        }
+
+        .photo-lightbox-prev,
+        .photo-lightbox-next {
+            top: 50%;
+            transform: translateY(-50%);
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            font-size: 38px;
+            line-height: 1;
+        }
+
+        .photo-lightbox-prev {
+            left: 20px;
+        }
+
+        .photo-lightbox-next {
+            right: 20px;
+        }
+
+        .photo-lightbox-prev:hover {
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .photo-lightbox-next:hover {
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .photo-lightbox-counter {
+            position: absolute;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            background: rgba(0,0,0,.60);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        .gallery-item img {
+            cursor: zoom-in;
+        }
+
+        @media (max-width: 600px) {
+
+            .photo-lightbox {
+                padding: 8px;
+            }
+
+            .photo-lightbox-image {
+                max-width: 96vw;
+                max-height: 84vh;
+                border-radius: 7px;
+            }
+
+            .photo-lightbox-prev,
+            .photo-lightbox-next {
+                width: 43px;
+                height: 43px;
+                font-size: 29px;
+                background: rgba(255,255,255,.13);
+            }
+
+            .photo-lightbox-prev {
+                left: 8px;
+            }
+
+            .photo-lightbox-next {
+                right: 8px;
+            }
+
+            .photo-lightbox-close {
+                top: 10px;
+                right: 10px;
+                width: 42px;
+                height: 42px;
+                font-size: 28px;
+            }
+
+            .photo-lightbox-counter {
+                bottom: 12px;
+                font-size: 12px;
+                padding: 7px 12px;
+            }
+        }
+
+    `;
+
+
+    document.head.appendChild(
+        style
+    );
+
+
+    const lightbox =
+        document.createElement("div");
+
+
+    lightbox.id =
+        "photoLightbox";
+
+
+    lightbox.className =
+        "photo-lightbox";
+
+
+    lightbox.innerHTML = `
+
+        <div class="photo-lightbox-content">
+
+            <button
+                type="button"
+                class="photo-lightbox-close"
+                id="photoLightboxClose"
+                aria-label="Kapat"
+            >
+                ×
+            </button>
+
+            <button
+                type="button"
+                class="photo-lightbox-prev"
+                id="photoLightboxPrev"
+                aria-label="Önceki fotoğraf"
+            >
+                ‹
+            </button>
+
+            <img
+                id="photoLightboxImage"
+                class="photo-lightbox-image"
+                src=""
+                alt="İşletme fotoğrafı"
+                draggable="false"
+            >
+
+            <button
+                type="button"
+                class="photo-lightbox-next"
+                id="photoLightboxNext"
+                aria-label="Sonraki fotoğraf"
+            >
+                ›
+            </button>
+
+            <div
+                class="photo-lightbox-counter"
+                id="photoLightboxCounter"
+            >
+                1 / 1
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        lightbox
+    );
+
+
+    const closeButton =
+        document.getElementById(
+            "photoLightboxClose"
+        );
+
+    const previousButton =
+        document.getElementById(
+            "photoLightboxPrev"
+        );
+
+    const nextButton =
+        document.getElementById(
+            "photoLightboxNext"
+        );
+
+
+    closeButton?.addEventListener(
+        "click",
+        function (event) {
+
+            event.stopPropagation();
+
+            closePhotoGallery();
+        }
+    );
+
+
+    previousButton?.addEventListener(
+        "click",
+        function (event) {
+
+            event.stopPropagation();
+
+            showPreviousPhoto();
+        }
+    );
+
+
+    nextButton?.addEventListener(
+        "click",
+        function (event) {
+
+            event.stopPropagation();
+
+            showNextPhoto();
+        }
+    );
+
+
+    lightbox.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                event.target ===
+                lightbox
+            ) {
+
+                closePhotoGallery();
+            }
+        }
+    );
+
+
+    const content =
+        lightbox.querySelector(
+            ".photo-lightbox-content"
+        );
+
+
+    content?.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                event.target ===
+                content
+            ) {
+
+                closePhotoGallery();
+            }
+        }
+    );
+
+
+    lightbox.addEventListener(
+        "touchstart",
+        function (event) {
+
+            if (
+                event.touches.length !== 1
+            ) {
+                return;
+            }
+
+
+            photoTouchStartX =
+                event.touches[0].clientX;
+
+
+            photoTouchStartY =
+                event.touches[0].clientY;
+
+        },
+        {
+            passive: true
+        }
+    );
+
+
+    lightbox.addEventListener(
+        "touchend",
+        function (event) {
+
+            if (
+                !photoTouchStartX
+            ) {
+                return;
+            }
+
+
+            if (
+                event.changedTouches.length !== 1
+            ) {
+
+                photoTouchStartX = 0;
+                photoTouchStartY = 0;
+
+                return;
+            }
+
+
+            const endX =
+                event.changedTouches[0].clientX;
+
+
+            const endY =
+                event.changedTouches[0].clientY;
+
+
+            const diffX =
+                endX -
+                photoTouchStartX;
+
+
+            const diffY =
+                endY -
+                photoTouchStartY;
+
+
+            photoTouchStartX = 0;
+            photoTouchStartY = 0;
+
+
+            /*
+             * Yatay hareket dikey hareketten
+             * belirgin şekilde büyük olmalı.
+             */
+            if (
+                Math.abs(diffX) < 50 ||
+                Math.abs(diffX) <= Math.abs(diffY)
+            ) {
+
+                return;
+            }
+
+
+            if (diffX > 0) {
+
+                showPreviousPhoto();
+
+            } else {
+
+                showNextPhoto();
+            }
+
+        },
+        {
+            passive: true
+        }
+    );
+}
+
+
+// ============================================================
+// FOTOĞRAF GALERİSİ AÇ
+// ============================================================
+
+function openPhotoGallery(
+    images,
+    index = 0
+) {
+
+    if (
+        !Array.isArray(images) ||
+        !images.length
+    ) {
+        return;
+    }
+
+
+    photoGallery =
+        images
+            .map(
+                image => {
+
+                    if (
+                        typeof image === "string"
+                    ) {
+
+                        return image;
+                    }
+
+
+                    return image?.image_url ||
+                        "";
+                }
+            )
+            .filter(Boolean);
+
+
+    if (!photoGallery.length) {
+        return;
+    }
+
+
+    photoGalleryIndex =
+        Number(index) || 0;
+
+
+    if (
+        photoGalleryIndex < 0
+    ) {
+
+        photoGalleryIndex = 0;
+    }
+
+
+    if (
+        photoGalleryIndex >=
+        photoGallery.length
+    ) {
+
+        photoGalleryIndex =
+            photoGallery.length - 1;
+    }
+
+
+    const lightbox =
+        document.getElementById(
+            "photoLightbox"
+        );
+
+
+    if (!lightbox) {
+
+        createPhotoLightbox();
+    }
+
+
+    const finalLightbox =
+        document.getElementById(
+            "photoLightbox"
+        );
+
+
+    if (!finalLightbox) {
+        return;
+    }
+
+
+    finalLightbox.classList.add(
+        "open"
+    );
+
+
+    document.body.style.overflow =
+        "hidden";
+
+
+    updatePhotoGallery();
+}
+
+
+// ============================================================
+// İŞLETME FOTOĞRAFLARINDAN GALERİ AÇ
+// ============================================================
+
+function openBusinessPhotoGallery(
+    businessId,
+    index = 0
+) {
+
+    const business =
+        allBusinesses.find(
+            item =>
+                Number(item.id) ===
+                Number(businessId)
+        );
+
+
+    if (!business) {
+
+        console.warn(
+            "Galeri için işletme bulunamadı:",
+            businessId
+        );
+
+        return;
+    }
+
+
+    const images =
+        business.images || [];
+
+
+    if (!images.length) {
+        return;
+    }
+
+
+    openPhotoGallery(
+        images,
+        index
+    );
+}
+
+
+// ============================================================
+// FOTOĞRAF GALERİSİNİ GÜNCELLE
+// ============================================================
+
+function updatePhotoGallery() {
+
+    const image =
+        document.getElementById(
+            "photoLightboxImage"
+        );
+
+
+    const counter =
+        document.getElementById(
+            "photoLightboxCounter"
+        );
+
+
+    const previousButton =
+        document.getElementById(
+            "photoLightboxPrev"
+        );
+
+
+    const nextButton =
+        document.getElementById(
+            "photoLightboxNext"
+        );
+
+
+    if (
+        !image ||
+        !photoGallery.length
+    ) {
+
+        return;
+    }
+
+
+    if (
+        photoGalleryIndex < 0
+    ) {
+
+        photoGalleryIndex =
+            photoGallery.length - 1;
+    }
+
+
+    if (
+        photoGalleryIndex >=
+        photoGallery.length
+    ) {
+
+        photoGalleryIndex = 0;
+    }
+
+
+    image.style.opacity =
+        "0.4";
+
+
+    image.src =
+        photoGallery[
+            photoGalleryIndex
+        ];
+
+
+    image.onload =
+        function () {
+
+            image.style.opacity =
+                "1";
+        };
+
+
+    image.onerror =
+        function () {
+
+            image.style.opacity =
+                "1";
+        };
+
+
+    if (counter) {
+
+        counter.textContent =
+            `${photoGalleryIndex + 1} / ${photoGallery.length}`;
+    }
+
+
+    const showNavigation =
+        photoGallery.length > 1;
+
+
+    if (previousButton) {
+
+        previousButton.style.display =
+            showNavigation
+                ? "flex"
+                : "none";
+    }
+
+
+    if (nextButton) {
+
+        nextButton.style.display =
+            showNavigation
+                ? "flex"
+                : "none";
+    }
+}
+
+
+// ============================================================
+// ÖNCEKİ FOTOĞRAF
+// ============================================================
+
+function showPreviousPhoto() {
+
+    if (
+        !photoGallery.length
+    ) {
+        return;
+    }
+
+
+    photoGalleryIndex--;
+
+
+    if (
+        photoGalleryIndex < 0
+    ) {
+
+        photoGalleryIndex =
+            photoGallery.length - 1;
+    }
+
+
+    updatePhotoGallery();
+}
+
+
+// ============================================================
+// SONRAKİ FOTOĞRAF
+// ============================================================
+
+function showNextPhoto() {
+
+    if (
+        !photoGallery.length
+    ) {
+        return;
+    }
+
+
+    photoGalleryIndex++;
+
+
+    if (
+        photoGalleryIndex >=
+        photoGallery.length
+    ) {
+
+        photoGalleryIndex = 0;
+    }
+
+
+    updatePhotoGallery();
+}
+
+
+// ============================================================
+// FOTOĞRAF GALERİSİNİ KAPAT
+// ============================================================
+
+function closePhotoGallery() {
+
+    const lightbox =
+        document.getElementById(
+            "photoLightbox"
+        );
+
+
+    if (lightbox) {
+
+        lightbox.classList.remove(
+            "open"
+        );
+    }
+
+
+    document.body.style.overflow =
+        "";
+
+
+    photoGallery = [];
+
+    photoGalleryIndex = 0;
+
+    photoTouchStartX = 0;
+
+    photoTouchStartY = 0;
+}
+
+
+// ============================================================
+// LIGHTBOX KLAVYE KONTROLLERİ
+// ============================================================
+
+document.addEventListener(
+    "keydown",
+    function (event) {
+
+        const lightbox =
+            document.getElementById(
+                "photoLightbox"
+            );
+
+
+        if (
+            !lightbox ||
+            !lightbox.classList.contains(
+                "open"
+            )
+        ) {
+
+            return;
+        }
+
+
+        if (
+            event.key === "Escape"
+        ) {
+
+            event.preventDefault();
+
+            closePhotoGallery();
+
+            return;
+        }
+
+
+        if (
+            event.key === "ArrowLeft"
+        ) {
+
+            event.preventDefault();
+
+            showPreviousPhoto();
+
+            return;
+        }
+
+
+        if (
+            event.key === "ArrowRight"
+        ) {
+
+            event.preventDefault();
+
+            showNextPhoto();
+
+            return;
+        }
+    }
+);
+
+
+// ============================================================
+// LIGHTBOX'I SAYFA HAZIRLANIRKEN OLUŞTUR
+// ============================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        createPhotoLightbox();
+    }
+);
+
+
+// ============================================================
 // SAYFA BAŞLANGICI
 // ============================================================
 
@@ -418,6 +1308,7 @@ loginForm?.addEventListener(
         if (button) {
 
             button.disabled = true;
+
             button.textContent =
                 "Giriş yapılıyor...";
         }
@@ -472,6 +1363,7 @@ loginForm?.addEventListener(
             if (button) {
 
                 button.disabled = false;
+
                 button.textContent =
                     "Giriş Yap";
             }
@@ -887,7 +1779,9 @@ async function loadApplications() {
 
 
         renderPendingBusinesses();
+
         renderFeaturedBusinesses();
+
         renderPhotoBusinesses();
 
 
@@ -1426,6 +2320,7 @@ function renderBusinessCard(
 
             <div>
                 <strong>🖼️ Fotoğraf Galerisi</strong>
+
                 ${gallery}
 
                 <div class="upload-box">
@@ -1537,6 +2432,10 @@ function renderAdminImage(
         images.length - 1;
 
 
+    const businessId =
+        image.business_id;
+
+
     return `
         <div class="gallery-item">
 
@@ -1546,6 +2445,10 @@ function renderAdminImage(
                 )}"
                 alt="İşletme fotoğrafı"
                 loading="lazy"
+                onclick="openBusinessPhotoGallery(
+                    ${businessId},
+                    ${index}
+                )"
             >
 
 
