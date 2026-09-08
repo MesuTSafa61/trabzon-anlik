@@ -1,163 +1,336 @@
 const SUPABASE_URL =
     "https://yhunhkzsecppbnhjewrt.supabase.co";
+
 const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_0h5ycfDBJjgdf6bXlZ9OEg_K45u2b2v";
-const BUSINESS_IMAGES_BUCKET = "business-images";
+
+const BUSINESS_IMAGES_BUCKET =
+    "business-images";
+
+
 const supabaseClient =
     window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_PUBLISHABLE_KEY
     );
+
+
 // =====================================
 // ELEMENTLER
 // =====================================
+
 const loginScreen =
     document.getElementById("loginScreen");
+
 const loginForm =
     document.getElementById("loginForm");
+
 const loginEmail =
     document.getElementById("loginEmail");
+
 const loginPassword =
     document.getElementById("loginPassword");
+
 const loginError =
     document.getElementById("loginError");
+
 const adminApp =
     document.getElementById("adminApp");
+
 const adminUser =
     document.getElementById("adminUser");
+
 const logoutButton =
     document.getElementById("logoutButton");
+
 const refreshButton =
     document.getElementById("refreshButton");
+
 const applications =
     document.getElementById("applications");
+
 const reviewsList =
     document.getElementById("reviewsList");
+
 const adminMessage =
     document.getElementById("adminMessage");
+
+
+// Dashboard
+
+const statTotalBusinesses =
+    document.getElementById(
+        "statTotalBusinesses"
+    );
+
+const statPendingBusinesses =
+    document.getElementById(
+        "statPendingBusinesses"
+    );
+
+const statApprovedBusinesses =
+    document.getElementById(
+        "statApprovedBusinesses"
+    );
+
+const statFeaturedBusinesses =
+    document.getElementById(
+        "statFeaturedBusinesses"
+    );
+
+const statTotalReviews =
+    document.getElementById(
+        "statTotalReviews"
+    );
+
+const statTotalEvents =
+    document.getElementById(
+        "statTotalEvents"
+    );
+
+const businessStatusDashboard =
+    document.getElementById(
+        "businessStatusDashboard"
+    );
+
+const recentBusinessesDashboard =
+    document.getElementById(
+        "recentBusinessesDashboard"
+    );
+
+
 // =====================================
 // BAŞLANGIÇ
 // =====================================
+
 document.addEventListener(
     "DOMContentLoaded",
     initializeAdmin
 );
+
+
 async function initializeAdmin() {
+
     const {
         data: { session },
         error
-    } = await supabaseClient.auth.getSession();
+    } =
+        await supabaseClient.auth.getSession();
+
+
     if (error) {
+
         console.error(
             "Session kontrol hatası:",
             error
         );
+
         showLogin();
+
         return;
     }
+
+
     if (session?.user) {
+
         await checkAdmin(
             session.user.id
         );
+
     } else {
+
         showLogin();
+
     }
+
+
     supabaseClient.auth.onAuthStateChange(
-        async (event, session) => {
+        async (
+            event,
+            session
+        ) => {
+
             if (
                 event === "SIGNED_IN" &&
                 session?.user
             ) {
+
                 await checkAdmin(
                     session.user.id
                 );
+
             }
+
+
             if (
                 event === "SIGNED_OUT"
             ) {
+
                 showLogin();
+
             }
+
         }
     );
 }
+
+
 // =====================================
 // ADMİN KONTROLÜ
 // =====================================
-async function checkAdmin(userId) {
+
+async function checkAdmin(
+    userId
+) {
+
     console.log(
         "Admin kontrolü:",
         userId
     );
+
+
     const {
         data,
         error
-    } = await supabaseClient
-        .from("admin_users")
-        .select("id, created_at")
-        .eq("id", userId)
-        .maybeSingle();
+    } =
+        await supabaseClient
+            .from("admin_users")
+            .select(
+                "id, created_at"
+            )
+            .eq(
+                "id",
+                userId
+            )
+            .maybeSingle();
+
+
     if (error) {
+
         console.error(
             "Admin kontrol hatası:",
             error
         );
+
         showLoginError(
             "Admin kontrolü sırasında hata oluştu: " +
             error.message
         );
+
         showLogin();
+
         return;
     }
+
+
     if (!data) {
+
         await supabaseClient.auth.signOut();
+
         showLoginError(
             "Bu hesap yönetim paneline erişim yetkisine sahip değil."
         );
+
         return;
     }
+
+
     const {
-        data: { user }
-    } = await supabaseClient.auth.getUser();
-    await showAdmin(user);
+        data: {
+            user
+        }
+    } =
+        await supabaseClient.auth.getUser();
+
+
+    await showAdmin(
+        user
+    );
 }
+
+
 // =====================================
 // ADMİN PANELİNİ GÖSTER
 // =====================================
-async function showAdmin(user) {
+
+async function showAdmin(
+    user
+) {
+
     if (loginScreen) {
-        loginScreen.style.display = "none";
+
+        loginScreen.style.display =
+            "none";
+
     }
+
+
     if (adminApp) {
-        adminApp.style.display = "block";
+
+        adminApp.style.display =
+            "block";
+
     }
+
+
     if (adminUser) {
+
         adminUser.textContent =
             user?.email || "";
+
     }
+
+
     await Promise.all([
+        loadDashboard(),
         loadApplications(),
         loadReviews()
     ]);
 }
+
+
 // =====================================
 // LOGIN
 // =====================================
+
 loginForm?.addEventListener(
     "submit",
-    async (event) => {
+    async (
+        event
+    ) => {
+
         event.preventDefault();
+
+
         const email =
             loginEmail.value.trim();
+
         const password =
             loginPassword.value;
-        if (!email || !password) {
+
+
+        if (
+            !email ||
+            !password
+        ) {
+
             showLoginError(
                 "E-posta ve şifre gerekli."
             );
+
             return;
         }
-        setLoginLoading(true);
-        showLoginError("");
+
+
+        setLoginLoading(
+            true
+        );
+
+        showLoginError(
+            ""
+        );
+
+
         const {
             data,
             error
@@ -166,64 +339,765 @@ loginForm?.addEventListener(
                 email,
                 password
             });
+
+
         if (error) {
+
             console.error(
                 "Giriş hatası:",
                 error
             );
+
             showLoginError(
                 error.message ||
                 "Giriş yapılamadı."
             );
-            setLoginLoading(false);
+
+            setLoginLoading(
+                false
+            );
+
             return;
         }
+
+
         if (data?.user) {
+
             await checkAdmin(
                 data.user.id
             );
+
         }
-        setLoginLoading(false);
+
+
+        setLoginLoading(
+            false
+        );
+
     }
 );
+
+
 // =====================================
 // ÇIKIŞ
 // =====================================
+
 logoutButton?.addEventListener(
     "click",
     async () => {
+
         await supabaseClient.auth.signOut();
+
         showLogin();
+
     }
 );
+
+
 // =====================================
 // YENİLE
 // =====================================
+
 refreshButton?.addEventListener(
     "click",
     async () => {
-        refreshButton.disabled = true;
-        await Promise.all([
-            loadApplications(),
-            loadReviews()
-        ]);
-        refreshButton.disabled = false;
-        showMessage(
-            "Bilgiler yenilendi.",
-            "success"
-        );
+
+        refreshButton.disabled =
+            true;
+
+        refreshButton.textContent =
+            "⏳ Yenileniyor...";
+
+
+        try {
+
+            await Promise.all([
+                loadDashboard(),
+                loadApplications(),
+                loadReviews()
+            ]);
+
+
+            showMessage(
+                "Bilgiler yenilendi.",
+                "success"
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Yenileme hatası:",
+                error
+            );
+
+            showMessage(
+                "Bilgiler yenilenirken hata oluştu.",
+                "error"
+            );
+
+        }
+
+
+        refreshButton.disabled =
+            false;
+
+        refreshButton.textContent =
+            "🔄 Yenile";
+
     }
 );
+
+
+// =====================================
+// DASHBOARD
+// =====================================
+
+async function loadDashboard() {
+
+    setDashboardLoading();
+
+
+    try {
+
+        const [
+            businessesResult,
+            reviewsResult,
+            eventsResult
+        ] =
+            await Promise.all([
+
+                supabaseClient
+                    .from("businesses")
+                    .select(
+                        "id, name, is_approved, is_featured, created_at, image_url",
+                        {
+                            count: "exact"
+                        }
+                    )
+                    .order(
+                        "created_at",
+                        {
+                            ascending: false
+                        }
+                    ),
+
+                supabaseClient
+                    .from("reviews")
+                    .select(
+                        "id",
+                        {
+                            count: "exact",
+                            head: true
+                        }
+                    ),
+
+                supabaseClient
+                    .from("events")
+                    .select(
+                        "id",
+                        {
+                            count: "exact",
+                            head: true
+                        }
+                    )
+
+            ]);
+
+
+        const businesses =
+            businessesResult.data || [];
+
+
+        const businessError =
+            businessesResult.error;
+
+
+        if (businessError) {
+
+            console.error(
+                "Dashboard işletme hatası:",
+                businessError
+            );
+
+            throw businessError;
+
+        }
+
+
+        const totalBusinesses =
+            businesses.length;
+
+
+        const approvedBusinesses =
+            businesses.filter(
+                business =>
+                    business.is_approved === true
+            ).length;
+
+
+        const pendingBusinesses =
+            businesses.filter(
+                business =>
+                    business.is_approved !== true
+            ).length;
+
+
+        const featuredBusinesses =
+            businesses.filter(
+                business =>
+                    business.is_featured === true
+            ).length;
+
+
+        const totalReviews =
+            reviewsResult.count || 0;
+
+
+        /*
+         * events tablosu henüz yoksa
+         * dashboard diğer verileri göstermeye
+         * devam eder.
+         */
+
+        const totalEvents =
+            eventsResult.error
+                ? 0
+                : (
+                    eventsResult.count || 0
+                );
+
+
+        updateDashboardNumber(
+            statTotalBusinesses,
+            totalBusinesses
+        );
+
+
+        updateDashboardNumber(
+            statPendingBusinesses,
+            pendingBusinesses
+        );
+
+
+        updateDashboardNumber(
+            statApprovedBusinesses,
+            approvedBusinesses
+        );
+
+
+        updateDashboardNumber(
+            statFeaturedBusinesses,
+            featuredBusinesses
+        );
+
+
+        updateDashboardNumber(
+            statTotalReviews,
+            totalReviews
+        );
+
+
+        updateDashboardNumber(
+            statTotalEvents,
+            totalEvents
+        );
+
+
+        renderBusinessStatusDashboard(
+            totalBusinesses,
+            approvedBusinesses,
+            pendingBusinesses
+        );
+
+
+        await renderRecentBusinesses(
+            businesses.slice(
+                0,
+                5
+            )
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Dashboard yükleme hatası:",
+            error
+        );
+
+
+        updateDashboardNumber(
+            statTotalBusinesses,
+            0
+        );
+
+        updateDashboardNumber(
+            statPendingBusinesses,
+            0
+        );
+
+        updateDashboardNumber(
+            statApprovedBusinesses,
+            0
+        );
+
+        updateDashboardNumber(
+            statFeaturedBusinesses,
+            0
+        );
+
+        updateDashboardNumber(
+            statTotalReviews,
+            0
+        );
+
+        updateDashboardNumber(
+            statTotalEvents,
+            0
+        );
+
+
+        if (
+            businessStatusDashboard
+        ) {
+
+            businessStatusDashboard.innerHTML = `
+                <div class="dashboard-empty">
+                    Dashboard verileri yüklenemedi.
+                </div>
+            `;
+
+        }
+
+
+        if (
+            recentBusinessesDashboard
+        ) {
+
+            recentBusinessesDashboard.innerHTML = `
+                <div class="dashboard-empty">
+                    Son işletmeler yüklenemedi.
+                </div>
+            `;
+
+        }
+
+    }
+}
+
+
+// =====================================
+// DASHBOARD SAYI
+// =====================================
+
+function updateDashboardNumber(
+    element,
+    value
+) {
+
+    if (!element) return;
+
+    element.textContent =
+        Number(
+            value || 0
+        ).toLocaleString(
+            "tr-TR"
+        );
+}
+
+
+// =====================================
+// DASHBOARD LOADING
+// =====================================
+
+function setDashboardLoading() {
+
+    const elements = [
+        statTotalBusinesses,
+        statPendingBusinesses,
+        statApprovedBusinesses,
+        statFeaturedBusinesses,
+        statTotalReviews,
+        statTotalEvents
+    ];
+
+
+    elements.forEach(
+        element => {
+
+            if (element) {
+
+                element.textContent =
+                    "…";
+
+            }
+
+        }
+    );
+
+
+    if (
+        businessStatusDashboard
+    ) {
+
+        businessStatusDashboard.innerHTML = `
+            <div class="loading">
+                Hesaplanıyor...
+            </div>
+        `;
+
+    }
+
+
+    if (
+        recentBusinessesDashboard
+    ) {
+
+        recentBusinessesDashboard.innerHTML = `
+            <div class="loading">
+                Yükleniyor...
+            </div>
+        `;
+
+    }
+}
+
+
+// =====================================
+// DASHBOARD İŞLETME DURUMU
+// =====================================
+
+function renderBusinessStatusDashboard(
+    total,
+    approved,
+    pending
+) {
+
+    if (
+        !businessStatusDashboard
+    ) {
+        return;
+    }
+
+
+    if (!total) {
+
+        businessStatusDashboard.innerHTML = `
+            <div class="dashboard-empty">
+                Henüz işletme bulunmuyor.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const approvedPercent =
+        Math.round(
+            (
+                approved /
+                total
+            ) *
+            100
+        );
+
+
+    const pendingPercent =
+        Math.round(
+            (
+                pending /
+                total
+            ) *
+            100
+        );
+
+
+    businessStatusDashboard.innerHTML = `
+
+        <div class="dashboard-progress">
+
+            <div class="dashboard-progress-row">
+                <span>
+                    ✅ Onaylı işletmeler
+                </span>
+
+                <strong>
+                    ${approved}
+                    (%${approvedPercent})
+                </strong>
+            </div>
+
+            <div class="dashboard-progress-track">
+                <div
+                    class="dashboard-progress-fill"
+                    style="width:${approvedPercent}%"
+                ></div>
+            </div>
+
+        </div>
+
+
+        <div class="dashboard-progress">
+
+            <div class="dashboard-progress-row">
+                <span>
+                    ⏳ Onay bekleyen
+                </span>
+
+                <strong>
+                    ${pending}
+                    (%${pendingPercent})
+                </strong>
+            </div>
+
+            <div class="dashboard-progress-track">
+                <div
+                    class="dashboard-progress-fill"
+                    style="width:${pendingPercent}%"
+                ></div>
+            </div>
+
+        </div>
+
+    `;
+}
+
+
+// =====================================
+// SON EKLENEN İŞLETMELER
+// =====================================
+
+async function renderRecentBusinesses(
+    businesses
+) {
+
+    if (
+        !recentBusinessesDashboard
+    ) {
+        return;
+    }
+
+
+    if (
+        !businesses?.length
+    ) {
+
+        recentBusinessesDashboard.innerHTML = `
+            <div class="dashboard-empty">
+                Henüz işletme bulunmuyor.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const ids =
+        businesses
+            .map(
+                business =>
+                    business.id
+            )
+            .filter(Boolean);
+
+
+    let imageMap = {};
+
+
+    if (ids.length) {
+
+        const {
+            data: images,
+            error
+        } =
+            await supabaseClient
+                .from("business_images")
+                .select(`
+                    business_id,
+                    image_url,
+                    is_cover,
+                    sort_order,
+                    created_at
+                `)
+                .in(
+                    "business_id",
+                    ids
+                )
+                .order(
+                    "is_cover",
+                    {
+                        ascending: false
+                    }
+                )
+                .order(
+                    "sort_order",
+                    {
+                        ascending: true
+                    }
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: true
+                    }
+                );
+
+
+        if (error) {
+
+            console.warn(
+                "Dashboard fotoğraf hatası:",
+                error
+            );
+
+        } else {
+
+            (
+                images || []
+            ).forEach(
+                image => {
+
+                    if (
+                        !image?.business_id ||
+                        !image?.image_url
+                    ) {
+                        return;
+                    }
+
+
+                    const key =
+                        String(
+                            image.business_id
+                        );
+
+
+                    if (
+                        !imageMap[key]
+                    ) {
+
+                        imageMap[key] =
+                            image.image_url;
+
+                    }
+
+                }
+            );
+
+        }
+    }
+
+
+    recentBusinessesDashboard.innerHTML =
+        businesses
+            .map(
+                business => {
+
+                    const imageUrl =
+                        imageMap[
+                            String(
+                                business.id
+                            )
+                        ] ||
+                        business.image_url ||
+                        "";
+
+
+                    const status =
+                        business.is_approved
+                            ? "Onaylı"
+                            : "Onay bekliyor";
+
+
+                    return `
+
+                        <div
+                            class="dashboard-recent-item"
+                        >
+
+                            <div
+                                class="dashboard-recent-image"
+                            >
+
+                                ${
+                                    imageUrl
+                                        ? `
+                                            <img
+                                                src="${escapeHtml(
+                                                    imageUrl
+                                                )}"
+                                                alt="${escapeHtml(
+                                                    business.name || ""
+                                                )}"
+                                                loading="lazy"
+                                                onerror="this.style.display='none';"
+                                            >
+                                        `
+                                        : `
+                                            <div
+                                                style="
+                                                    width:100%;
+                                                    height:100%;
+                                                    display:flex;
+                                                    align-items:center;
+                                                    justify-content:center;
+                                                    font-size:22px;
+                                                "
+                                            >
+                                                🏪
+                                            </div>
+                                        `
+                                }
+
+                            </div>
+
+
+                            <div
+                                class="dashboard-recent-info"
+                            >
+
+                                <strong>
+                                    ${escapeHtml(
+                                        business.name || ""
+                                    )}
+                                </strong>
+
+                                <span>
+                                    ${
+                                        status
+                                    }
+                                    ·
+                                    ${formatDate(
+                                        business.created_at
+                                    )}
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+            )
+            .join("");
+}
+
+
 // =====================================
 // İŞLETMELERİ YÜKLE
 // =====================================
+
 async function loadApplications() {
+
     if (!applications) return;
+
+
     applications.innerHTML = `
         <div class="loading">
             İşletmeler yükleniyor...
         </div>
     `;
+
+
     const {
         data,
         error
@@ -242,36 +1116,53 @@ async function loadApplications() {
                     ascending: false
                 }
             );
+
+
     if (error) {
+
         console.error(
             "İşletmeler yüklenemedi:",
             error
         );
+
+
         applications.innerHTML = `
             <div class="error">
                 İşletmeler yüklenemedi.
             </div>
         `;
+
         return;
     }
+
+
     if (!data?.length) {
+
         applications.innerHTML = `
             <div class="empty">
                 Henüz işletme bulunmuyor.
             </div>
         `;
+
         return;
     }
+
+
     const businesses =
         await Promise.all(
             data.map(
-                async (business) => {
+                async (
+                    business
+                ) => {
+
                     const {
                         data: images,
                         error: imageError
                     } =
                         await supabaseClient
-                            .from("business_images")
+                            .from(
+                                "business_images"
+                            )
                             .select("*")
                             .eq(
                                 "business_id",
@@ -289,139 +1180,211 @@ async function loadApplications() {
                                     ascending: true
                                 }
                             );
+
+
                     if (imageError) {
+
                         console.error(
                             "Galeri hatası:",
                             imageError
                         );
+
                     }
+
+
                     return {
                         ...business,
                         images:
                             images || []
                     };
+
                 }
             )
         );
+
+
     applications.innerHTML =
         businesses
-            .map(renderBusinessCard)
+            .map(
+                renderBusinessCard
+            )
             .join("");
 }
+
+
 // =====================================
 // İŞLETME KARTI
 // =====================================
+
 function renderBusinessCard(
     business
 ) {
+
     const images =
         business.images || [];
+
+
     const categoryName =
         business.categories?.name ||
         "Kategori yok";
+
+
     const status =
         business.is_approved
             ? "Onaylı"
             : "Bekliyor";
+
+
     const statusClass =
         business.is_approved
             ? "approved"
             : "pending";
+
+
     const featuredButton =
         business.is_featured
             ? "featured-remove-button"
             : "featured-button";
+
+
     const featuredText =
         business.is_featured
             ? "⭐ Öne Çıkarıldı"
             : "☆ Öne Çıkar";
+
+
     return `
+
         <div class="application-card">
+
             <div class="application-header">
+
                 <div>
+
                     <h3>
                         ${escapeHtml(
                             business.name || ""
                         )}
                     </h3>
+
                     <span
                         class="status ${statusClass}"
                     >
                         ${status}
                     </span>
+
                 </div>
+
+
                 <div class="business-rating">
+
                     ⭐
+
                     ${Number(
                         business.rating || 0
                     ).toFixed(1)}
+
                     (${business.review_count || 0})
+
                 </div>
+
             </div>
+
+
             <div class="application-info">
+
                 <p>
                     <strong>Kategori:</strong>
-                    ${escapeHtml(categoryName)}
+                    ${escapeHtml(
+                        categoryName
+                    )}
                 </p>
+
+
                 <p>
                     <strong>İlçe:</strong>
                     ${escapeHtml(
                         business.district || "-"
                     )}
                 </p>
+
+
                 <p>
                     <strong>Adres:</strong>
                     ${escapeHtml(
                         business.address || "-"
                     )}
                 </p>
+
+
                 <p>
                     <strong>Telefon:</strong>
                     ${escapeHtml(
                         business.phone || "-"
                     )}
                 </p>
+
+
                 <p>
                     <strong>İşletme sahibi:</strong>
                     ${escapeHtml(
                         business.owner_name || "-"
                     )}
                 </p>
+
+
                 <p>
                     <strong>Sahibi telefon:</strong>
                     ${escapeHtml(
                         business.owner_phone || "-"
                     )}
                 </p>
+
+
                 <p>
                     <strong>Sahibi e-posta:</strong>
                     ${escapeHtml(
                         business.owner_email || "-"
                     )}
                 </p>
+
+
                 <p>
                     <strong>Instagram:</strong>
                     ${escapeHtml(
                         business.instagram || "-"
                     )}
                 </p>
+
             </div>
+
+
             <!-- GALERİ -->
+
             <div class="admin-gallery">
+
                 <div class="admin-gallery-header">
+
                     <h4>
                         🖼️ Fotoğraf Galerisi
                     </h4>
+
                     <span>
-                        ${images.length} fotoğraf
+                        ${images.length}
+                        fotoğraf
                     </span>
+
                 </div>
+
+
                 ${
                     images.length
                         ? `
+
                             <div
                                 class="admin-gallery-grid"
                             >
+
                                 ${
                                     images
                                         .map(
@@ -437,35 +1400,51 @@ function renderBusinessCard(
                                         )
                                         .join("")
                                 }
+
                             </div>
+
                         `
                         : `
+
                             <div
                                 class="admin-gallery-empty"
                             >
                                 Henüz fotoğraf eklenmemiş.
                             </div>
+
                         `
                 }
+
+
                 <div class="admin-upload-area">
+
                     <input
                         type="file"
                         id="imageInput-${business.id}"
                         accept="image/*"
                     >
+
+
                     <button
                         type="button"
                         onclick="uploadBusinessImage(${business.id})"
                     >
                         ➕ Fotoğraf Ekle
                     </button>
+
                 </div>
+
             </div>
+
+
             <!-- BUTONLAR -->
+
             <div class="application-actions">
+
                 ${
                     !business.is_approved
                         ? `
+
                             <button
                                 class="approve-button"
                                 onclick="approveBusiness(
@@ -474,6 +1453,8 @@ function renderBusinessCard(
                             >
                                 ✓ Onayla
                             </button>
+
+
                             <button
                                 class="reject-button"
                                 onclick="rejectBusiness(
@@ -482,9 +1463,12 @@ function renderBusinessCard(
                             >
                                 ✕ Reddet
                             </button>
+
                         `
                         : ""
                 }
+
+
                 <button
                     class="${featuredButton}"
                     onclick="toggleFeatured(
@@ -494,6 +1478,8 @@ function renderBusinessCard(
                 >
                     ${featuredText}
                 </button>
+
+
                 <button
                     class="delete-button"
                     onclick="deleteBusiness(
@@ -502,27 +1488,44 @@ function renderBusinessCard(
                 >
                     🗑️ İşletmeyi Sil
                 </button>
+
             </div>
+
         </div>
+
     `;
 }
+
+
 // =====================================
 // GALERİ FOTOĞRAFI
 // =====================================
+
 function renderAdminImage(
     image,
     images,
     index
 ) {
+
     const isCover =
         image.is_cover === true;
+
+
     const hasPrevious =
         index > 0;
+
+
     const hasNext =
-        index < images.length - 1;
+        index <
+        images.length - 1;
+
+
     return `
+
         <div class="admin-gallery-item">
+
             <div class="admin-image-wrapper">
+
                 <img
                     src="${escapeHtml(
                         image.image_url || ""
@@ -530,20 +1533,29 @@ function renderAdminImage(
                     alt="İşletme fotoğrafı"
                     loading="lazy"
                 >
+
+
                 ${
                     isCover
                         ? `
+
                             <span class="cover-badge">
                                 ⭐ Kapak
                             </span>
+
                         `
                         : ""
                 }
+
             </div>
+
+
             <div class="admin-image-actions">
+
                 ${
                     !isCover
                         ? `
+
                             <button
                                 onclick="setCoverImage(
                                     ${image.id},
@@ -552,13 +1564,18 @@ function renderAdminImage(
                             >
                                 ⭐ Kapak Yap
                             </button>
+
                         `
                         : `
+
                             <button disabled>
                                 ✓ Kapak
                             </button>
+
                         `
                 }
+
+
                 <button
                     ${
                         hasPrevious
@@ -572,6 +1589,8 @@ function renderAdminImage(
                 >
                     ↑
                 </button>
+
+
                 <button
                     ${
                         hasNext
@@ -585,6 +1604,8 @@ function renderAdminImage(
                 >
                     ↓
                 </button>
+
+
                 <button
                     class="image-delete-button"
                     onclick="deleteBusinessImage(
@@ -594,61 +1615,93 @@ function renderAdminImage(
                 >
                     🗑️
                 </button>
+
             </div>
+
         </div>
+
     `;
 }
+
+
 // =====================================
 // FOTOĞRAF YÜKLE
 // =====================================
+
 async function uploadBusinessImage(
     businessId
 ) {
+
     const input =
         document.getElementById(
             `imageInput-${businessId}`
         );
+
+
     if (
         !input ||
         !input.files ||
         !input.files.length
     ) {
+
         showMessage(
             "Önce bir fotoğraf seç.",
             "error"
         );
+
         return;
     }
+
+
     const file =
         input.files[0];
-    if (!file.type.startsWith("image/")) {
+
+
+    if (
+        !file.type.startsWith(
+            "image/"
+        )
+    ) {
+
         showMessage(
             "Sadece fotoğraf dosyaları yüklenebilir.",
             "error"
         );
+
         return;
     }
+
+
     if (
         file.size >
         5 * 1024 * 1024
     ) {
+
         showMessage(
             "Fotoğraf en fazla 5 MB olabilir.",
             "error"
         );
+
         return;
     }
+
+
     try {
+
         showMessage(
             "Fotoğraf yükleniyor...",
             "info"
         );
+
+
         const {
             data: existing,
             error: existingError
         } =
             await supabaseClient
-                .from("business_images")
+                .from(
+                    "business_images"
+                )
                 .select("*")
                 .eq(
                     "business_id",
@@ -660,11 +1713,19 @@ async function uploadBusinessImage(
                         ascending: true
                     }
                 );
+
+
         if (existingError) {
+
             throw existingError;
+
         }
+
+
         const images =
             existing || [];
+
+
         const maxOrder =
             images.reduce(
                 (
@@ -679,17 +1740,23 @@ async function uploadBusinessImage(
                     ),
                 -1
             );
+
+
         const extension =
             (
                 file.name
                     .split(".")
-                    .pop() || "jpg"
+                    .pop() ||
+                "jpg"
             )
                 .toLowerCase()
                 .replace(
                     /[^a-z0-9]/g,
                     ""
-                ) || "jpg";
+                ) ||
+                "jpg";
+
+
         const random =
             Math.random()
                 .toString(36)
@@ -697,8 +1764,12 @@ async function uploadBusinessImage(
                     2,
                     10
                 );
+
+
         const filePath =
             `businesses/${businessId}/${Date.now()}-${random}.${extension}`;
+
+
         const {
             error: uploadError
         } =
@@ -711,15 +1782,23 @@ async function uploadBusinessImage(
                     filePath,
                     file,
                     {
-                        cacheControl: "3600",
-                        upsert: false,
+                        cacheControl:
+                            "3600",
+                        upsert:
+                            false,
                         contentType:
                             file.type
                     }
                 );
+
+
         if (uploadError) {
+
             throw uploadError;
+
         }
+
+
         const {
             data: publicData
         } =
@@ -731,29 +1810,45 @@ async function uploadBusinessImage(
                 .getPublicUrl(
                     filePath
                 );
+
+
         const imageUrl =
             publicData?.publicUrl;
+
+
         if (!imageUrl) {
+
             throw new Error(
                 "Fotoğraf URL'si oluşturulamadı."
             );
+
         }
+
+
         const {
             error: insertError
         } =
             await supabaseClient
-                .from("business_images")
+                .from(
+                    "business_images"
+                )
                 .insert({
                     business_id:
                         businessId,
+
                     image_url:
                         imageUrl,
+
                     is_cover:
                         images.length === 0,
+
                     sort_order:
                         maxOrder + 1
                 });
+
+
         if (insertError) {
+
             await supabaseClient
                 .storage
                 .from(
@@ -762,58 +1857,92 @@ async function uploadBusinessImage(
                 .remove([
                     filePath
                 ]);
+
             throw insertError;
+
         }
-        input.value = "";
+
+
+        input.value =
+            "";
+
+
         showMessage(
             images.length === 0
                 ? "Fotoğraf yüklendi ve kapak yapıldı."
                 : "Fotoğraf başarıyla yüklendi.",
             "success"
         );
-        await loadApplications();
+
+
+        await Promise.all([
+            loadDashboard(),
+            loadApplications()
+        ]);
+
     } catch (error) {
+
         console.error(
             "Fotoğraf yükleme hatası:",
             error
         );
+
+
         showMessage(
             "Fotoğraf yüklenemedi: " +
             error.message,
             "error"
         );
+
     }
 }
+
+
 // =====================================
 // KAPAK FOTOĞRAFI
 // =====================================
+
 async function setCoverImage(
     imageId,
     businessId
 ) {
+
     try {
+
         const {
             error: resetError
         } =
             await supabaseClient
-                .from("business_images")
+                .from(
+                    "business_images"
+                )
                 .update({
-                    is_cover: false
+                    is_cover:
+                        false
                 })
                 .eq(
                     "business_id",
                     businessId
                 );
+
+
         if (resetError) {
+
             throw resetError;
+
         }
+
+
         const {
             error
         } =
             await supabaseClient
-                .from("business_images")
+                .from(
+                    "business_images"
+                )
                 .update({
-                    is_cover: true
+                    is_cover:
+                        true
                 })
                 .eq(
                     "id",
@@ -823,33 +1952,50 @@ async function setCoverImage(
                     "business_id",
                     businessId
                 );
+
+
         if (error) {
+
             throw error;
+
         }
+
+
         showMessage(
             "Kapak fotoğrafı değiştirildi.",
             "success"
         );
+
+
         await loadApplications();
+
     } catch (error) {
+
         console.error(
             "Kapak hatası:",
             error
         );
+
+
         showMessage(
             "Kapak fotoğrafı değiştirilemedi: " +
             error.message,
             "error"
         );
+
     }
 }
+
+
 // =====================================
 // FOTOĞRAF SİL
 // =====================================
+
 async function deleteBusinessImage(
     imageId,
     businessId
 ) {
+
     if (
         !confirm(
             "Bu fotoğrafı silmek istediğine emin misin?"
@@ -857,36 +2003,56 @@ async function deleteBusinessImage(
     ) {
         return;
     }
+
+
     try {
+
         const {
             data: image,
             error: fetchError
         } =
             await supabaseClient
-                .from("business_images")
+                .from(
+                    "business_images"
+                )
                 .select("*")
                 .eq(
                     "id",
                     imageId
                 )
                 .maybeSingle();
+
+
         if (fetchError) {
+
             throw fetchError;
+
         }
+
+
         if (!image) {
+
             showMessage(
                 "Fotoğraf bulunamadı.",
                 "error"
             );
+
             return;
         }
+
+
         const wasCover =
             image.is_cover === true;
+
+
         const storagePath =
             extractStoragePath(
                 image.image_url
             );
+
+
         if (storagePath) {
+
             const {
                 error: storageError
             } =
@@ -898,32 +2064,50 @@ async function deleteBusinessImage(
                     .remove([
                         storagePath
                     ]);
+
+
             if (storageError) {
+
                 console.warn(
                     "Storage silme uyarısı:",
                     storageError
                 );
+
             }
+
         }
+
+
         const {
             error: deleteError
         } =
             await supabaseClient
-                .from("business_images")
+                .from(
+                    "business_images"
+                )
                 .delete()
                 .eq(
                     "id",
                     imageId
                 );
+
+
         if (deleteError) {
+
             throw deleteError;
+
         }
+
+
         if (wasCover) {
+
             const {
                 data: remaining
             } =
                 await supabaseClient
-                    .from("business_images")
+                    .from(
+                        "business_images"
+                    )
                     .select("*")
                     .eq(
                         "business_id",
@@ -936,52 +2120,79 @@ async function deleteBusinessImage(
                         }
                     )
                     .limit(1);
+
+
             if (
                 remaining?.length
             ) {
+
                 await supabaseClient
-                    .from("business_images")
+                    .from(
+                        "business_images"
+                    )
                     .update({
-                        is_cover: true
+                        is_cover:
+                            true
                     })
                     .eq(
                         "id",
                         remaining[0].id
                     );
+
             }
+
         }
+
+
         showMessage(
             "Fotoğraf silindi.",
             "success"
         );
-        await loadApplications();
+
+
+        await Promise.all([
+            loadDashboard(),
+            loadApplications()
+        ]);
+
     } catch (error) {
+
         console.error(
             "Fotoğraf silme hatası:",
             error
         );
+
+
         showMessage(
             "Fotoğraf silinemedi: " +
             error.message,
             "error"
         );
+
     }
 }
+
+
 // =====================================
 // FOTOĞRAF SIRASI
 // =====================================
+
 async function moveImage(
     imageId,
     businessId,
     direction
 ) {
+
     try {
+
         const {
             data: images,
             error
         } =
             await supabaseClient
-                .from("business_images")
+                .from(
+                    "business_images"
+                )
                 .select("*")
                 .eq(
                     "business_id",
@@ -993,149 +2204,249 @@ async function moveImage(
                         ascending: true
                     }
                 );
+
+
         if (error) {
+
             throw error;
+
         }
+
+
         const index =
             images.findIndex(
                 image =>
-                    Number(image.id) ===
-                    Number(imageId)
+                    Number(
+                        image.id
+                    ) ===
+                    Number(
+                        imageId
+                    )
             );
-        if (index === -1) {
+
+
+        if (
+            index === -1
+        ) {
             return;
         }
+
+
         const targetIndex =
             direction === "up"
                 ? index - 1
                 : index + 1;
+
+
         if (
             targetIndex < 0 ||
-            targetIndex >= images.length
+            targetIndex >=
+                images.length
         ) {
             return;
         }
+
+
         const current =
             images[index];
+
         const target =
             images[targetIndex];
+
+
         const currentOrder =
             Number(
                 current.sort_order || 0
             );
+
+
         const targetOrder =
             Number(
                 target.sort_order || 0
             );
+
+
         await supabaseClient
-            .from("business_images")
+            .from(
+                "business_images"
+            )
             .update({
-                sort_order: -999999
+                sort_order:
+                    -999999
             })
             .eq(
                 "id",
                 current.id
             );
+
+
         await supabaseClient
-            .from("business_images")
+            .from(
+                "business_images"
+            )
             .update({
-                sort_order: currentOrder
+                sort_order:
+                    currentOrder
             })
             .eq(
                 "id",
                 target.id
             );
+
+
         await supabaseClient
-            .from("business_images")
+            .from(
+                "business_images"
+            )
             .update({
-                sort_order: targetOrder
+                sort_order:
+                    targetOrder
             })
             .eq(
                 "id",
                 current.id
             );
+
+
         await loadApplications();
+
     } catch (error) {
+
         console.error(
             "Sıralama hatası:",
             error
         );
+
+
         showMessage(
             "Fotoğraf sırası değiştirilemedi.",
             "error"
         );
+
     }
 }
+
+
 // =====================================
 // STORAGE PATH
 // =====================================
+
 function extractStoragePath(
     imageUrl
 ) {
+
     if (!imageUrl) {
+
         return null;
+
     }
+
+
     const marker =
         `/object/public/${BUSINESS_IMAGES_BUCKET}/`;
+
+
     const position =
-        imageUrl.indexOf(marker);
-    if (position === -1) {
+        imageUrl.indexOf(
+            marker
+        );
+
+
+    if (
+        position === -1
+    ) {
+
         return null;
+
     }
+
+
     return imageUrl.substring(
-        position + marker.length
+        position +
+        marker.length
     );
 }
+
+
 // =====================================
 // İŞLETME ONAYLA
 // =====================================
+
 async function approveBusiness(
     id
 ) {
+
     try {
+
         const {
             error
         } =
             await supabaseClient
-                .from("businesses")
+                .from(
+                    "businesses"
+                )
                 .update({
-                    is_approved: true
+                    is_approved:
+                        true
                 })
                 .eq(
                     "id",
                     id
                 );
+
+
         if (error) {
+
             throw error;
+
         }
+
+
         showMessage(
             "İşletme onaylandı.",
             "success"
         );
-        await loadApplications();
+
+
+        await Promise.all([
+            loadDashboard(),
+            loadApplications()
+        ]);
+
     } catch (error) {
+
         console.error(
             error
         );
+
+
         showMessage(
             "İşletme onaylanamadı.",
             "error"
         );
+
     }
 }
+
+
 // =====================================
 // ÖNE ÇIKAR
 // =====================================
+
 async function toggleFeatured(
     id,
     featured
 ) {
+
     try {
+
         const {
             error
         } =
             await supabaseClient
-                .from("businesses")
+                .from(
+                    "businesses"
+                )
                 .update({
                     is_featured:
                         featured
@@ -1144,96 +2455,158 @@ async function toggleFeatured(
                     "id",
                     id
                 );
+
+
         if (error) {
+
             throw error;
+
         }
+
+
         showMessage(
             featured
                 ? "İşletme öne çıkarıldı."
                 : "Öne çıkarma kaldırıldı.",
             "success"
         );
-        await loadApplications();
+
+
+        await Promise.all([
+            loadDashboard(),
+            loadApplications()
+        ]);
+
     } catch (error) {
+
         console.error(
             error
         );
+
+
         showMessage(
             "İşlem gerçekleştirilemedi.",
             "error"
         );
+
     }
 }
+
+
 // =====================================
 // İŞLETME REDDET
 // =====================================
+
 async function rejectBusiness(
     id
 ) {
+
     if (
         !confirm(
             "Bu işletme başvurusunu reddetmek istediğine emin misin?"
         )
     ) {
+
         return;
+
     }
+
+
     try {
+
         const {
             error
         } =
             await supabaseClient
-                .from("businesses")
+                .from(
+                    "businesses"
+                )
                 .update({
-                    is_approved: false,
-                    is_featured: false
+                    is_approved:
+                        false,
+
+                    is_featured:
+                        false
                 })
                 .eq(
                     "id",
                     id
                 );
+
+
         if (error) {
+
             throw error;
+
         }
+
+
         showMessage(
             "İşletme reddedildi.",
             "success"
         );
-        await loadApplications();
+
+
+        await Promise.all([
+            loadDashboard(),
+            loadApplications()
+        ]);
+
     } catch (error) {
+
         console.error(
             error
         );
+
+
         showMessage(
             "İşletme reddedilemedi.",
             "error"
         );
+
     }
 }
+
+
 // =====================================
 // İŞLETME SİL
 // =====================================
+
 async function deleteBusiness(
     id
 ) {
+
     if (
         !confirm(
             "Bu işletmeyi ve fotoğraflarını tamamen silmek istediğine emin misin?"
         )
     ) {
+
         return;
+
     }
+
+
     try {
+
         const {
             data: images
         } =
             await supabaseClient
-                .from("business_images")
+                .from(
+                    "business_images"
+                )
                 .select("*")
                 .eq(
                     "business_id",
                     id
                 );
-        if (images?.length) {
+
+
+        if (
+            images?.length
+        ) {
+
             const paths =
                 images
                     .map(
@@ -1242,69 +2615,114 @@ async function deleteBusiness(
                                 image.image_url
                             )
                     )
-                    .filter(Boolean);
-            if (paths.length) {
+                    .filter(
+                        Boolean
+                    );
+
+
+            if (
+                paths.length
+            ) {
+
                 await supabaseClient
                     .storage
                     .from(
                         BUSINESS_IMAGES_BUCKET
                     )
-                    .remove(paths);
+                    .remove(
+                        paths
+                    );
+
             }
+
+
             await supabaseClient
-                .from("business_images")
+                .from(
+                    "business_images"
+                )
                 .delete()
                 .eq(
                     "business_id",
                     id
                 );
+
         }
+
+
         const {
             error
         } =
             await supabaseClient
-                .from("businesses")
+                .from(
+                    "businesses"
+                )
                 .delete()
                 .eq(
                     "id",
                     id
                 );
+
+
         if (error) {
+
             throw error;
+
         }
+
+
         showMessage(
             "İşletme silindi.",
             "success"
         );
-        await loadApplications();
+
+
+        await Promise.all([
+            loadDashboard(),
+            loadApplications()
+        ]);
+
     } catch (error) {
+
         console.error(
             "İşletme silme hatası:",
             error
         );
+
+
         showMessage(
             "İşletme silinemedi: " +
             error.message,
             "error"
         );
+
     }
 }
+
+
 // =====================================
 // YORUMLAR
 // =====================================
+
 async function loadReviews() {
+
     if (!reviewsList) return;
+
+
     reviewsList.innerHTML = `
         <div class="loading">
             Yorumlar yükleniyor...
         </div>
     `;
+
+
     const {
         data,
         error
     } =
         await supabaseClient
-            .from("reviews")
+            .from(
+                "reviews"
+            )
             .select(`
                 *,
                 businesses (
@@ -1318,78 +2736,127 @@ async function loadReviews() {
                     ascending: false
                 }
             );
+
+
     if (error) {
+
         console.error(
             "Yorum hatası:",
             error
         );
+
+
         reviewsList.innerHTML = `
             <div class="error">
                 Yorumlar yüklenemedi.
             </div>
         `;
+
         return;
     }
+
+
     if (!data?.length) {
+
         reviewsList.innerHTML = `
             <div class="empty">
                 Henüz yorum bulunmuyor.
             </div>
         `;
+
         return;
     }
+
+
     reviewsList.innerHTML =
         data
-            .map(renderReview)
+            .map(
+                renderReview
+            )
             .join("");
 }
+
+
 // =====================================
 // YORUM KARTI
 // =====================================
+
 function renderReview(
     review
 ) {
+
     const businessName =
         review.businesses?.name ||
         "Bilinmeyen işletme";
+
+
     const rating =
         Number(
             review.rating || 0
         );
+
+
     return `
+
         <div class="review-card">
+
             <div class="review-header">
+
                 <div>
+
                     <strong>
                         ${escapeHtml(
                             review.user_name ||
                             "İsimsiz"
                         )}
                     </strong>
+
                     <span>
                         ${escapeHtml(
                             businessName
                         )}
                     </span>
+
                 </div>
+
+
                 <div>
-                    ${"⭐".repeat(rating)}
+                    ${
+                        "⭐".repeat(
+                            Math.max(
+                                0,
+                                Math.min(
+                                    5,
+                                    rating
+                                )
+                            )
+                        )
+                    }
                 </div>
+
             </div>
+
+
             <p>
                 ${escapeHtml(
                     review.comment || ""
                 )}
             </p>
+
+
             <small>
                 ${formatDate(
                     review.created_at
                 )}
             </small>
+
+
             <div class="review-actions">
+
                 ${
                     !review.is_approved
                         ? `
+
                             <button
                                 class="approve-button"
                                 onclick="approveReview(
@@ -1398,15 +2865,20 @@ function renderReview(
                             >
                                 ✓ Onayla
                             </button>
+
                         `
                         : `
+
                             <span
                                 class="approved-label"
                             >
                                 ✓ Onaylı
                             </span>
+
                         `
                 }
+
+
                 <button
                     class="delete-button"
                     onclick="deleteReview(
@@ -1416,78 +2888,124 @@ function renderReview(
                 >
                     🗑️ Sil
                 </button>
+
             </div>
+
         </div>
+
     `;
 }
+
+
 // =====================================
 // YORUM ONAYLA
 // =====================================
+
 async function approveReview(
     reviewId
 ) {
+
     try {
+
         const {
             data: review,
             error: fetchError
         } =
             await supabaseClient
-                .from("reviews")
+                .from(
+                    "reviews"
+                )
                 .select("*")
                 .eq(
                     "id",
                     reviewId
                 )
                 .single();
+
+
         if (fetchError) {
+
             throw fetchError;
+
         }
+
+
         const {
             error
         } =
             await supabaseClient
-                .from("reviews")
+                .from(
+                    "reviews"
+                )
                 .update({
-                    is_approved: true
+                    is_approved:
+                        true
                 })
                 .eq(
                     "id",
                     reviewId
                 );
+
+
         if (error) {
+
             throw error;
+
         }
+
+
         await updateBusinessRating(
             review.business_id
         );
+
+
         showMessage(
             "Yorum onaylandı.",
             "success"
         );
-        await loadReviews();
+
+
+        await Promise.all([
+            loadDashboard(),
+            loadReviews(),
+            loadApplications()
+        ]);
+
     } catch (error) {
+
         console.error(
             error
         );
+
+
         showMessage(
             "Yorum onaylanamadı.",
             "error"
         );
+
     }
 }
+
+
 // =====================================
 // PUAN GÜNCELLE
 // =====================================
+
 async function updateBusinessRating(
     businessId
 ) {
+
     const {
         data: reviews,
         error
     } =
         await supabaseClient
-            .from("reviews")
-            .select("rating")
+            .from(
+                "reviews"
+            )
+            .select(
+                "rating"
+            )
             .eq(
                 "business_id",
                 businessId
@@ -1496,13 +3014,23 @@ async function updateBusinessRating(
                 "is_approved",
                 true
             );
+
+
     if (error) {
+
         throw error;
+
     }
+
+
     const list =
         reviews || [];
+
+
     const count =
         list.length;
+
+
     const total =
         list.reduce(
             (
@@ -1515,20 +3043,27 @@ async function updateBusinessRating(
                 ),
             0
         );
+
+
     const rating =
         count
             ? total / count
             : 0;
+
+
     const {
         error: updateError
     } =
         await supabaseClient
-            .from("businesses")
+            .from(
+                "businesses"
+            )
             .update({
                 rating:
                     Math.round(
                         rating * 10
                     ) / 10,
+
                 review_count:
                     count
             })
@@ -1536,162 +3071,266 @@ async function updateBusinessRating(
                 "id",
                 businessId
             );
+
+
     if (updateError) {
+
         throw updateError;
+
     }
 }
+
+
 // =====================================
 // YORUM SİL
 // =====================================
+
 async function deleteReview(
     reviewId,
     businessId
 ) {
+
     if (
         !confirm(
             "Bu yorumu silmek istediğine emin misin?"
         )
     ) {
+
         return;
+
     }
+
+
     try {
+
         const {
             error
         } =
             await supabaseClient
-                .from("reviews")
+                .from(
+                    "reviews"
+                )
                 .delete()
                 .eq(
                     "id",
                     reviewId
                 );
+
+
         if (error) {
+
             throw error;
+
         }
+
+
         await updateBusinessRating(
             businessId
         );
+
+
         showMessage(
             "Yorum silindi.",
             "success"
         );
-        await loadReviews();
+
+
+        await Promise.all([
+            loadDashboard(),
+            loadReviews(),
+            loadApplications()
+        ]);
+
     } catch (error) {
+
         console.error(
             error
         );
+
+
         showMessage(
             "Yorum silinemedi.",
             "error"
         );
+
     }
 }
+
+
 // =====================================
 // MESAJ
 // =====================================
+
 function showMessage(
     text,
     type = "info"
 ) {
+
     if (!adminMessage) return;
+
+
     adminMessage.textContent =
         text;
+
+
     adminMessage.className =
         `admin-message ${type}`;
+
+
     adminMessage.style.display =
         "block";
+
+
     clearTimeout(
         showMessage.timer
     );
+
+
     showMessage.timer =
         setTimeout(
             () => {
+
                 adminMessage.style.display =
                     "none";
+
             },
             4000
         );
 }
+
+
 // =====================================
 // LOGIN HATASI
 // =====================================
+
 function showLoginError(
     message
 ) {
+
     if (!loginError) return;
+
+
     loginError.textContent =
         message || "";
+
+
     loginError.style.display =
         message
             ? "block"
             : "none";
 }
+
+
 // =====================================
 // LOGIN EKRANI
 // =====================================
+
 function showLogin() {
+
     if (loginScreen) {
+
         loginScreen.style.display =
             "flex";
+
     }
+
+
     if (adminApp) {
+
         adminApp.style.display =
             "none";
+
     }
+
+
     if (loginPassword) {
-        loginPassword.value = "";
+
+        loginPassword.value =
+            "";
+
     }
 }
+
+
 // =====================================
 // LOGIN LOADING
 // =====================================
+
 function setLoginLoading(
     loading
 ) {
+
     const button =
         loginForm?.querySelector(
             'button[type="submit"]'
         );
+
+
     if (!button) return;
+
+
     button.disabled =
         loading;
+
+
     button.textContent =
         loading
             ? "Giriş yapılıyor..."
             : "Giriş Yap";
 }
+
+
 // =====================================
 // TARİH
 // =====================================
+
 function formatDate(
     value
 ) {
+
     if (!value) {
+
         return "-";
+
     }
+
+
     const date =
         new Date(value);
+
+
     if (
         Number.isNaN(
             date.getTime()
         )
     ) {
+
         return "-";
+
     }
+
+
     return date.toLocaleString(
         "tr-TR",
         {
-            dateStyle: "medium",
-            timeStyle: "short"
+            dateStyle:
+                "medium",
+
+            timeStyle:
+                "short"
         }
     );
 }
+
+
 // =====================================
 // HTML GÜVENLİĞİ
 // =====================================
+
 function escapeHtml(
     value
 ) {
+
     return String(
         value ?? ""
     )
