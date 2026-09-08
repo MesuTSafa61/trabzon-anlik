@@ -1,5 +1,6 @@
 // ============================================================
 // TRABZON ANLIK - ANA SAYFA SİSTEMİ
+// Güncel sürüm
 // ============================================================
 
 const SUPABASE_URL =
@@ -80,6 +81,174 @@ const searchResultsTitle =
 
 
 // ============================================================
+// SABİT KATEGORİLER
+// ============================================================
+
+const fallbackCategories = [
+
+    {
+        id: "fallback-kafe",
+        name: "Kafeler",
+        slug: "kafe",
+        icon: "☕",
+        description: "Kahve ve sohbet"
+    },
+
+    {
+        id: "fallback-restoran",
+        name: "Restoranlar",
+        slug: "restoran",
+        icon: "🍽️",
+        description: "Lezzet durakları"
+    },
+
+    {
+        id: "fallback-kahvalti",
+        name: "Kahvaltı",
+        slug: "kahvalti",
+        icon: "🍳",
+        description: "Güne güzel başla"
+    },
+
+    {
+        id: "fallback-fastfood",
+        name: "Fast Food",
+        slug: "fast-food",
+        icon: "🍔",
+        description: "Hızlı ve lezzetli"
+    },
+
+    {
+        id: "fallback-otel",
+        name: "Oteller",
+        slug: "otel",
+        icon: "🏨",
+        description: "Konaklama"
+    },
+
+    {
+        id: "fallback-kuafor",
+        name: "Berber & Kuaför",
+        slug: "berber-kuafor",
+        icon: "💈",
+        description: "Bakım ve güzellik"
+    },
+
+    {
+        id: "fallback-market",
+        name: "Marketler",
+        slug: "market",
+        icon: "🛒",
+        description: "Alışveriş"
+    },
+
+    {
+        id: "fallback-spor",
+        name: "Spor",
+        slug: "spor",
+        icon: "🏋️",
+        description: "Spor ve fitness"
+    },
+
+    {
+        id: "fallback-giyim",
+        name: "Giyim",
+        slug: "giyim",
+        icon: "👕",
+        description: "Moda ve alışveriş"
+    },
+
+    {
+        id: "fallback-oto",
+        name: "Oto",
+        slug: "oto",
+        icon: "🚗",
+        description: "Otomotiv"
+    },
+
+    {
+        id: "fallback-teknoloji",
+        name: "Teknoloji",
+        slug: "teknoloji",
+        icon: "📱",
+        description: "Telefon ve teknoloji"
+    },
+
+    {
+        id: "fallback-egitim",
+        name: "Eğitim",
+        slug: "egitim",
+        icon: "🎓",
+        description: "Kurs ve eğitim"
+    }
+
+];
+
+
+// ============================================================
+// FALLBACK KEŞİF YERLERİ
+// ============================================================
+
+const fallbackPlaces = [
+
+    {
+        name: "Uzungöl",
+        slug: "uzungol",
+        district: "Çaykara",
+        description:
+            "Trabzon'un en bilinen doğal güzelliklerinden biri.",
+        image_url: ""
+    },
+
+    {
+        name: "Sümela Manastırı",
+        slug: "sumela-manastiri",
+        district: "Maçka",
+        description:
+            "Dağların arasında tarihi ve etkileyici bir yapı.",
+        image_url: ""
+    },
+
+    {
+        name: "Atatürk Köşkü",
+        slug: "ataturk-kosku",
+        district: "Ortahisar",
+        description:
+            "Trabzon'un simge tarihi yapılarından biri.",
+        image_url: ""
+    },
+
+    {
+        name: "Boztepe",
+        slug: "boztepe",
+        district: "Ortahisar",
+        description:
+            "Trabzon manzarasını izlemek için güzel noktalardan biri.",
+        image_url: ""
+    },
+
+    {
+        name: "Hıdırnebi Yaylası",
+        slug: "hidirnebi-yaylasi",
+        district: "Akçaabat",
+        description:
+            "Doğa, yayla havası ve Karadeniz manzarası.",
+        image_url: ""
+    },
+
+    {
+        name: "Şahinkaya Kanyonu",
+        slug: "sahinkaya-kanyonu",
+        district: "Düzköy",
+        description:
+            "Doğa ve macera sevenler için etkileyici bir keşif noktası.",
+        image_url: ""
+    }
+
+];
+
+
+// ============================================================
 // SAYFA BAŞLANGICI
 // ============================================================
 
@@ -91,31 +260,50 @@ document.addEventListener(
             "Trabzon Anlık başlatılıyor..."
         );
 
+        setupSearch();
+        setupMobileMenu();
+        setupPopularSearches();
+        setupQuickSearchCards();
+
         const connected =
             initializeSupabase();
 
         if (!connected) {
 
-            showGlobalError(
-                "Site bağlantısı kurulamadı. Lütfen sayfayı yenileyin."
-            );
+            loadFallbackContent();
 
             return;
         }
 
-        setupSearch();
-        setupMobileMenu();
-        setupPopularSearches();
+        await Promise.allSettled([
 
-        await loadCategories();
-        await loadFeaturedBusinesses();
-        await loadPlaces();
+            loadCategories(),
+
+            loadFeaturedBusinesses(),
+
+            loadPlaces()
+
+        ]);
 
         console.log(
             "Trabzon Anlık hazır."
         );
     }
 );
+
+
+// ============================================================
+// FALLBACK ANA SAYFA
+// ============================================================
+
+function loadFallbackContent() {
+
+    renderFallbackCategories();
+
+    renderFallbackPlaces();
+
+    showNoFeaturedBusinesses();
+}
 
 
 // ============================================================
@@ -166,21 +354,7 @@ function showGlobalError(message) {
 
     if (placesContainer) {
 
-        placesContainer.innerHTML = `
-            <a href="#" class="place-card">
-
-                <div>⚠️</div>
-
-                <strong>
-                    Bağlantı hatası
-                </strong>
-
-                <span>
-                    ${escapeHtml(message)}
-                </span>
-
-            </a>
-        `;
+        renderFallbackPlaces();
     }
 }
 
@@ -201,11 +375,11 @@ async function loadCategories() {
             <span>⏳</span>
 
             <strong>
-                Yükleniyor...
+                Kategoriler yükleniyor...
             </strong>
 
             <small>
-                Kategoriler hazırlanıyor
+                Birkaç saniye...
             </small>
 
         </div>
@@ -217,10 +391,13 @@ async function loadCategories() {
             data,
             error
         } = await supabaseClient
+
             .from("categories")
+
             .select(
                 "id, name, slug, icon, description"
             )
+
             .order(
                 "id",
                 {
@@ -237,88 +414,12 @@ async function loadCategories() {
             data.length === 0
         ) {
 
-            categoriesContainer.innerHTML = `
-                <div class="category-card">
-
-                    <span>📂</span>
-
-                    <strong>
-                        Henüz kategori yok
-                    </strong>
-
-                    <small>
-                        Yakında eklenecek.
-                    </small>
-
-                </div>
-            `;
+            renderFallbackCategories();
 
             return;
         }
 
-        categoriesContainer.innerHTML =
-            data
-                .map(
-                    category => {
-
-                        return `
-                            <a
-                                href="#isletmeler"
-                                class="category-card"
-                                data-category="${escapeHtml(
-                                    category.slug
-                                )}"
-                            >
-
-                                <span>
-                                    ${escapeHtml(
-                                        category.icon ||
-                                        "📌"
-                                    )}
-                                </span>
-
-                                <strong>
-                                    ${escapeHtml(
-                                        category.name
-                                    )}
-                                </strong>
-
-                                <small>
-                                    ${escapeHtml(
-                                        category.description ||
-                                        ""
-                                    )}
-                                </small>
-
-                            </a>
-                        `;
-                    }
-                )
-                .join("");
-
-        document
-            .querySelectorAll(
-                ".category-card[data-category]"
-            )
-            .forEach(
-                card => {
-
-                    card.addEventListener(
-                        "click",
-                        async event => {
-
-                            event.preventDefault();
-
-                            const categorySlug =
-                                card.dataset.category;
-
-                            await searchByCategory(
-                                categorySlug
-                            );
-                        }
-                    );
-                }
-            );
+        renderCategories(data);
 
     } catch (error) {
 
@@ -327,22 +428,100 @@ async function loadCategories() {
             error
         );
 
-        categoriesContainer.innerHTML = `
-            <div class="category-card">
-
-                <span>⚠️</span>
-
-                <strong>
-                    Kategoriler yüklenemedi
-                </strong>
-
-                <small>
-                    Lütfen sayfayı yenileyin.
-                </small>
-
-            </div>
-        `;
+        renderFallbackCategories();
     }
+}
+
+
+// ============================================================
+// KATEGORİLERİ GÖSTER
+// ============================================================
+
+function renderCategories(data) {
+
+    if (!categoriesContainer) {
+        return;
+    }
+
+    categoriesContainer.innerHTML =
+        data
+            .map(
+                category => {
+
+                    return `
+                        <a
+                            href="#isletmeler"
+                            class="category-card"
+                            data-category="${escapeHtml(
+                                category.slug || ""
+                            )}"
+                        >
+
+                            <span>
+                                ${escapeHtml(
+                                    category.icon ||
+                                    "📌"
+                                )}
+                            </span>
+
+                            <strong>
+                                ${escapeHtml(
+                                    category.name
+                                )}
+                            </strong>
+
+                            <small>
+                                ${escapeHtml(
+                                    category.description ||
+                                    "İşletmeleri keşfet"
+                                )}
+                            </small>
+
+                        </a>
+                    `;
+                }
+            )
+            .join("");
+
+    document
+        .querySelectorAll(
+            ".category-card[data-category]"
+        )
+        .forEach(
+            card => {
+
+                card.addEventListener(
+                    "click",
+                    async event => {
+
+                        event.preventDefault();
+
+                        const categorySlug =
+                            card.dataset.category;
+
+                        await searchByCategory(
+                            categorySlug
+                        );
+                    }
+                );
+            }
+        );
+}
+
+
+// ============================================================
+// FALLBACK KATEGORİLER
+// ============================================================
+
+function renderFallbackCategories() {
+
+    if (!categoriesContainer) {
+        return;
+    }
+
+    renderCategories(
+        fallbackCategories
+    );
 }
 
 
@@ -374,7 +553,7 @@ async function loadFeaturedBusinesses() {
                 </h3>
 
                 <p>
-                    Lütfen bekleyin.
+                    Trabzon'daki işletmeler hazırlanıyor.
                 </p>
 
             </div>
@@ -384,9 +563,15 @@ async function loadFeaturedBusinesses() {
 
     try {
 
-        const {
-            data: businesses,
-            error: businessError
+        // ----------------------------------------------------
+        // ÖNCE ÖNE ÇIKANLAR
+        // ----------------------------------------------------
+
+        let businesses = null;
+
+        let {
+            data: featuredBusinesses,
+            error: featuredError
         } = await supabaseClient
 
             .from("businesses")
@@ -429,9 +614,82 @@ async function loadFeaturedBusinesses() {
 
             .limit(6);
 
-        if (businessError) {
-            throw businessError;
+
+        if (featuredError) {
+
+            console.warn(
+                "Öne çıkan işletmeler alınamadı:",
+                featuredError
+            );
         }
+
+
+        if (
+            featuredBusinesses &&
+            featuredBusinesses.length > 0
+        ) {
+
+            businesses =
+                featuredBusinesses;
+
+        } else {
+
+            // ------------------------------------------------
+            // ÖNE ÇIKAN YOKSA TÜM ONAYLI İŞLETMELER
+            // ------------------------------------------------
+
+            const {
+                data: approvedBusinesses,
+                error: approvedError
+            } = await supabaseClient
+
+                .from("businesses")
+
+                .select(`
+                    id,
+                    name,
+                    slug,
+                    category_id,
+                    description,
+                    address,
+                    district,
+                    phone,
+                    website,
+                    instagram,
+                    image_url,
+                    rating,
+                    review_count,
+                    is_featured,
+                    is_approved,
+                    created_at
+                `)
+
+                .eq(
+                    "is_approved",
+                    true
+                )
+
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                )
+
+                .limit(6);
+
+            if (approvedError) {
+                throw approvedError;
+            }
+
+            businesses =
+                approvedBusinesses || [];
+        }
+
+
+        // ----------------------------------------------------
+        // HİÇ İŞLETME YOKSA
+        // ----------------------------------------------------
 
         if (
             !businesses ||
@@ -460,13 +718,12 @@ async function loadFeaturedBusinesses() {
             );
 
         if (categoryError) {
-            throw categoryError;
+            console.warn(
+                "Kategori bilgileri alınamadı:",
+                categoryError
+            );
         }
 
-
-        // ----------------------------------------------------
-        // KATEGORİ EŞLEŞTİR
-        // ----------------------------------------------------
 
         const categoryMap =
             new Map(
@@ -476,13 +733,14 @@ async function loadFeaturedBusinesses() {
                         String(category.id),
 
                         category
+
                     ]
                 )
             );
 
 
         // ----------------------------------------------------
-        // FOTOĞRAFLARI ÇEK
+        // FOTOĞRAFLAR
         // ----------------------------------------------------
 
         const businessesWithImages =
@@ -512,14 +770,11 @@ async function loadFeaturedBusinesses() {
 
                         categories:
                             category || null
+
                     };
                 }
             );
 
-
-        // ----------------------------------------------------
-        // EKRANA BAS
-        // ----------------------------------------------------
 
         businessContainer.innerHTML =
             finalBusinesses
@@ -531,35 +786,11 @@ async function loadFeaturedBusinesses() {
     } catch (error) {
 
         console.error(
-            "Öne çıkan işletmeler alınamadı:",
+            "İşletmeler alınamadı:",
             error
         );
 
-        businessContainer.innerHTML = `
-            <article class="business-card">
-
-                <div class="business-image">
-                    ⚠️
-                </div>
-
-                <div class="business-content">
-
-                    <span class="badge">
-                        HATA
-                    </span>
-
-                    <h3>
-                        İşletmeler yüklenemedi
-                    </h3>
-
-                    <p>
-                        Lütfen sayfayı yenileyin.
-                    </p>
-
-                </div>
-
-            </article>
-        `;
+        showNoFeaturedBusinesses();
     }
 }
 
@@ -576,6 +807,7 @@ async function attachBusinessImages(
         !businesses ||
         businesses.length === 0
     ) {
+
         return [];
     }
 
@@ -607,7 +839,6 @@ async function attachBusinessImages(
                 businessIds
             )
 
-            // Önce kapak fotoğrafı
             .order(
                 "is_cover",
                 {
@@ -615,7 +846,6 @@ async function attachBusinessImages(
                 }
             )
 
-            // Sonra sıra
             .order(
                 "sort_order",
                 {
@@ -623,7 +853,6 @@ async function attachBusinessImages(
                 }
             )
 
-            // Son olarak yüklenme tarihi
             .order(
                 "created_at",
                 {
@@ -635,7 +864,7 @@ async function attachBusinessImages(
         if (error) {
 
             console.warn(
-                "business_images okunamadı. Eski image_url kullanılacak:",
+                "business_images okunamadı:",
                 error
             );
 
@@ -643,12 +872,9 @@ async function attachBusinessImages(
         }
 
 
-        // ----------------------------------------------------
-        // HER İŞLETME İÇİN İLK FOTOĞRAFI AL
-        // ----------------------------------------------------
-
         const imageMap =
             new Map();
+
 
         (images || []).forEach(
             image => {
@@ -672,10 +898,6 @@ async function attachBusinessImages(
             }
         );
 
-
-        // ----------------------------------------------------
-        // FOTOĞRAFI İŞLETMEYE EKLE
-        // ----------------------------------------------------
 
         return businesses.map(
             business => {
@@ -705,11 +927,11 @@ async function attachBusinessImages(
 
                         gallery_image_id:
                             galleryImage.id
+
                     };
                 }
 
 
-                // Galeri yoksa eski fotoğraf
                 return business;
             }
         );
@@ -732,7 +954,12 @@ async function attachBusinessImages(
 
 function showNoFeaturedBusinesses() {
 
+    if (!businessContainer) {
+        return;
+    }
+
     businessContainer.innerHTML = `
+
         <article class="business-card">
 
             <div class="business-image">
@@ -742,22 +969,23 @@ function showNoFeaturedBusinesses() {
             <div class="business-content">
 
                 <span class="badge">
-                    YAKINDA
+                    TRABZON ANLIK
                 </span>
 
                 <h3>
-                    İlk işletmeler çok yakında
+                    Trabzon'daki işletmeler burada
                 </h3>
 
                 <p>
-                    Trabzon'daki işletmeler
-                    burada yer alacak.
+                    Kafelerden restoranlara,
+                    otellerden mağazalara kadar
+                    Trabzon'daki işletmeleri keşfet.
                 </p>
 
                 <div class="business-bottom">
 
                     <span>
-                        Trabzon Anlık
+                        Yeni işletmeler yakında
                     </span>
 
                     <span>
@@ -769,6 +997,84 @@ function showNoFeaturedBusinesses() {
             </div>
 
         </article>
+
+
+        <article class="business-card">
+
+            <div class="business-image">
+                ☕
+            </div>
+
+            <div class="business-content">
+
+                <span class="badge">
+                    KAFE
+                </span>
+
+                <h3>
+                    Favori mekanını bul
+                </h3>
+
+                <p>
+                    Trabzon'da kahve içmek,
+                    yemek yemek veya yeni bir
+                    yer keşfetmek için ara.
+                </p>
+
+                <div class="business-bottom">
+
+                    <span>
+                        Keşfet
+                    </span>
+
+                    <span>
+                        →
+                    </span>
+
+                </div>
+
+            </div>
+
+        </article>
+
+
+        <article class="business-card">
+
+            <div class="business-image">
+                📍
+            </div>
+
+            <div class="business-content">
+
+                <span class="badge">
+                    YEREL
+                </span>
+
+                <h3>
+                    İşletmeni sen de ekle
+                </h3>
+
+                <p>
+                    İşletmeni Trabzon Anlık'a
+                    ekleyerek daha fazla kişiye ulaş.
+                </p>
+
+                <div class="business-bottom">
+
+                    <span>
+                        İşletmeni Ekle
+                    </span>
+
+                    <span>
+                        →
+                    </span>
+
+                </div>
+
+            </div>
+
+        </article>
+
     `;
 }
 
@@ -777,20 +1083,19 @@ function showNoFeaturedBusinesses() {
 // İŞLETME KARTI
 // ============================================================
 
-function renderBusinessCard(business) {
+function renderBusinessCard(
+    business
+) {
 
     const categoryName =
         business.categories?.name ||
         "İŞLETME";
 
+
     const categoryIcon =
         business.categories?.icon ||
         "🏪";
 
-
-    // --------------------------------------------------------
-    // FOTOĞRAF
-    // --------------------------------------------------------
 
     const imageContent =
         business.image_url
@@ -804,31 +1109,31 @@ function renderBusinessCard(business) {
                         business.name
                     )}"
                     loading="lazy"
-                    onerror="this.style.display='none'; this.parentElement.textContent='${escapeHtml(categoryIcon)}';"
+                    onerror="
+                        this.style.display='none';
+                        this.parentElement.textContent='${escapeHtml(
+                            categoryIcon
+                        )}';
+                    "
                 >
             `
 
-            : escapeHtml(categoryIcon);
+            : escapeHtml(
+                categoryIcon
+            );
 
-
-    // --------------------------------------------------------
-    // PUAN
-    // --------------------------------------------------------
 
     const rating =
         Number(
             business.rating || 0
         );
 
+
     const ratingText =
         rating > 0
             ? `⭐ ${rating.toFixed(1)}`
             : "⭐ Yeni";
 
-
-    // --------------------------------------------------------
-    // SLUG
-    // --------------------------------------------------------
 
     const businessSlug =
         business.slug
@@ -838,21 +1143,14 @@ function renderBusinessCard(business) {
             : "";
 
 
-    // --------------------------------------------------------
-    // DETAY SAYFASI
-    // --------------------------------------------------------
-
     const detailUrl =
         businessSlug
             ? `isletme.html?slug=${businessSlug}`
             : "#";
 
 
-    // --------------------------------------------------------
-    // İŞLETME KARTI
-    // --------------------------------------------------------
-
     return `
+
         <a
             href="${detailUrl}"
             class="business-card"
@@ -867,6 +1165,7 @@ function renderBusinessCard(business) {
 
             </div>
 
+
             <div class="business-content">
 
                 <span class="badge">
@@ -877,6 +1176,7 @@ function renderBusinessCard(business) {
 
                 </span>
 
+
                 <h3>
 
                     ${escapeHtml(
@@ -884,6 +1184,7 @@ function renderBusinessCard(business) {
                     )}
 
                 </h3>
+
 
                 <p>
 
@@ -897,6 +1198,7 @@ function renderBusinessCard(business) {
 
                 </p>
 
+
                 <div class="business-bottom">
 
                     <span>
@@ -904,6 +1206,7 @@ function renderBusinessCard(business) {
                         ${ratingText}
 
                     </span>
+
 
                     <span>
 
@@ -933,14 +1236,16 @@ async function loadPlaces() {
     placesContainer.innerHTML = `
         <a href="#" class="place-card">
 
-            <div>⏳</div>
+            <div>
+                ⏳
+            </div>
 
             <strong>
-                Yükleniyor...
+                Keşif noktaları yükleniyor...
             </strong>
 
             <span>
-                Keşif noktaları hazırlanıyor.
+                Trabzon hazırlanıyor.
             </span>
 
         </a>
@@ -977,119 +1282,173 @@ async function loadPlaces() {
                 }
             );
 
+
         if (error) {
             throw error;
         }
+
 
         if (
             !data ||
             data.length === 0
         ) {
 
-            placesContainer.innerHTML = `
-                <a href="#" class="place-card">
-
-                    <div>📍</div>
-
-                    <strong>
-                        Yakında
-                    </strong>
-
-                    <span>
-                        Trabzon'un güzel yerleri
-                        burada olacak.
-                    </span>
-
-                </a>
-            `;
+            renderFallbackPlaces();
 
             return;
         }
 
-        placesContainer.innerHTML =
-            data
-                .map(
-                    place => {
 
-                        const imageContent =
-                            place.image_url
-
-                                ? `
-                                    <img
-                                        src="${escapeHtml(
-                                            place.image_url
-                                        )}"
-                                        alt="${escapeHtml(
-                                            place.name
-                                        )}"
-                                        loading="lazy"
-                                    >
-                                `
-
-                                : "🏔️";
-
-
-                        return `
-                            <a
-                                href="#"
-                                class="place-card"
-                                data-place="${escapeHtml(
-                                    place.slug
-                                )}"
-                            >
-
-                                <div>
-
-                                    ${imageContent}
-
-                                </div>
-
-                                <strong>
-
-                                    ${escapeHtml(
-                                        place.name
-                                    )}
-
-                                </strong>
-
-                                <span>
-
-                                    ${escapeHtml(
-                                        place.district ||
-                                        "Trabzon"
-                                    )}
-
-                                </span>
-
-                            </a>
-                        `;
-                    }
-                )
-                .join("");
+        renderPlaces(data);
 
     } catch (error) {
 
-        console.error(
+        console.warn(
             "Keşif yerleri alınamadı:",
             error
         );
 
-        placesContainer.innerHTML = `
-            <a href="#" class="place-card">
-
-                <div>⚠️</div>
-
-                <strong>
-                    Yerler yüklenemedi
-                </strong>
-
-                <span>
-                    Lütfen daha sonra tekrar deneyin.
-                </span>
-
-            </a>
-        `;
+        renderFallbackPlaces();
     }
+}
+
+
+// ============================================================
+// KEŞİF YERLERİNİ GÖSTER
+// ============================================================
+
+function renderPlaces(
+    data
+) {
+
+    if (!placesContainer) {
+        return;
+    }
+
+    placesContainer.innerHTML =
+        data
+            .map(
+                place => {
+
+                    const imageContent =
+                        place.image_url
+
+                            ? `
+                                <img
+                                    src="${escapeHtml(
+                                        place.image_url
+                                    )}"
+                                    alt="${escapeHtml(
+                                        place.name
+                                    )}"
+                                    loading="lazy"
+                                >
+                            `
+
+                            : "🏔️";
+
+
+                    return `
+
+                        <a
+                            href="#"
+                            class="place-card"
+                            data-place="${escapeHtml(
+                                place.slug || ""
+                            )}"
+                        >
+
+                            <div>
+
+                                ${imageContent}
+
+                            </div>
+
+
+                            <strong>
+
+                                ${escapeHtml(
+                                    place.name
+                                )}
+
+                            </strong>
+
+
+                            <span>
+
+                                ${escapeHtml(
+                                    place.district ||
+                                    "Trabzon"
+                                )}
+
+                            </span>
+
+                        </a>
+
+                    `;
+                }
+            )
+            .join("");
+}
+
+
+// ============================================================
+// FALLBACK KEŞİF YERLERİ
+// ============================================================
+
+function renderFallbackPlaces() {
+
+    if (!placesContainer) {
+        return;
+    }
+
+    placesContainer.innerHTML =
+        fallbackPlaces
+            .map(
+                place => {
+
+                    return `
+
+                        <a
+                            href="#"
+                            class="place-card"
+                            data-place="${escapeHtml(
+                                place.slug
+                            )}"
+                        >
+
+                            <div>
+
+                                🏔️
+
+                            </div>
+
+
+                            <strong>
+
+                                ${escapeHtml(
+                                    place.name
+                                )}
+
+                            </strong>
+
+
+                            <span>
+
+                                📍
+
+                                ${escapeHtml(
+                                    place.district
+                                )}
+
+                            </span>
+
+                        </a>
+
+                    `;
+                }
+            )
+            .join("");
 }
 
 
@@ -1103,13 +1462,16 @@ function setupSearch() {
         !searchButton ||
         !searchInput
     ) {
+
         return;
     }
+
 
     searchButton.addEventListener(
         "click",
         performSearch
     );
+
 
     searchInput.addEventListener(
         "keydown",
@@ -1129,7 +1491,7 @@ function setupSearch() {
 
 
 // ============================================================
-// ARAMA BAŞLAT
+// ARAMA
 // ============================================================
 
 async function performSearch() {
@@ -1137,16 +1499,14 @@ async function performSearch() {
     const searchText =
         searchInput.value.trim();
 
-    if (!searchText) {
 
-        alert(
-            "Lütfen aramak istediğiniz kelimeyi yazın."
-        );
+    if (!searchText) {
 
         searchInput.focus();
 
         return;
     }
+
 
     await searchBusinesses(
         searchText
@@ -1166,16 +1526,21 @@ async function searchBusinesses(
         !searchResultsContainer ||
         !searchResultsSection
     ) {
+
         return;
     }
+
 
     searchResultsSection.style.display =
         "block";
 
+
     searchResultsTitle.textContent =
         `"${searchText}" için sonuçlar`;
 
+
     searchResultsContainer.innerHTML = `
+
         <article class="business-card">
 
             <div class="business-image">
@@ -1199,7 +1564,9 @@ async function searchBusinesses(
             </div>
 
         </article>
+
     `;
+
 
     try {
 
@@ -1208,9 +1575,10 @@ async function searchBusinesses(
                 searchText
             );
 
+
         const {
             data: businesses,
-            error: businessError
+            error
         } = await supabaseClient
 
             .from("businesses")
@@ -1259,9 +1627,11 @@ async function searchBusinesses(
 
             .limit(20);
 
-        if (businessError) {
-            throw businessError;
+
+        if (error) {
+            throw error;
         }
+
 
         if (
             !businesses ||
@@ -1274,22 +1644,22 @@ async function searchBusinesses(
         }
 
 
-        // Fotoğrafları ekle
         const businessesWithImages =
             await attachBusinessImages(
                 businesses
             );
 
 
-        // Kategorileri ekle
         const businessesWithCategories =
             await attachCategories(
                 businessesWithImages
             );
 
+
         renderSearchResults(
             businessesWithCategories
         );
+
 
     } catch (error) {
 
@@ -1298,7 +1668,9 @@ async function searchBusinesses(
             error
         );
 
+
         searchResultsContainer.innerHTML = `
+
             <article class="business-card">
 
                 <div class="business-image">
@@ -1322,6 +1694,7 @@ async function searchBusinesses(
                 </div>
 
             </article>
+
         `;
     }
 }
@@ -1339,16 +1712,21 @@ async function searchByCategory(
         !searchResultsContainer ||
         !searchResultsSection
     ) {
+
         return;
     }
+
 
     searchResultsSection.style.display =
         "block";
 
+
     searchResultsTitle.textContent =
         "Kategori sonuçları";
 
+
     searchResultsContainer.innerHTML = `
+
         <article class="business-card">
 
             <div class="business-image">
@@ -1372,7 +1750,9 @@ async function searchByCategory(
             </div>
 
         </article>
+
     `;
+
 
     try {
 
@@ -1394,16 +1774,54 @@ async function searchByCategory(
 
             .maybeSingle();
 
-        if (categoryError) {
-            throw categoryError;
-        }
 
-        if (!category) {
+        if (categoryError) {
+
+            // Fallback kategorilerden bul
+            const fallback =
+                fallbackCategories.find(
+                    item =>
+                        item.slug ===
+                        categorySlug
+                );
+
+
+            if (fallback) {
+
+                searchResultsTitle.textContent =
+                    fallback.name;
+
+            }
 
             renderSearchResults([]);
 
             return;
         }
+
+
+        if (!category) {
+
+            const fallback =
+                fallbackCategories.find(
+                    item =>
+                        item.slug ===
+                        categorySlug
+                );
+
+
+            if (fallback) {
+
+                searchResultsTitle.textContent =
+                    fallback.name;
+
+            }
+
+
+            renderSearchResults([]);
+
+            return;
+        }
+
 
         searchResultsTitle.textContent =
             category.name;
@@ -1461,12 +1879,12 @@ async function searchByCategory(
 
             .limit(20);
 
+
         if (businessError) {
             throw businessError;
         }
 
 
-        // Fotoğrafları ekle
         const businessesWithImages =
             await attachBusinessImages(
                 businesses || []
@@ -1485,9 +1903,11 @@ async function searchByCategory(
                 })
             );
 
+
         renderSearchResults(
             businessesWithCategories
         );
+
 
     } catch (error) {
 
@@ -1495,6 +1915,7 @@ async function searchByCategory(
             "Kategori araması hatası:",
             error
         );
+
 
         renderSearchResults([]);
     }
@@ -1513,8 +1934,10 @@ async function attachCategories(
         !businesses ||
         businesses.length === 0
     ) {
+
         return [];
     }
+
 
     const {
         data: categories,
@@ -1527,9 +1950,11 @@ async function attachCategories(
             "id, name, icon"
         );
 
+
     if (error) {
         throw error;
     }
+
 
     const categoryMap =
         new Map(
@@ -1539,9 +1964,11 @@ async function attachCategories(
                     String(category.id),
 
                     category
+
                 ]
             )
         );
+
 
     return businesses.map(
         business => ({
@@ -1554,6 +1981,7 @@ async function attachCategories(
                         business.category_id
                     )
                 ) || null
+
         })
     );
 }
@@ -1571,12 +1999,14 @@ function renderSearchResults(
         return;
     }
 
+
     if (
         !data ||
         data.length === 0
     ) {
 
         searchResultsContainer.innerHTML = `
+
             <article class="business-card">
 
                 <div class="business-image">
@@ -1594,16 +2024,24 @@ function renderSearchResults(
                     </h3>
 
                     <p>
-                        Başka bir arama yapmayı deneyin.
+                        Başka bir işletme,
+                        kategori veya ilçe arayın.
                     </p>
 
                 </div>
 
             </article>
+
         `;
+
+        searchResultsSection?.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
 
         return;
     }
+
 
     searchResultsContainer.innerHTML =
         data
@@ -1612,13 +2050,11 @@ function renderSearchResults(
             )
             .join("");
 
-    if (searchResultsSection) {
 
-        searchResultsSection.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
-    }
+    searchResultsSection?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
 }
 
 
@@ -1633,6 +2069,7 @@ function setupPopularSearches() {
             "[data-search]"
         );
 
+
     links.forEach(
         link => {
 
@@ -1642,15 +2079,62 @@ function setupPopularSearches() {
 
                     event.preventDefault();
 
+
                     const value =
                         link.dataset.search;
+
 
                     if (!searchInput) {
                         return;
                     }
 
+
                     searchInput.value =
                         value;
+
+
+                    await performSearch();
+                }
+            );
+        }
+    );
+}
+
+
+// ============================================================
+// HIZLI KATEGORİ / İLÇE KARTLARI
+// ============================================================
+
+function setupQuickSearchCards() {
+
+    const cards =
+        document.querySelectorAll(
+            ".quick-category[data-search], .district-card[data-search]"
+        );
+
+
+    cards.forEach(
+        card => {
+
+            card.addEventListener(
+                "click",
+                async event => {
+
+                    event.preventDefault();
+
+
+                    const value =
+                        card.dataset.search;
+
+
+                    if (!searchInput) {
+                        return;
+                    }
+
+
+                    searchInput.value =
+                        value;
+
 
                     await performSearch();
                 }
@@ -1670,10 +2154,12 @@ function setupMobileMenu() {
         return;
     }
 
+
     menuButton.setAttribute(
         "aria-expanded",
         "false"
     );
+
 
     menuButton.addEventListener(
         "click",
@@ -1683,14 +2169,17 @@ function setupMobileMenu() {
                 return;
             }
 
+
             mobileNav.classList.toggle(
                 "active"
             );
+
 
             const isOpen =
                 mobileNav.classList.contains(
                     "active"
                 );
+
 
             menuButton.setAttribute(
                 "aria-expanded",
@@ -1698,8 +2187,10 @@ function setupMobileMenu() {
                     ? "true"
                     : "false"
             );
+
         }
     );
+
 
     if (mobileNav) {
 
@@ -1716,12 +2207,15 @@ function setupMobileMenu() {
                                 "active"
                             );
 
+
                             menuButton.setAttribute(
                                 "aria-expanded",
                                 "false"
                             );
+
                         }
                     );
+
                 }
             );
     }
@@ -1738,8 +2232,10 @@ function escapeHtml(value) {
         value === null ||
         value === undefined
     ) {
+
         return "";
     }
+
 
     return String(value)
 
@@ -1774,7 +2270,9 @@ function escapeHtml(value) {
 // SUPABASE ARAMA KARAKTERLERİ
 // ============================================================
 
-function escapeForQuery(value) {
+function escapeForQuery(
+    value
+) {
 
     return String(value)
 
@@ -1815,6 +2313,7 @@ window.addEventListener(
         );
     }
 );
+
 
 window.addEventListener(
     "unhandledrejection",
