@@ -2,70 +2,38 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trabzon Anlık - Admin Paneli</title>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Yönetim Paneli | Trabzon Anlık</title>
-
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* =========================
-           ADMIN GENEL
-        ========================= */
-
-        .admin-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        .admin-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            flex-wrap: wrap;
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f6f9;
+            color: #1f2937;
         }
 
-        .admin-header-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
         }
 
-        .admin-message {
-            margin: 15px 0;
-            padding: 12px 15px;
-            border-radius: 10px;
-            display: none;
+        button {
+            cursor: pointer;
         }
 
-        .admin-message.success {
-            background: #e8f7ed;
-            color: #18743a;
-        }
-
-        .admin-message.error {
-            background: #fdecec;
-            color: #a32121;
-        }
-
-        .admin-message.info {
-            background: #eef4ff;
-            color: #2457a6;
-        }
-
-        /* =========================
+        /* =====================================================
            LOGIN
-        ========================= */
+        ===================================================== */
 
         #loginScreen {
             min-height: 100vh;
@@ -73,780 +41,749 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            background: linear-gradient(135deg, #111827, #1f2937);
         }
 
         .login-box {
             width: 100%;
             max-width: 420px;
-            padding: 30px;
-            border-radius: 18px;
             background: #fff;
-            box-shadow: 0 10px 40px rgba(0,0,0,.10);
+            border-radius: 18px;
+            padding: 35px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.25);
         }
 
-        .login-box h1 {
+        .login-logo {
+            text-align: center;
+            font-size: 30px;
+            font-weight: 800;
             margin-bottom: 8px;
         }
 
-        .login-box p {
-            margin-bottom: 25px;
-            opacity: .7;
+        .login-subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 28px;
         }
 
-        .login-box label {
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
             display: block;
             margin-bottom: 7px;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 700;
         }
 
-        .login-box input {
+        .form-control {
             width: 100%;
-            box-sizing: border-box;
-            padding: 13px 14px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
+            border: 1px solid #d1d5db;
             border-radius: 10px;
-            font-size: 15px;
+            padding: 12px 14px;
+            outline: none;
+            background: #fff;
+            transition: .2s;
         }
 
-        .login-box button {
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+        }
+
+        .login-btn {
             width: 100%;
             border: 0;
-            padding: 13px;
             border-radius: 10px;
-            cursor: pointer;
+            padding: 13px;
+            background: #2563eb;
+            color: #fff;
             font-weight: 700;
-            font-size: 15px;
+            margin-top: 5px;
         }
 
-        #loginError {
+        .login-btn:hover {
+            background: #1d4ed8;
+        }
+
+        #loginMessage {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        /* =====================================================
+           LAYOUT
+        ===================================================== */
+
+        #adminPanel {
             display: none;
-            margin-bottom: 15px;
-            padding: 10px;
-            border-radius: 8px;
-            background: #fdecec;
-            color: #a32121;
+            min-height: 100vh;
         }
 
-        /* =========================
-           DASHBOARD
-        ========================= */
-
-        .admin-dashboard {
-            display: grid;
-            grid-template-columns:
-                repeat(5, minmax(0, 1fr));
-            gap: 14px;
-            margin: 25px 0;
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 250px;
+            background: #111827;
+            color: #fff;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            transition: transform .25s ease;
         }
 
-        .dashboard-card {
-            padding: 18px;
-            border-radius: 16px;
-            background: #fff;
-            box-shadow: 0 6px 25px rgba(0,0,0,.07);
-            border: 1px solid #eee;
-        }
-
-        .dashboard-icon {
-            font-size: 25px;
-            margin-bottom: 10px;
-        }
-
-        .dashboard-number {
-            font-size: 28px;
+        .sidebar-logo {
+            padding: 25px 22px;
+            font-size: 21px;
             font-weight: 800;
-            line-height: 1;
-            margin-bottom: 7px;
+            border-bottom: 1px solid rgba(255,255,255,.08);
         }
 
-        .dashboard-label {
+        .sidebar-logo small {
+            display: block;
+            color: #9ca3af;
+            font-size: 12px;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .menu {
+            padding: 15px 10px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .menu-title {
+            color: #6b7280;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 15px 12px 8px;
+            text-transform: uppercase;
+        }
+
+        .menu-item {
+            width: 100%;
+            border: 0;
+            background: transparent;
+            color: #d1d5db;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 14px;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            text-align: left;
+            font-weight: 600;
+            transition: .2s;
+        }
+
+        .menu-item:hover {
+            background: #1f2937;
+            color: #fff;
+        }
+
+        .menu-item.active {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .menu-icon {
+            width: 23px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .sidebar-bottom {
+            padding: 12px 10px 18px;
+            border-top: 1px solid rgba(255,255,255,.08);
+        }
+
+        .logout-btn {
+            width: 100%;
+            border: 0;
+            background: #7f1d1d;
+            color: #fff;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+
+        .main {
+            margin-left: 250px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            height: 70px;
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topbar-title {
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            border: 0;
+            background: #111827;
+            color: #fff;
+            border-radius: 9px;
+            padding: 9px 12px;
+            font-size: 20px;
+        }
+
+        .content {
+            padding: 28px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* =====================================================
+           DASHBOARD
+        ===================================================== */
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,.04);
+        }
+
+        .stat-icon {
+            font-size: 26px;
+            margin-bottom: 12px;
+        }
+
+        .stat-label {
+            color: #6b7280;
             font-size: 13px;
-            opacity: .65;
             font-weight: 600;
         }
 
-        .dashboard-card.pending-stat {
-            border-left: 4px solid #e3a900;
+        .stat-value {
+            font-size: 30px;
+            font-weight: 800;
+            margin-top: 5px;
         }
 
-        .dashboard-card.approved-stat {
-            border-left: 4px solid #28a745;
+        /* =====================================================
+           SECTION HEADER
+        ===================================================== */
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
-        .dashboard-card.featured-stat {
-            border-left: 4px solid #7653c7;
+        .section-header h2 {
+            font-size: 24px;
         }
 
-        /* =========================
-           FİLTRELER
-        ========================= */
+        .section-header p {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 4px;
+        }
 
-        .admin-filters {
-            margin: 20px 0 25px;
-            padding: 18px;
-            border-radius: 16px;
+        .refresh-btn {
+            border: 1px solid #d1d5db;
             background: #fff;
-            border: 1px solid #eee;
-            box-shadow: 0 5px 20px rgba(0,0,0,.05);
+            padding: 10px 15px;
+            border-radius: 9px;
+            font-weight: 700;
         }
 
-        .admin-filters-title {
-            margin: 0 0 13px;
-            font-size: 16px;
+        /* =====================================================
+           FILTERS
+        ===================================================== */
+
+        .filters {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            padding: 17px;
+            border-radius: 14px;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .filter-result {
+            grid-column: 1 / -1;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        /* =====================================================
+           BUSINESS CARDS
+        ===================================================== */
+
+        #applications {
+            display: grid;
+            gap: 18px;
+        }
+
+        .business-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,.04);
+        }
+
+        .business-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .business-title {
+            font-size: 20px;
             font-weight: 800;
         }
 
-        .admin-filter-grid {
-            display: grid;
-            grid-template-columns:
-                minmax(220px, 2fr)
-                repeat(3, minmax(150px, 1fr));
-            gap: 10px;
-        }
-
-        .admin-filter-input,
-        .admin-filter-select {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 11px 12px;
-            border: 1px solid #ddd;
-            border-radius: 9px;
-            background: #fff;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .admin-filter-input:focus,
-        .admin-filter-select:focus {
-            border-color: #888;
-        }
-
-        .filter-result-count {
-            margin-top: 12px;
+        .business-meta {
+            color: #6b7280;
             font-size: 13px;
-            opacity: .65;
+            margin-top: 5px;
         }
 
-        /* =========================
-           İŞLETME KARTI
-        ========================= */
-
-        .application-card {
-            margin-bottom: 25px;
-            padding: 22px;
-            border-radius: 18px;
-            background: #fff;
-            box-shadow: 0 6px 25px rgba(0,0,0,.08);
-        }
-
-        .application-header {
+        .badges {
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 15px;
-            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: flex-end;
         }
 
-        .application-header h3 {
-            margin: 0 0 8px;
-            font-size: 21px;
-        }
-
-        .status {
-            display: inline-block;
+        .badge {
             padding: 5px 9px;
             border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .status.approved {
-            background: #e8f7ed;
-            color: #18743a;
-        }
-
-        .status.pending {
-            background: #fff4d6;
-            color: #8a6100;
-        }
-
-        .business-rating {
-            font-weight: 700;
+            font-size: 11px;
+            font-weight: 800;
             white-space: nowrap;
         }
 
-        .application-info {
+        .badge-green {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-red {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-yellow {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-blue {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .business-info {
             display: grid;
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-            gap: 8px 20px;
-            margin-bottom: 22px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 9px 20px;
+            margin-bottom: 17px;
+            font-size: 14px;
         }
 
-        .application-info p {
-            margin: 0;
-            line-height: 1.5;
-            word-break: break-word;
+        .business-info strong {
+            color: #374151;
         }
 
-        /* =========================
-           GALERİ
-        ========================= */
-
-        .admin-gallery {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-
-        .admin-gallery-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
+        .description {
+            background: #f9fafb;
+            border-radius: 9px;
+            padding: 12px;
+            font-size: 14px;
             margin-bottom: 15px;
         }
 
-        .admin-gallery-header h4 {
-            margin: 0;
-            font-size: 17px;
+        .business-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
         }
 
-        .admin-gallery-header span {
+        .action-btn {
+            border: 0;
+            padding: 9px 12px;
+            border-radius: 8px;
+            color: #fff;
             font-size: 13px;
-            opacity: .65;
+            font-weight: 700;
         }
 
-        .admin-gallery-grid {
+        .btn-blue {
+            background: #2563eb;
+        }
+
+        .btn-green {
+            background: #16a34a;
+        }
+
+        .btn-red {
+            background: #dc2626;
+        }
+
+        .btn-yellow {
+            background: #d97706;
+        }
+
+        .btn-gray {
+            background: #4b5563;
+        }
+
+        /* =====================================================
+           GALLERY
+        ===================================================== */
+
+        .gallery {
             display: grid;
-            grid-template-columns:
-                repeat(4, minmax(0, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
         }
 
-        .admin-gallery-item {
-            min-width: 0;
-            overflow: hidden;
-            border: 1px solid #e5e5e5;
-            border-radius: 12px;
-            background: #fafafa;
-        }
-
-        .admin-image-wrapper {
+        .gallery-item {
             position: relative;
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            background: #eee;
+            height: 110px;
+            border-radius: 10px;
             overflow: hidden;
+            background: #eee;
         }
 
-        .admin-image-wrapper img {
+        .gallery-item img {
             width: 100%;
             height: 100%;
-            display: block;
             object-fit: cover;
         }
 
-        .cover-badge {
+        .cover-label {
             position: absolute;
-            left: 7px;
-            top: 7px;
-            padding: 5px 8px;
-            border-radius: 20px;
+            left: 5px;
+            top: 5px;
+            background: #2563eb;
+            color: #fff;
+            padding: 4px 6px;
+            border-radius: 5px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .gallery-buttons {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            right: 5px;
+            display: flex;
+            gap: 3px;
+        }
+
+        .gallery-buttons button {
+            flex: 1;
+            border: 0;
             background: rgba(0,0,0,.75);
             color: #fff;
+            border-radius: 5px;
+            padding: 5px;
             font-size: 11px;
-            font-weight: 700;
         }
 
-        .admin-image-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            padding: 7px;
-        }
-
-        .admin-image-actions button {
-            flex: 1;
-            min-width: 35px;
-            border: 0;
-            padding: 7px 6px;
-            border-radius: 7px;
-            cursor: pointer;
-            font-size: 11px;
-            font-weight: 700;
-            background: #eee;
-        }
-
-        .admin-image-actions button:hover {
-            opacity: .85;
-        }
-
-        .admin-image-actions button:disabled {
-            cursor: not-allowed;
-            opacity: .4;
-        }
-
-        .admin-image-actions .image-delete-button {
-            background: #ffe8e8;
-            color: #a32121;
-        }
-
-        .admin-upload-area {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
+        .upload-box {
             margin-top: 15px;
-            padding: 14px;
-            border: 1px dashed #ccc;
-            border-radius: 12px;
-            background: #fafafa;
+            padding: 15px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+            background: #f8fafc;
         }
 
-        .admin-upload-area input[type="file"] {
-            flex: 1;
-            min-width: 220px;
-            font-size: 13px;
+        /* =====================================================
+           REVIEWS
+        ===================================================== */
+
+        #reviewsList {
+            display: grid;
+            gap: 15px;
         }
-
-        .admin-upload-area button {
-            border: 0;
-            padding: 11px 15px;
-            border-radius: 9px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-
-        .admin-gallery-empty {
-            padding: 20px;
-            text-align: center;
-            border: 1px dashed #ddd;
-            border-radius: 12px;
-            opacity: .65;
-            margin-bottom: 15px;
-        }
-
-        /* =========================
-           İŞLETME BUTONLARI
-        ========================= */
-
-        .application-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 9px;
-            margin-top: 20px;
-        }
-
-        .application-actions button {
-            border: 0;
-            padding: 10px 13px;
-            border-radius: 9px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-
-        .edit-button {
-            background: #eef4ff;
-            color: #2457a6;
-        }
-
-        .approve-button {
-            background: #e8f7ed;
-            color: #18743a;
-        }
-
-        .reject-button {
-            background: #fff0e8;
-            color: #a34c16;
-        }
-
-        .delete-button {
-            background: #ffe8e8;
-            color: #a32121;
-        }
-
-        .featured-button {
-            background: #fff4d6;
-            color: #8a6100;
-        }
-
-        .featured-remove-button {
-            background: #f0eaff;
-            color: #6140a0;
-        }
-
-        /* =========================
-           YORUMLAR
-        ========================= */
 
         .review-card {
-            margin-bottom: 15px;
-            padding: 18px;
-            border-radius: 14px;
             background: #fff;
-            box-shadow: 0 4px 18px rgba(0,0,0,.06);
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 18px;
         }
 
         .review-header {
             display: flex;
             justify-content: space-between;
             gap: 15px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
-        .review-header strong {
-            display: block;
+        .review-name {
+            font-weight: 800;
         }
 
-        .review-header span {
-            display: block;
-            margin-top: 3px;
-            font-size: 13px;
-            opacity: .65;
+        .review-stars {
+            font-size: 15px;
         }
 
-        .review-card p {
-            margin: 10px 0;
-            line-height: 1.6;
+        .review-comment {
+            color: #4b5563;
+            line-height: 1.5;
+            margin-bottom: 12px;
         }
 
-        .review-card small {
-            opacity: .6;
-        }
+        /* =====================================================
+           EDIT MODAL
+        ===================================================== */
 
-        .review-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .review-actions button {
-            border: 0;
-            padding: 9px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-
-        .approved-label {
-            padding: 8px 11px;
-            border-radius: 8px;
-            background: #e8f7ed;
-            color: #18743a;
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        /* =========================
-           DÜZENLEME MODALI
-        ========================= */
-
-        .edit-modal {
+        .modal-overlay {
+            display: none;
             position: fixed;
             inset: 0;
-            z-index: 9999;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
             background: rgba(0,0,0,.65);
+            z-index: 3000;
+            padding: 20px;
             overflow-y: auto;
         }
 
-        .edit-modal.show {
+        .modal-overlay.open {
             display: flex;
+            align-items: flex-start;
+            justify-content: center;
         }
 
-        .edit-modal-box {
+        .edit-modal {
             width: 100%;
-            max-width: 700px;
-            max-height: 92vh;
-            overflow-y: auto;
-            padding: 25px;
-            border-radius: 18px;
+            max-width: 900px;
             background: #fff;
-            box-shadow: 0 20px 70px rgba(0,0,0,.25);
+            border-radius: 18px;
+            margin: 30px auto;
+            box-shadow: 0 25px 70px rgba(0,0,0,.3);
         }
 
-        .edit-modal-header {
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            gap: 15px;
-            margin-bottom: 22px;
+            align-items: center;
         }
 
-        .edit-modal-header h2 {
-            margin: 0;
-            font-size: 22px;
+        .modal-header h3 {
+            font-size: 20px;
         }
 
-        .edit-modal-close {
-            width: 38px;
-            height: 38px;
+        .modal-close {
             border: 0;
+            background: #f3f4f6;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
-            background: #f1f1f1;
-            cursor: pointer;
-            font-size: 22px;
-            line-height: 1;
+            font-size: 18px;
         }
 
-        .edit-modal-close:hover {
-            background: #e5e5e5;
+        .modal-body {
+            padding: 24px;
         }
 
         .edit-form-grid {
             display: grid;
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-            gap: 14px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
         }
 
-        .edit-form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .edit-form-group.full {
+        .full-width {
             grid-column: 1 / -1;
         }
 
-        .edit-form-group label {
-            margin-bottom: 6px;
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        .edit-form-group input,
-        .edit-form-group textarea {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 11px 12px;
-            border: 1px solid #ddd;
-            border-radius: 9px;
-            font-size: 14px;
-            font-family: inherit;
-            outline: none;
-            background: #fff;
-        }
-
-        .edit-form-group textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-
-        .edit-form-group input:focus,
-        .edit-form-group textarea:focus {
-            border-color: #777;
-        }
-
-        .edit-category-info {
-            padding: 11px 12px;
-            border: 1px solid #ddd;
-            border-radius: 9px;
-            background: #f8f8f8;
-            font-size: 14px;
-            color: #555;
-        }
-
-        .edit-form-checks {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 5px;
-        }
-
-        .edit-form-check {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .edit-form-check input {
-            width: 18px;
-            height: 18px;
-            margin: 0;
-        }
-
-        .edit-modal-actions {
+        .modal-footer {
+            border-top: 1px solid #e5e7eb;
+            padding: 18px 24px;
             display: flex;
             justify-content: flex-end;
             gap: 10px;
-            margin-top: 22px;
-            padding-top: 18px;
-            border-top: 1px solid #eee;
         }
 
-        .edit-cancel-button,
-        .edit-save-button {
+        .modal-btn {
             border: 0;
-            padding: 11px 18px;
             border-radius: 9px;
-            cursor: pointer;
+            padding: 11px 17px;
             font-weight: 700;
         }
 
-        .edit-cancel-button {
-            background: #eee;
+        .cancel-btn {
+            background: #e5e7eb;
+            color: #374151;
         }
 
-        .edit-save-button {
-            background: #e8f7ed;
-            color: #18743a;
+        .save-btn {
+            background: #2563eb;
+            color: #fff;
         }
 
-        .edit-save-button:disabled,
-        .edit-cancel-button:disabled {
-            opacity: .5;
-            cursor: not-allowed;
-        }
+        /* =====================================================
+           EMPTY / LOADING
+        ===================================================== */
 
-        /* =========================
-           YÜKLENİYOR / BOŞ
-        ========================= */
-
-        .loading,
-        .empty,
-        .error {
-            padding: 25px;
+        .empty {
+            background: #fff;
+            border: 1px dashed #d1d5db;
+            border-radius: 14px;
+            padding: 40px 20px;
             text-align: center;
-            border-radius: 12px;
+            color: #6b7280;
         }
 
         .loading {
-            background: #f5f5f5;
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
         }
 
-        .empty {
-            background: #fafafa;
-            opacity: .7;
-        }
+        /* =====================================================
+           MOBILE
+        ===================================================== */
 
-        .error {
-            background: #fdecec;
-            color: #a32121;
-        }
-
-        /* =========================
-           MOBİL
-        ========================= */
-
-        @media (max-width: 1000px) {
-
-            .admin-dashboard {
-                grid-template-columns:
-                    repeat(3, minmax(0, 1fr));
+        @media (max-width: 1100px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
             }
 
-            .admin-filter-grid {
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
+            .filters {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
-        @media (max-width: 800px) {
-
-            .admin-gallery-grid {
-                grid-template-columns:
-                    repeat(3, minmax(0, 1fr));
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                box-shadow: 10px 0 30px rgba(0,0,0,.2);
             }
 
-            .admin-dashboard {
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        @media (max-width: 600px) {
-
-            .admin-container {
-                padding: 12px;
+            .sidebar.open {
+                transform: translateX(0);
             }
 
-            .application-card {
+            .main {
+                margin-left: 0;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .topbar {
+                padding: 0 15px;
+            }
+
+            .topbar-title {
+                font-size: 18px;
+            }
+
+            .content {
                 padding: 15px;
-                border-radius: 14px;
             }
 
-            .application-info {
-                grid-template-columns: 1fr;
-            }
-
-            .application-header {
-                flex-direction: column;
-            }
-
-            .admin-gallery-grid {
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
-            }
-
-            .admin-upload-area {
-                align-items: stretch;
-            }
-
-            .admin-upload-area input[type="file"],
-            .admin-upload-area button {
-                width: 100%;
-                box-sizing: border-box;
-            }
-
-            .application-actions {
-                flex-direction: column;
-            }
-
-            .application-actions button {
-                width: 100%;
-            }
-
-            .admin-dashboard {
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
             }
 
-            .dashboard-card {
-                padding: 14px;
+            .stat-card {
+                padding: 15px;
             }
 
-            .dashboard-number {
-                font-size: 23px;
+            .stat-value {
+                font-size: 25px;
             }
 
-            .admin-filter-grid {
+            .filters {
                 grid-template-columns: 1fr;
             }
 
-            .edit-modal {
-                padding: 10px;
+            .business-top {
+                flex-direction: column;
             }
 
-            .edit-modal-box {
-                padding: 18px;
-                max-height: 94vh;
+            .badges {
+                justify-content: flex-start;
+            }
+
+            .business-info {
+                grid-template-columns: 1fr;
             }
 
             .edit-form-grid {
                 grid-template-columns: 1fr;
             }
 
-            .edit-form-group.full {
+            .full-width {
                 grid-column: auto;
             }
 
-            .edit-modal-actions {
+            .section-header {
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 450px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stat-label {
+                font-size: 11px;
+            }
+
+            .stat-value {
+                font-size: 22px;
+            }
+
+            .business-actions {
                 flex-direction: column;
             }
 
-            .edit-cancel-button,
-            .edit-save-button {
+            .action-btn {
                 width: 100%;
             }
         }
@@ -855,222 +792,174 @@
 
 <body>
 
-    <!-- =========================
-         LOGIN
-    ========================= -->
+<!-- =========================================================
+     LOGIN
+========================================================= -->
 
-    <section id="loginScreen">
+<div id="loginScreen">
+    <div class="login-box">
+        <div class="login-logo">Trabzon Anlık</div>
+        <div class="login-subtitle">Yönetim Paneli</div>
 
-        <div class="login-box">
-
-            <h1>TRABZON ANLIK</h1>
-
-            <p>
-                Yönetim paneline giriş yap
-            </p>
-
-            <div id="loginError"></div>
-
-            <form id="loginForm">
-
-                <label for="loginEmail">
-                    E-posta
-                </label>
-
+        <form id="loginForm">
+            <div class="form-group">
+                <label>E-posta</label>
                 <input
-                    type="email"
                     id="loginEmail"
-                    placeholder="E-posta adresiniz"
-                    autocomplete="email"
+                    class="form-control"
+                    type="email"
+                    placeholder="admin@email.com"
                     required
                 >
+            </div>
 
-                <label for="loginPassword">
-                    Şifre
-                </label>
-
+            <div class="form-group">
+                <label>Şifre</label>
                 <input
-                    type="password"
                     id="loginPassword"
-                    placeholder="Şifreniz"
-                    autocomplete="current-password"
+                    class="form-control"
+                    type="password"
+                    placeholder="••••••••"
                     required
                 >
+            </div>
 
-                <button type="submit">
-                    Giriş Yap
-                </button>
+            <button class="login-btn" type="submit">
+                Giriş Yap
+            </button>
 
-            </form>
+            <div id="loginMessage"></div>
+        </form>
+    </div>
+</div>
 
+
+<!-- =========================================================
+     ADMIN PANEL
+========================================================= -->
+
+<div id="adminPanel">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+        <div class="sidebar-logo">
+            Trabzon Anlık
+            <small>Yönetim Paneli</small>
         </div>
 
-    </section>
+        <nav class="menu">
+
+            <div class="menu-title">Genel</div>
+
+            <button class="menu-item active" data-section="dashboard">
+                <span class="menu-icon">📊</span>
+                Dashboard
+            </button>
 
 
-    <!-- =========================
-         ADMIN PANEL
-    ========================= -->
+            <div class="menu-title">İşletme Yönetimi</div>
 
-    <section
-        id="adminApp"
-        style="display:none;"
-    >
+            <button class="menu-item" data-section="businesses">
+                <span class="menu-icon">🏪</span>
+                İşletmeler
+            </button>
 
-        <div class="admin-container">
+            <button class="menu-item" data-section="pending">
+                <span class="menu-icon">⏳</span>
+                Bekleyen Başvurular
+            </button>
 
-            <header class="admin-header">
-
-                <div>
-
-                    <h1>
-                        TRABZON ANLIK
-                    </h1>
-
-                    <p>
-                        YÖNETİM PANELİ
-                    </p>
-
-                </div>
-
-                <div class="admin-header-actions">
-
-                    <span id="adminUser"></span>
-
-                    <button
-                        id="refreshButton"
-                        type="button"
-                    >
-                        🔄 Yenile
-                    </button>
-
-                    <button
-                        id="logoutButton"
-                        type="button"
-                    >
-                        Çıkış Yap
-                    </button>
-
-                </div>
-
-            </header>
+            <button class="menu-item" data-section="featured">
+                <span class="menu-icon">⭐</span>
+                Öne Çıkanlar
+            </button>
 
 
-            <div
-                id="adminMessage"
-                class="admin-message"
-            ></div>
+            <div class="menu-title">İçerik</div>
+
+            <button class="menu-item" data-section="reviews">
+                <span class="menu-icon">💬</span>
+                Yorumlar
+            </button>
+
+            <button class="menu-item" data-section="photos">
+                <span class="menu-icon">🖼️</span>
+                Fotoğraf Yönetimi
+            </button>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+            <button class="logout-btn" id="logoutBtn">
+                🚪 Çıkış Yap
+            </button>
+        </div>
+
+    </aside>
 
 
-            <!-- =========================
+    <!-- MAIN -->
+    <main class="main">
+
+        <header class="topbar">
+            <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+
+            <div class="topbar-title" id="pageTitle">
+                Dashboard
+            </div>
+
+            <button class="refresh-btn" id="refreshBtn">
+                🔄 Yenile
+            </button>
+        </header>
+
+
+        <div class="content">
+
+            <!-- =================================================
                  DASHBOARD
-            ========================= -->
+            ================================================== -->
 
-            <section>
+            <section class="section active" id="section-dashboard">
 
-                <h2>
-                    📊 Genel Bakış
-                </h2>
+                <div class="section-header">
+                    <div>
+                        <h2>Dashboard</h2>
+                        <p>Trabzon Anlık genel durum</p>
+                    </div>
+                </div>
 
-                <div class="admin-dashboard">
+                <div class="stats-grid">
 
-                    <div class="dashboard-card">
-
-                        <div class="dashboard-icon">
-                            🏪
-                        </div>
-
-                        <div
-                            id="statTotalBusinesses"
-                            class="dashboard-number"
-                        >
-                            0
-                        </div>
-
-                        <div class="dashboard-label">
-                            Toplam İşletme
-                        </div>
-
+                    <div class="stat-card">
+                        <div class="stat-icon">🏪</div>
+                        <div class="stat-label">Toplam İşletme</div>
+                        <div class="stat-value" id="statTotalBusinesses">0</div>
                     </div>
 
-
-                    <div class="dashboard-card pending-stat">
-
-                        <div class="dashboard-icon">
-                            ⏳
-                        </div>
-
-                        <div
-                            id="statPendingBusinesses"
-                            class="dashboard-number"
-                        >
-                            0
-                        </div>
-
-                        <div class="dashboard-label">
-                            Onay Bekleyen
-                        </div>
-
+                    <div class="stat-card">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-label">Bekleyen İşletme</div>
+                        <div class="stat-value" id="statPendingBusinesses">0</div>
                     </div>
 
-
-                    <div class="dashboard-card approved-stat">
-
-                        <div class="dashboard-icon">
-                            ✅
-                        </div>
-
-                        <div
-                            id="statApprovedBusinesses"
-                            class="dashboard-number"
-                        >
-                            0
-                        </div>
-
-                        <div class="dashboard-label">
-                            Onaylı İşletme
-                        </div>
-
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-label">Onaylı İşletme</div>
+                        <div class="stat-value" id="statApprovedBusinesses">0</div>
                     </div>
 
-
-                    <div class="dashboard-card featured-stat">
-
-                        <div class="dashboard-icon">
-                            ⭐
-                        </div>
-
-                        <div
-                            id="statFeaturedBusinesses"
-                            class="dashboard-number"
-                        >
-                            0
-                        </div>
-
-                        <div class="dashboard-label">
-                            Öne Çıkan
-                        </div>
-
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-label">Öne Çıkan İşletme</div>
+                        <div class="stat-value" id="statFeaturedBusinesses">0</div>
                     </div>
 
-
-                    <div class="dashboard-card">
-
-                        <div class="dashboard-icon">
-                            💬
-                        </div>
-
-                        <div
-                            id="statReviews"
-                            class="dashboard-number"
-                        >
-                            0
-                        </div>
-
-                        <div class="dashboard-label">
-                            Toplam Yorum
-                        </div>
-
+                    <div class="stat-card">
+                        <div class="stat-icon">💬</div>
+                        <div class="stat-label">Toplam Yorum</div>
+                        <div class="stat-value" id="statReviews">0</div>
                     </div>
 
                 </div>
@@ -1078,392 +967,311 @@
             </section>
 
 
-            <!-- =========================
-                 İŞLETME FİLTRELERİ
-            ========================= -->
+            <!-- =================================================
+                 BUSINESSES
+            ================================================== -->
 
-            <section>
+            <section class="section" id="section-businesses">
 
-                <h2>
-                    🏪 İşletmeler
-                </h2>
-
-                <div class="admin-filters">
-
-                    <div class="admin-filters-title">
-                        🔎 İşletme Ara ve Filtrele
+                <div class="section-header">
+                    <div>
+                        <h2>🏪 İşletmeler</h2>
+                        <p>Tüm işletmeleri buradan yönetebilirsin.</p>
                     </div>
+                </div>
 
-                    <div class="admin-filter-grid">
+                <div class="filters">
 
-                        <input
-                            type="search"
-                            id="businessSearch"
-                            class="admin-filter-input"
-                            placeholder="İşletme adı, telefon, adres..."
-                        >
-
-                        <select
-                            id="businessCategoryFilter"
-                            class="admin-filter-select"
-                        >
-
-                            <option value="">
-                                📂 Tüm Kategoriler
-                            </option>
-
-                        </select>
-
-
-                        <select
-                            id="businessStatusFilter"
-                            class="admin-filter-select"
-                        >
-
-                            <option value="">
-                                📌 Tüm Durumlar
-                            </option>
-
-                            <option value="pending">
-                                ⏳ Onay Bekleyen
-                            </option>
-
-                            <option value="approved">
-                                ✅ Onaylı
-                            </option>
-
-                        </select>
-
-
-                        <select
-                            id="businessFeaturedFilter"
-                            class="admin-filter-select"
-                        >
-
-                            <option value="">
-                                ⭐ Öne Çıkan Durumu
-                            </option>
-
-                            <option value="featured">
-                                ⭐ Öne Çıkanlar
-                            </option>
-
-                            <option value="normal">
-                                ☆ Normal İşletmeler
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                    <div
-                        id="filterResultCount"
-                        class="filter-result-count"
+                    <input
+                        id="businessSearch"
+                        class="form-control"
+                        type="text"
+                        placeholder="🔍 İşletme ara..."
                     >
-                        İşletmeler yükleniyor...
+
+                    <select id="businessCategoryFilter" class="form-control">
+                        <option value="">Tüm Kategoriler</option>
+                    </select>
+
+                    <select id="businessStatusFilter" class="form-control">
+                        <option value="">Tüm Durumlar</option>
+                        <option value="approved">Onaylı</option>
+                        <option value="pending">Bekleyen</option>
+                    </select>
+
+                    <select id="businessFeaturedFilter" class="form-control">
+                        <option value="">Tüm İşletmeler</option>
+                        <option value="featured">Öne Çıkanlar</option>
+                        <option value="normal">Normal</option>
+                    </select>
+
+                    <div class="filter-result" id="filterResultCount">
+                        0 işletme
                     </div>
 
                 </div>
-
 
                 <div id="applications">
-
-                    <div class="loading">
-                        İşletmeler yükleniyor...
-                    </div>
-
+                    <div class="loading">İşletmeler yükleniyor...</div>
                 </div>
 
             </section>
 
 
-            <!-- =========================
-                 YORUMLAR
-            ========================= -->
+            <!-- =================================================
+                 PENDING
+            ================================================== -->
 
-            <section>
+            <section class="section" id="section-pending">
 
-                <h2>
-                    💬 Yorumlar
-                </h2>
+                <div class="section-header">
+                    <div>
+                        <h2>⏳ Bekleyen Başvurular</h2>
+                        <p>Henüz onaylanmamış işletmeler.</p>
+                    </div>
+                </div>
+
+                <div id="pendingApplications">
+                    <div class="loading">Yükleniyor...</div>
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 FEATURED
+            ================================================== -->
+
+            <section class="section" id="section-featured">
+
+                <div class="section-header">
+                    <div>
+                        <h2>⭐ Öne Çıkanlar</h2>
+                        <p>Öne çıkarılmış işletmeler.</p>
+                    </div>
+                </div>
+
+                <div id="featuredApplications">
+                    <div class="loading">Yükleniyor...</div>
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 REVIEWS
+            ================================================== -->
+
+            <section class="section" id="section-reviews">
+
+                <div class="section-header">
+                    <div>
+                        <h2>💬 Yorumlar</h2>
+                        <p>İşletme yorumlarını buradan yönetebilirsin.</p>
+                    </div>
+                </div>
 
                 <div id="reviewsList">
+                    <div class="loading">Yorumlar yükleniyor...</div>
+                </div>
 
-                    <div class="loading">
-                        Yorumlar yükleniyor...
+            </section>
+
+
+            <!-- =================================================
+                 PHOTOS
+            ================================================== -->
+
+            <section class="section" id="section-photos">
+
+                <div class="section-header">
+                    <div>
+                        <h2>🖼️ Fotoğraf Yönetimi</h2>
+                        <p>İşletmelerin fotoğraflarını buradan yönetebilirsin.</p>
                     </div>
+                </div>
 
+                <div class="filters">
+                    <input
+                        id="photoBusinessSearch"
+                        class="form-control"
+                        type="text"
+                        placeholder="🔍 İşletme ara..."
+                    >
+                </div>
+
+                <div id="photoBusinesses">
+                    <div class="loading">Yükleniyor...</div>
                 </div>
 
             </section>
 
         </div>
+    </main>
+</div>
 
-    </section>
 
+<!-- =========================================================
+     EDIT MODAL
+========================================================= -->
 
-    <!-- =========================
-         İŞLETME DÜZENLEME MODALI
-    ========================= -->
+<div class="modal-overlay" id="editBusinessModal">
 
-    <div
-        id="editBusinessModal"
-        class="edit-modal"
-    >
+    <div class="edit-modal">
 
-        <div class="edit-modal-box">
+        <div class="modal-header">
+            <h3>✏️ İşletmeyi Düzenle</h3>
 
-            <div class="edit-modal-header">
+            <button
+                type="button"
+                class="modal-close"
+                id="closeEditModal"
+            >
+                ×
+            </button>
+        </div>
 
-                <h2>
-                    ✏️ İşletmeyi Düzenle
-                </h2>
+        <form id="editBusinessForm">
+
+            <input type="hidden" id="editBusinessId">
+
+            <div class="modal-body">
+
+                <div class="edit-form-grid">
+
+                    <div class="form-group">
+                        <label>İşletme Adı</label>
+                        <input
+                            id="editBusinessName"
+                            class="form-control"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select
+                            id="editBusinessCategory"
+                            class="form-control"
+                            required
+                        ></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>İlçe</label>
+                        <input
+                            id="editBusinessDistrict"
+                            class="form-control"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Telefon</label>
+                        <input
+                            id="editBusinessPhone"
+                            class="form-control"
+                            type="tel"
+                        >
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Adres</label>
+                        <input
+                            id="editBusinessAddress"
+                            class="form-control"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>İşletme Sahibi</label>
+                        <input
+                            id="editBusinessOwnerName"
+                            class="form-control"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sahibi Telefonu</label>
+                        <input
+                            id="editBusinessOwnerPhone"
+                            class="form-control"
+                            type="tel"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sahibi E-posta</label>
+                        <input
+                            id="editBusinessOwnerEmail"
+                            class="form-control"
+                            type="email"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Instagram</label>
+                        <input
+                            id="editBusinessInstagram"
+                            class="form-control"
+                            placeholder="@kullaniciadi"
+                        >
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Açıklama</label>
+                        <textarea
+                            id="editBusinessDescription"
+                            class="form-control"
+                            rows="5"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Onay Durumu</label>
+                        <select id="editBusinessApproved" class="form-control">
+                            <option value="true">✅ Onaylı</option>
+                            <option value="false">⏳ Bekliyor</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Öne Çıkarma</label>
+                        <select id="editBusinessFeatured" class="form-control">
+                            <option value="false">Normal</option>
+                            <option value="true">⭐ Öne Çıkar</option>
+                        </select>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
 
                 <button
                     type="button"
-                    class="edit-modal-close"
-                    onclick="closeEditBusinessModal()"
+                    class="modal-btn cancel-btn"
+                    id="cancelEditBtn"
                 >
-                    ×
+                    Vazgeç
+                </button>
+
+                <button
+                    type="submit"
+                    class="modal-btn save-btn"
+                >
+                    💾 Değişiklikleri Kaydet
                 </button>
 
             </div>
 
-
-            <form id="editBusinessForm">
-
-                <input
-                    type="hidden"
-                    id="editBusinessId"
-                >
-
-
-                <div class="edit-form-grid">
-
-                    <div class="edit-form-group full">
-
-                        <label for="editBusinessName">
-                            İşletme Adı
-                        </label>
-
-                        <input
-                            type="text"
-                            id="editBusinessName"
-                            required
-                        >
-
-                    </div>
-
-
-                    <div class="edit-form-group">
-
-                        <label>
-                            Kategori
-                        </label>
-
-                        <div
-                            id="editBusinessCategory"
-                            class="edit-category-info"
-                        >
-                            -
-                        </div>
-
-                    </div>
-
-
-                    <div class="edit-form-group">
-
-                        <label for="editBusinessDistrict">
-                            İlçe
-                        </label>
-
-                        <input
-                            type="text"
-                            id="editBusinessDistrict"
-                        >
-
-                    </div>
-
-
-                    <div class="edit-form-group full">
-
-                        <label for="editBusinessAddress">
-                            Adres
-                        </label>
-
-                        <input
-                            type="text"
-                            id="editBusinessAddress"
-                        >
-
-                    </div>
-
-
-                    <div class="edit-form-group">
-
-                        <label for="editBusinessPhone">
-                            Telefon
-                        </label>
-
-                        <input
-                            type="text"
-                            id="editBusinessPhone"
-                        >
-
-                    </div>
-
-
-                    <div class="edit-form-group">
-
-                        <label for="editOwnerName">
-                            İşletme Sahibi
-                        </label>
-
-                        <input
-                            type="text"
-                            id="editOwnerName"
-                        >
-
-                    </div>
-
-
-                    <div class="edit-form-group">
-
-                        <label for="editOwnerPhone">
-                            Sahibi Telefon
-                        </label>
-
-                        <input
-                            type="text"
-                            id="editOwnerPhone"
-                        >
-
-                    </div>
-
-
-                    <div class="edit-form-group">
-
-                        <label for="editOwnerEmail">
-                            Sahibi E-posta
-                        </label>
-
-                        <input
-                            type="email"
-                            id="editOwnerEmail"
-                        >
-
-                    </div>
-
-
-                    <div class="edit-form-group">
-
-                        <label for="editInstagram">
-                            Instagram
-                        </label>
-
-                        <input
-                            type="text"
-                            id="editInstagram"
-                            placeholder="@kullaniciadi"
-                        >
-
-                    </div>
-
-
-                    <div class="edit-form-group full">
-
-                        <label for="editDescription">
-                            İşletme Açıklaması
-                        </label>
-
-                        <textarea
-                            id="editDescription"
-                        ></textarea>
-
-                    </div>
-
-
-                    <div class="edit-form-group full">
-
-                        <label>
-                            Durum
-                        </label>
-
-                        <div class="edit-form-checks">
-
-                            <label class="edit-form-check">
-
-                                <input
-                                    type="checkbox"
-                                    id="editApproved"
-                                >
-
-                                <span>
-                                    İşletme onaylı
-                                </span>
-
-                            </label>
-
-
-                            <label class="edit-form-check">
-
-                                <input
-                                    type="checkbox"
-                                    id="editFeatured"
-                                >
-
-                                <span>
-                                    ⭐ Öne çıkar
-                                </span>
-
-                            </label>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="edit-modal-actions">
-
-                    <button
-                        type="button"
-                        class="edit-cancel-button"
-                        onclick="closeEditBusinessModal()"
-                    >
-                        Vazgeç
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="edit-save-button"
-                        id="editBusinessSaveButton"
-                    >
-                        💾 Değişiklikleri Kaydet
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
+        </form>
 
     </div>
+</div>
 
 
-    <!-- SUPABASE -->
-
-    <script
-        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-    ></script>
-
-
-    <!-- ADMIN JS -->
-
-    <script
-        src="admin.js?v=6"
-    ></script>
+<script src="admin.js?v=6"></script>
 
 </body>
 </html>
