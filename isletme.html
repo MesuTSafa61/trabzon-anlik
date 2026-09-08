@@ -10,7 +10,17 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>İşletme Detayı | Trabzon Anlık</title>
+    <title>İşletmeler | Trabzon Anlık</title>
+
+    <meta
+        name="description"
+        content="Trabzon'daki işletmeleri, mekanları ve hizmetleri keşfet."
+    >
+
+    <meta
+        name="theme-color"
+        content="#101c35"
+    >
 
     <link
         rel="stylesheet"
@@ -21,12 +31,18 @@
 
         body {
             background: #f6f8fb;
+            margin: 0;
         }
+
+        /* =====================================================
+           ANA İÇERİK
+        ===================================================== */
 
         .business-detail {
             max-width: 1150px;
             margin: 40px auto 80px;
             padding: 0 20px;
+            min-height: 400px;
         }
 
         .back-button {
@@ -43,9 +59,9 @@
             opacity: .7;
         }
 
-        /* =========================
-           İŞLETME
-        ========================= */
+        /* =====================================================
+           İŞLETME DETAY
+        ===================================================== */
 
         .business-detail-card {
             background: #fff;
@@ -251,9 +267,9 @@
             margin: 8px 0 0;
         }
 
-        /* =========================
+        /* =====================================================
            YORUMLAR
-        ========================= */
+        ===================================================== */
 
         .reviews-section {
             margin-top: 32px;
@@ -522,9 +538,9 @@
             margin-bottom: 8px;
         }
 
-        /* =========================
+        /* =====================================================
            YÜKLENİYOR / HATA
-        ========================= */
+        ===================================================== */
 
         .business-loading {
             background: #fff;
@@ -569,7 +585,23 @@
             font-weight: 700;
         }
 
+        /* =====================================================
+           MOBİL ALT BAR
+        ===================================================== */
+
+        .mobile-bottom-bar {
+            display: none;
+        }
+
+        /* =====================================================
+           MOBİL
+        ===================================================== */
+
         @media (max-width: 700px) {
+
+            body {
+                padding-bottom: 72px;
+            }
 
             .business-detail {
                 margin: 25px auto 50px;
@@ -627,6 +659,47 @@
                 font-size: 32px;
             }
 
+            /* MOBİL ALT MENÜ */
+
+            .mobile-bottom-bar {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                height: 66px;
+                background: rgba(255,255,255,.98);
+                border-top: 1px solid #e5e7eb;
+                box-shadow: 0 -8px 25px rgba(16,28,53,.10);
+                display: flex;
+                align-items: stretch;
+                justify-content: space-around;
+                z-index: 99999;
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+
+            .mobile-bottom-bar a {
+                flex: 1;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 3px;
+                color: #667085;
+                text-decoration: none;
+                font-size: 11px;
+                font-weight: 700;
+            }
+
+            .mobile-bottom-bar a span {
+                font-size: 22px;
+                line-height: 1;
+            }
+
+            .mobile-bottom-bar a.active {
+                color: #7b1830;
+            }
+
         }
 
     </style>
@@ -637,37 +710,63 @@
 <body>
 
 
+<!-- =====================================================
+     HEADER
+====================================================== -->
+
 <header class="header">
 
-    <div class="header-content">
+    <div class="container header-content">
 
         <a
             href="index.html"
             class="logo"
         >
-            TRABZON ANLIK
+            <span>TRABZON</span>
+            <strong>ANLIK</strong>
         </a>
 
-        <nav class="nav">
+
+        <nav class="desktop-nav">
 
             <a href="index.html">
-                Ana Sayfa
+                Keşfet
             </a>
 
-            <a href="index.html#kategoriler">
-                Kategoriler
+            <a href="isletme.html">
+                İşletmeler
             </a>
 
-            <a href="isletme-ekle.html">
-                İşletmeni Ekle
+            <a href="index.html#etkinlikler">
+                Etkinlikler
+            </a>
+
+            <a href="index.html#bugun">
+                Bugün Trabzon
+            </a>
+
+            <a href="index.html#trabzon-kesfet">
+                Trabzon'u Keşfet
             </a>
 
         </nav>
+
+
+        <a
+            href="isletme-ekle.html"
+            class="business-button"
+        >
+            İşletmeni Ekle
+        </a>
 
     </div>
 
 </header>
 
+
+<!-- =====================================================
+     ANA İÇERİK
+====================================================== -->
 
 <main class="business-detail">
 
@@ -696,9 +795,9 @@
     </div>
 
 
-    <!-- =========================
+    <!-- =================================================
          YORUMLAR
-    ========================== -->
+    ================================================== -->
 
     <section class="reviews-section">
 
@@ -803,45 +902,35 @@
                             class="star-input"
                             data-rating="1"
                             aria-label="1 yıldız"
-                        >
-                            ★
-                        </button>
+                        >★</button>
 
                         <button
                             type="button"
                             class="star-input"
                             data-rating="2"
                             aria-label="2 yıldız"
-                        >
-                            ★
-                        </button>
+                        >★</button>
 
                         <button
                             type="button"
                             class="star-input"
                             data-rating="3"
                             aria-label="3 yıldız"
-                        >
-                            ★
-                        </button>
+                        >★</button>
 
                         <button
                             type="button"
                             class="star-input"
                             data-rating="4"
                             aria-label="4 yıldız"
-                        >
-                            ★
-                        </button>
+                        >★</button>
 
                         <button
                             type="button"
                             class="star-input"
                             data-rating="5"
                             aria-label="5 yıldız"
-                        >
-                            ★
-                        </button>
+                        >★</button>
 
                     </div>
 
@@ -932,13 +1021,147 @@
 </main>
 
 
+<!-- =====================================================
+     FOOTER
+====================================================== -->
+
+<footer class="footer">
+
+    <div class="container footer-content">
+
+        <div>
+
+            <div class="footer-logo">
+                TRABZON
+                <strong>ANLIK</strong>
+            </div>
+
+            <p>
+                Trabzon'u keşfet,
+                hayatı yakala.
+            </p>
+
+        </div>
+
+
+        <div>
+
+            <strong>
+                Keşfet
+            </strong>
+
+            <a href="isletme.html">
+                İşletmeler
+            </a>
+
+            <a href="index.html#etkinlikler">
+                Etkinlikler
+            </a>
+
+            <a href="index.html#bugun">
+                Bugün Trabzon
+            </a>
+
+            <a href="index.html#trabzon-kesfet">
+                Trabzon'u Keşfet
+            </a>
+
+        </div>
+
+
+        <div>
+
+            <strong>
+                Trabzon Anlık
+            </strong>
+
+            <a href="#">
+                Hakkımızda
+            </a>
+
+            <a href="#">
+                İletişim
+            </a>
+
+            <a href="isletme-ekle.html">
+                İşletmeni Ekle
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="footer-bottom">
+
+        © 2026 Trabzon Anlık.
+        Tüm hakları saklıdır.
+
+    </div>
+
+</footer>
+
+
+<!-- =====================================================
+     MOBİL ALT BAR
+====================================================== -->
+
+<nav class="mobile-bottom-bar">
+
+    <a
+        href="index.html"
+    >
+        <span>🏠</span>
+        Ana Sayfa
+    </a>
+
+
+    <a
+        href="isletme.html"
+        class="active"
+    >
+        <span>🏪</span>
+        İşletmeler
+    </a>
+
+
+    <a
+        href="index.html#etkinlikler"
+    >
+        <span>📅</span>
+        Etkinlikler
+    </a>
+
+
+    <a
+        href="index.html#trabzon-kesfet"
+    >
+        <span>🧭</span>
+        Keşfet
+    </a>
+
+
+    <a
+        href="isletme-ekle.html"
+    >
+        <span>➕</span>
+        İşletme Ekle
+    </a>
+
+</nav>
+
+
+<!-- =====================================================
+     SCRIPTS
+====================================================== -->
+
 <script
     src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
 ></script>
 
 
 <script
-    src="isletme.js?v=5"
+    src="isletme.js?v=6"
 ></script>
 
 
