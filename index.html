@@ -3,19 +3,296 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Trabzon Anlık | Trabzon'un Şehir Rehberi</title>
-    <meta name="description" content="Trabzon'un öne çıkan mekanları, işletmeleri ve keşif noktaları.">
+
+    <meta
+        name="description"
+        content="Trabzon'un mekanları, işletmeleri, etkinlikleri, gezilecek yerleri ve şehir gündemi."
+    >
+
+    <meta
+        name="theme-color"
+        content="#101c35"
+    >
+
     <link rel="stylesheet" href="style.css">
+
     <style>
-        /* Mobil Menü Görünürlük Kontrolleri */
+        /* =====================================================
+           ANA SAYFA EK TASARIMLARI
+        ===================================================== */
+
+        .section-intro {
+            max-width: 700px;
+            margin: -25px auto 35px;
+            text-align: center;
+            color: #667085;
+            line-height: 1.7;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .section-header .section-title {
+            margin-bottom: 0;
+        }
+
+        .section-link {
+            color: #7b1830;
+            text-decoration: none;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .section-link:hover {
+            text-decoration: underline;
+        }
+
+        /* =====================================================
+           HIZLI KATEGORİLER
+        ===================================================== */
+
+        .quick-categories {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 30px;
+        }
+
+        .quick-category {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 16px;
+            background: #fff;
+            border: 1px solid #edf0f4;
+            color: #101c35;
+            text-decoration: none;
+            transition: .2s ease;
+        }
+
+        .quick-category:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(16, 28, 53, .08);
+        }
+
+        .quick-category-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f7eef1;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .quick-category strong {
+            display: block;
+            font-size: 14px;
+        }
+
+        .quick-category small {
+            display: block;
+            margin-top: 3px;
+            color: #7b8495;
+            font-size: 12px;
+        }
+
+        /* =====================================================
+           BUGÜN TRABZON
+        ===================================================== */
+
+        .today-section {
+            background: #f7f8fa;
+        }
+
+        .today-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .today-card {
+            background: #fff;
+            border: 1px solid #edf0f4;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(16, 28, 53, .04);
+        }
+
+        .today-card-icon {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+
+        .today-card strong {
+            display: block;
+            font-size: 18px;
+            color: #101c35;
+            margin-bottom: 8px;
+        }
+
+        .today-card p {
+            margin: 0;
+            color: #667085;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        /* =====================================================
+           ETKİNLİKLER
+        ===================================================== */
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .event-card {
+            background: #fff;
+            border: 1px solid #edf0f4;
+            border-radius: 20px;
+            padding: 24px;
+            text-decoration: none;
+            color: #101c35;
+            transition: .2s ease;
+        }
+
+        .event-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(16, 28, 53, .08);
+        }
+
+        .event-date {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 10px;
+            border-radius: 8px;
+            background: #f7eef1;
+            color: #7b1830;
+            font-size: 12px;
+            font-weight: 800;
+            margin-bottom: 15px;
+        }
+
+        .event-card h3 {
+            margin: 0 0 8px;
+            font-size: 18px;
+        }
+
+        .event-card p {
+            margin: 0;
+            color: #667085;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        /* =====================================================
+           İLÇELER
+        ===================================================== */
+
+        .district-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+        }
+
+        .district-card {
+            padding: 15px 10px;
+            border-radius: 14px;
+            background: #fff;
+            border: 1px solid #edf0f4;
+            color: #101c35;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 13px;
+            transition: .2s ease;
+        }
+
+        .district-card:hover {
+            background: #7b1830;
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        /* =====================================================
+           KEŞİF
+        ===================================================== */
+
+        .places-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        /* =====================================================
+           CTA
+        ===================================================== */
+
+        .business-cta {
+            margin-top: 50px;
+            padding: 45px 30px;
+            border-radius: 25px;
+            background: linear-gradient(
+                135deg,
+                #101c35,
+                #182744
+            );
+            color: #fff;
+            text-align: center;
+        }
+
+        .business-cta h2 {
+            margin: 0 0 12px;
+            font-size: 30px;
+        }
+
+        .business-cta p {
+            max-width: 600px;
+            margin: 0 auto 25px;
+            color: rgba(255,255,255,.75);
+            line-height: 1.6;
+        }
+
+        .business-cta a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 13px 22px;
+            border-radius: 12px;
+            background: #fff;
+            color: #101c35;
+            text-decoration: none;
+            font-weight: 800;
+        }
+
+        /* =====================================================
+           MOBİL MENÜ
+        ===================================================== */
+
         @media (max-width: 768px) {
-            .desktop-nav, 
+
+            .desktop-nav,
             .business-button {
                 display: none !important;
             }
+
             .menu-button {
                 display: block !important;
             }
+
             .mobile-nav {
                 display: none;
                 flex-direction: column;
@@ -28,9 +305,11 @@
                 padding: 15px 0;
                 z-index: 999;
             }
+
             .mobile-nav.active {
                 display: flex !important;
             }
+
             .mobile-nav a {
                 padding: 12px 20px;
                 color: #101c35;
@@ -38,11 +317,36 @@
                 font-weight: 600;
                 border-bottom: 1px solid #f0f0f0;
             }
+
             .mobile-nav a.mobile-business-btn {
                 color: #7b1830;
                 font-weight: 700;
             }
+
+            .section-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .quick-categories {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .today-grid,
+            .events-grid,
+            .places-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .district-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .business-cta h2 {
+                font-size: 24px;
+            }
         }
+
         @media (min-width: 769px) {
             .menu-button,
             .mobile-nav {
@@ -51,135 +355,1098 @@
         }
     </style>
 </head>
+
 <body>
 
 <header class="header">
+
     <div class="container header-content">
+
         <a href="index.html" class="logo">
             <span>TRABZON</span>
             <strong>ANLIK</strong>
         </a>
 
         <nav class="desktop-nav">
-            <a href="index.html">Keşfet</a>
-            <a href="#isletmeler">İşletmeler</a>
-            <a href="#etkinlikler">Etkinlikler</a>
-            <a href="#bugun">Bugün Trabzon</a>
-            <a href="#trabzon-kesfet">Trabzon'u Keşfet</a>
+
+            <a href="index.html">
+                Keşfet
+            </a>
+
+            <a href="#isletmeler">
+                İşletmeler
+            </a>
+
+            <a href="#etkinlikler">
+                Etkinlikler
+            </a>
+
+            <a href="#bugun">
+                Bugün Trabzon
+            </a>
+
+            <a href="#trabzon-kesfet">
+                Trabzon'u Keşfet
+            </a>
+
         </nav>
 
-        <a href="isletme-ekle.html" class="business-button">
+        <a
+            href="isletme-ekle.html"
+            class="business-button"
+        >
             İşletmeni Ekle
         </a>
 
-        <button class="menu-button" id="menuButton" aria-label="Menüyü aç">
+        <button
+            class="menu-button"
+            id="menuButton"
+            aria-label="Menüyü aç"
+            aria-expanded="false"
+        >
             ☰
         </button>
+
     </div>
 
-    <!-- Mobil Menü -->
-    <nav class="mobile-nav" id="mobileNav">
-        <a href="index.html">Keşfet</a>
-        <a href="#isletmeler">İşletmeler</a>
-        <a href="#etkinlikler">Etkinlikler</a>
-        <a href="#bugun">Bugün Trabzon</a>
-        <a href="#trabzon-kesfet">Trabzon'u Keşfet</a>
-        <a href="isletme-ekle.html" class="mobile-business-btn">İşletmeni Ekle</a>
+
+    <nav
+        class="mobile-nav"
+        id="mobileNav"
+    >
+
+        <a href="index.html">
+            Keşfet
+        </a>
+
+        <a href="#isletmeler">
+            İşletmeler
+        </a>
+
+        <a href="#etkinlikler">
+            Etkinlikler
+        </a>
+
+        <a href="#bugun">
+            Bugün Trabzon
+        </a>
+
+        <a href="#trabzon-kesfet">
+            Trabzon'u Keşfet
+        </a>
+
+        <a
+            href="isletme-ekle.html"
+            class="mobile-business-btn"
+        >
+            İşletmeni Ekle
+        </a>
+
     </nav>
+
 </header>
 
+
 <main>
-    <!-- HERO SECTION -->
+
+
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
+
     <section class="hero">
+
         <div class="container hero-content">
-            <h1>Trabzon'da Ne Var, Nereye Gidilir?</h1>
-            <p>Mekanlar, etkinlikler, lezzet durakları ve Trabzon'a dair her şey burada.</p>
+
+            <h1>
+                Trabzon'da Ne Var,
+                Nereye Gidilir?
+            </h1>
+
+            <p>
+                Mekanlar, işletmeler, etkinlikler,
+                lezzet durakları ve Trabzon'a dair
+                her şey burada.
+            </p>
 
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Mekan, kafe, restoran veya ilçe ara...">
-                <button id="searchButton">Ara</button>
+
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Mekan, kafe, restoran veya ilçe ara..."
+                    autocomplete="off"
+                >
+
+                <button id="searchButton">
+                    Ara
+                </button>
+
             </div>
+
 
             <div class="popular-searches">
-                <span>Popüler:</span>
-                <a href="#" data-search="Kahvaltı">Kahvaltı</a>
-                <a href="#" data-search="Akçaabat Köfte">Akçaabat Köfte</a>
-                <a href="#" data-search="Uzungöl">Uzungöl</a>
-                <a href="#" data-search="Kafe">Kafe</a>
+
+                <span>
+                    Popüler:
+                </span>
+
+                <a
+                    href="#"
+                    data-search="Kahvaltı"
+                >
+                    Kahvaltı
+                </a>
+
+                <a
+                    href="#"
+                    data-search="Akçaabat Köfte"
+                >
+                    Akçaabat Köfte
+                </a>
+
+                <a
+                    href="#"
+                    data-search="Uzungöl"
+                >
+                    Uzungöl
+                </a>
+
+                <a
+                    href="#"
+                    data-search="Kafe"
+                >
+                    Kafe
+                </a>
+
             </div>
+
         </div>
+
     </section>
 
-    <!-- ARAMA SONUÇLARI BÖLÜMÜ -->
-    <section id="searchResultsSection" class="section search-results-section" style="display: none;">
-        <div class="container">
-            <h2 id="searchResultsTitle" class="section-title">Arama Sonuçları</h2>
-            <div id="searchResultsContainer" class="business-grid"></div>
-        </div>
-    </section>
 
-    <!-- KATEGORİLER -->
+    <!-- =====================================================
+         HIZLI KATEGORİLER
+    ====================================================== -->
+
     <section class="section">
+
         <div class="container">
-            <h2 class="section-title">Kategorileri Keşfet</h2>
-            <div id="categoriesContainer" class="category-grid">
-                <!-- JavaScript ile yüklenecek -->
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2 class="section-title">
+                        Hızlı Keşfet
+                    </h2>
+
+                    <p style="margin:8px 0 0;color:#667085;">
+                        Trabzon'da aradığın yere
+                        birkaç dokunuşla ulaş.
+                    </p>
+
+                </div>
+
             </div>
+
+
+            <div class="quick-categories">
+
+                <a
+                    href="#isletmeler"
+                    class="quick-category"
+                    data-search="Kafe"
+                >
+
+                    <div class="quick-category-icon">
+                        ☕
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Kafeler
+                        </strong>
+
+                        <small>
+                            Kahve & sohbet
+                        </small>
+
+                    </div>
+
+                </a>
+
+
+                <a
+                    href="#isletmeler"
+                    class="quick-category"
+                    data-search="Restoran"
+                >
+
+                    <div class="quick-category-icon">
+                        🍽️
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Restoranlar
+                        </strong>
+
+                        <small>
+                            Lezzet durakları
+                        </small>
+
+                    </div>
+
+                </a>
+
+
+                <a
+                    href="#isletmeler"
+                    class="quick-category"
+                    data-search="Kahvaltı"
+                >
+
+                    <div class="quick-category-icon">
+                        🍳
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Kahvaltı
+                        </strong>
+
+                        <small>
+                            Güne güzel başla
+                        </small>
+
+                    </div>
+
+                </a>
+
+
+                <a
+                    href="#isletmeler"
+                    class="quick-category"
+                    data-search="Otel"
+                >
+
+                    <div class="quick-category-icon">
+                        🏨
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Oteller
+                        </strong>
+
+                        <small>
+                            Konaklama
+                        </small>
+
+                    </div>
+
+                </a>
+
+
+                <a
+                    href="#isletmeler"
+                    class="quick-category"
+                    data-search="Berber"
+                >
+
+                    <div class="quick-category-icon">
+                        💈
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Berber & Kuaför
+                        </strong>
+
+                        <small>
+                            Bakım
+                        </small>
+
+                    </div>
+
+                </a>
+
+
+                <a
+                    href="#isletmeler"
+                    class="quick-category"
+                    data-search="Market"
+                >
+
+                    <div class="quick-category-icon">
+                        🛒
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Marketler
+                        </strong>
+
+                        <small>
+                            Alışveriş
+                        </small>
+
+                    </div>
+
+                </a>
+
+
+                <a
+                    href="#isletmeler"
+                    class="quick-category"
+                    data-search="Spor"
+                >
+
+                    <div class="quick-category-icon">
+                        🏋️
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Spor
+                        </strong>
+
+                        <small>
+                            Spor & fitness
+                        </small>
+
+                    </div>
+
+                </a>
+
+
+                <a
+                    href="#trabzon-kesfet"
+                    class="quick-category"
+                >
+
+                    <div class="quick-category-icon">
+                        🏔️
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Gezilecek Yerler
+                        </strong>
+
+                        <small>
+                            Trabzon'u keşfet
+                        </small>
+
+                    </div>
+
+                </a>
+
+            </div>
+
         </div>
+
     </section>
 
-    <!-- ÖNE ÇIKAN İŞLETMELER -->
-    <section id="isletmeler" class="section bg-light">
+
+    <!-- =====================================================
+         ARAMA SONUÇLARI
+    ====================================================== -->
+
+    <section
+        id="searchResultsSection"
+        class="section search-results-section"
+        style="display:none;"
+    >
+
         <div class="container">
-            <h2 class="section-title">Öne Çıkan İşletmeler</h2>
-            <div id="businessContainer" class="business-grid">
-                <!-- JavaScript ile yüklenecek -->
-            </div>
+
+            <h2
+                id="searchResultsTitle"
+                class="section-title"
+            >
+                Arama Sonuçları
+            </h2>
+
+            <div
+                id="searchResultsContainer"
+                class="business-grid"
+            ></div>
+
         </div>
+
     </section>
 
-    <!-- TRABZON'U KEŞFET -->
-    <section id="trabzon-kesfet" class="section">
+
+    <!-- =====================================================
+         KATEGORİLER
+    ====================================================== -->
+
+    <section class="section">
+
         <div class="container">
-            <h2 class="section-title">Trabzon'u Keşfet</h2>
-            <div id="placesContainer" class="places-grid">
-                <!-- JavaScript ile yüklenecek -->
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2 class="section-title">
+                        Kategorileri Keşfet
+                    </h2>
+
+                    <p style="margin:8px 0 0;color:#667085;">
+                        İhtiyacına uygun işletmeleri
+                        kategorilere göre keşfet.
+                    </p>
+
+                </div>
+
             </div>
+
+
+            <div
+                id="categoriesContainer"
+                class="category-grid"
+            >
+
+                <div class="category-card">
+                    <span>⏳</span>
+                    <strong>
+                        Kategoriler yükleniyor...
+                    </strong>
+                </div>
+
+            </div>
+
         </div>
+
     </section>
+
+
+    <!-- =====================================================
+         ÖNE ÇIKAN İŞLETMELER
+    ====================================================== -->
+
+    <section
+        id="isletmeler"
+        class="section bg-light"
+    >
+
+        <div class="container">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2 class="section-title">
+                        Öne Çıkan İşletmeler
+                    </h2>
+
+                    <p style="margin:8px 0 0;color:#667085;">
+                        Trabzon'da keşfedilmeyi bekleyen
+                        işletmeler.
+                    </p>
+
+                </div>
+
+                <a
+                    href="#isletmeler"
+                    class="section-link"
+                >
+                    Tümünü Gör →
+                </a>
+
+            </div>
+
+
+            <div
+                id="businessContainer"
+                class="business-grid"
+            >
+
+                <article class="business-card">
+
+                    <div class="business-image">
+                        🏪
+                    </div>
+
+                    <div class="business-content">
+
+                        <span class="badge">
+                            TRABZON ANLIK
+                        </span>
+
+                        <h3>
+                            İşletmeler hazırlanıyor...
+                        </h3>
+
+                        <p>
+                            Trabzon'daki işletmeleri
+                            burada keşfedebileceksin.
+                        </p>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         BUGÜN TRABZON
+    ====================================================== -->
+
+    <section
+        id="bugun"
+        class="section today-section"
+    >
+
+        <div class="container">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2 class="section-title">
+                        Bugün Trabzon
+                    </h2>
+
+                    <p style="margin:8px 0 0;color:#667085;">
+                        Şehirde bugün bilmen gerekenler.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="today-grid">
+
+                <article class="today-card">
+
+                    <div class="today-card-icon">
+                        🌆
+                    </div>
+
+                    <strong>
+                        Şehri Keşfet
+                    </strong>
+
+                    <p>
+                        Trabzon'un popüler mekanlarını,
+                        tarihi noktalarını ve doğal
+                        güzelliklerini keşfet.
+                    </p>
+
+                </article>
+
+
+                <article class="today-card">
+
+                    <div class="today-card-icon">
+                        🍽️
+                    </div>
+
+                    <strong>
+                        Bugün Ne Yenir?
+                    </strong>
+
+                    <p>
+                        Karadeniz mutfağının sevilen
+                        lezzetlerini ve Trabzon'un
+                        yemek duraklarını keşfet.
+                    </p>
+
+                </article>
+
+
+                <article class="today-card">
+
+                    <div class="today-card-icon">
+                        📍
+                    </div>
+
+                    <strong>
+                        Yakınını Keşfet
+                    </strong>
+
+                    <p>
+                        Bulunduğun ilçedeki işletmeleri
+                        arayarak sana uygun yerleri
+                        kolayca bul.
+                    </p>
+
+                </article>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         ETKİNLİKLER
+    ====================================================== -->
+
+    <section
+        id="etkinlikler"
+        class="section"
+    >
+
+        <div class="container">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2 class="section-title">
+                        Trabzon'da Etkinlikler
+                    </h2>
+
+                    <p style="margin:8px 0 0;color:#667085;">
+                        Konserler, festivaller ve şehirdeki
+                        etkinliklerden haberdar ol.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="events-grid">
+
+                <article class="event-card">
+
+                    <span class="event-date">
+                        📅 YAKINDA
+                    </span>
+
+                    <h3>
+                        Trabzon Etkinlikleri
+                    </h3>
+
+                    <p>
+                        Şehirde gerçekleşecek etkinlikler
+                        burada yayınlanacak.
+                    </p>
+
+                </article>
+
+
+                <article class="event-card">
+
+                    <span class="event-date">
+                        🎵 KONSER
+                    </span>
+
+                    <h3>
+                        Konserler
+                    </h3>
+
+                    <p>
+                        Trabzon'daki konser ve müzik
+                        etkinliklerini keşfet.
+                    </p>
+
+                </article>
+
+
+                <article class="event-card">
+
+                    <span class="event-date">
+                        🎉 ETKİNLİK
+                    </span>
+
+                    <h3>
+                        Şehir Etkinlikleri
+                    </h3>
+
+                    <p>
+                        Festival, gösteri ve diğer
+                        şehir etkinliklerini takip et.
+                    </p>
+
+                </article>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         İLÇELER
+    ====================================================== -->
+
+    <section class="section bg-light">
+
+        <div class="container">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2 class="section-title">
+                        İlçene Göre Keşfet
+                    </h2>
+
+                    <p style="margin:8px 0 0;color:#667085;">
+                        Trabzon'un ilçelerindeki işletmeleri
+                        keşfet.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="district-grid">
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Ortahisar"
+                >
+                    Ortahisar
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Akçaabat"
+                >
+                    Akçaabat
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Yomra"
+                >
+                    Yomra
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Arsin"
+                >
+                    Arsin
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Araklı"
+                >
+                    Araklı
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Sürmene"
+                >
+                    Sürmene
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Of"
+                >
+                    Of
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Çaykara"
+                >
+                    Çaykara
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Maçka"
+                >
+                    Maçka
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Vakfıkebir"
+                >
+                    Vakfıkebir
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Beşikdüzü"
+                >
+                    Beşikdüzü
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Tonya"
+                >
+                    Tonya
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Şalpazarı"
+                >
+                    Şalpazarı
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Düzköy"
+                >
+                    Düzköy
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Köprübaşı"
+                >
+                    Köprübaşı
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Hayrat"
+                >
+                    Hayrat
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Dernekpazarı"
+                >
+                    Dernekpazarı
+                </a>
+
+                <a
+                    href="#isletmeler"
+                    class="district-card"
+                    data-search="Çarşıbaşı"
+                >
+                    Çarşıbaşı
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         TRABZON'U KEŞFET
+    ====================================================== -->
+
+    <section
+        id="trabzon-kesfet"
+        class="section"
+    >
+
+        <div class="container">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2 class="section-title">
+                        Trabzon'u Keşfet
+                    </h2>
+
+                    <p style="margin:8px 0 0;color:#667085;">
+                        Şehrin doğal güzelliklerini,
+                        tarihi yerlerini ve keşif noktalarını bul.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="placesContainer"
+                class="places-grid"
+            >
+
+                <a
+                    href="#"
+                    class="place-card"
+                >
+
+                    <div>
+                        🏔️
+                    </div>
+
+                    <strong>
+                        Trabzon'un güzellikleri
+                    </strong>
+
+                    <span>
+                        Keşif noktaları hazırlanıyor...
+                    </span>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         İŞLETME EKLE CTA
+    ====================================================== -->
+
+    <section class="section">
+
+        <div class="container">
+
+            <div class="business-cta">
+
+                <h2>
+                    İşletmeni Trabzon'a Tanıt
+                </h2>
+
+                <p>
+                    İşletmeni Trabzon Anlık'a ekle,
+                    daha fazla kişiye ulaş ve
+                    Trabzon'daki yerini al.
+                </p>
+
+                <a href="isletme-ekle.html">
+                    İşletmeni Ekle →
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
+
 </main>
 
+
+<!-- =====================================================
+     FOOTER
+====================================================== -->
+
 <footer class="footer">
+
     <div class="container footer-content">
+
         <div>
+
             <div class="footer-logo">
-                TRABZON <strong>ANLIK</strong>
+                TRABZON
+                <strong>ANLIK</strong>
             </div>
-            <p>Trabzon'u keşfet, hayatı yakala.</p>
+
+            <p>
+                Trabzon'u keşfet,
+                hayatı yakala.
+            </p>
+
         </div>
 
-        <div>
-            <strong>Keşfet</strong>
-            <a href="#isletmeler">İşletmeler</a>
-            <a href="#etkinlikler">Etkinlikler</a>
-            <a href="#bugun">Bugün Trabzon</a>
-            <a href="#trabzon-kesfet">Trabzon'u Keşfet</a>
-        </div>
 
         <div>
-            <strong>Trabzon Anlık</strong>
-            <a href="#">Hakkımızda</a>
-            <a href="#">İletişim</a>
-            <a href="isletme-ekle.html">İşletmeni Ekle</a>
+
+            <strong>
+                Keşfet
+            </strong>
+
+            <a href="#isletmeler">
+                İşletmeler
+            </a>
+
+            <a href="#etkinlikler">
+                Etkinlikler
+            </a>
+
+            <a href="#bugun">
+                Bugün Trabzon
+            </a>
+
+            <a href="#trabzon-kesfet">
+                Trabzon'u Keşfet
+            </a>
+
         </div>
+
+
+        <div>
+
+            <strong>
+                Trabzon Anlık
+            </strong>
+
+            <a href="#">
+                Hakkımızda
+            </a>
+
+            <a href="#">
+                İletişim
+            </a>
+
+            <a href="isletme-ekle.html">
+                İşletmeni Ekle
+            </a>
+
+        </div>
+
     </div>
+
 
     <div class="footer-bottom">
-        © 2026 Trabzon Anlık. Tüm hakları saklıdır.
+
+        © 2026 Trabzon Anlık.
+        Tüm hakları saklıdır.
+
     </div>
+
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+></script>
+
 <script src="script.js"></script>
 
 </body>
