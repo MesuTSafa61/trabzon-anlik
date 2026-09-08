@@ -77,6 +77,16 @@ const filterResultCount =
         "filterResultCount"
     );
 
+const editBusinessModal =
+    document.getElementById(
+        "editBusinessModal"
+    );
+
+const editBusinessForm =
+    document.getElementById(
+        "editBusinessForm"
+    );
+
 
 // =====================================
 // GLOBAL VERİ
@@ -347,18 +357,24 @@ refreshButton?.addEventListener(
         refreshButton.disabled =
             true;
 
-        await Promise.all([
-            loadApplications(),
-            loadReviews()
-        ]);
+        try {
 
-        refreshButton.disabled =
-            false;
+            await Promise.all([
+                loadApplications(),
+                loadReviews()
+            ]);
 
-        showMessage(
-            "Bilgiler yenilendi.",
-            "success"
-        );
+            showMessage(
+                "Bilgiler yenilendi.",
+                "success"
+            );
+
+        } finally {
+
+            refreshButton.disabled =
+                false;
+
+        }
     }
 );
 
@@ -451,7 +467,10 @@ async function loadApplications() {
             </div>
         `;
 
-        updateFilterCount(0, 0);
+        updateFilterCount(
+            0,
+            0
+        );
 
         return;
     }
@@ -606,7 +625,7 @@ function updateDashboard(
 
 
 // =====================================
-// YORUM SAYISINI DASHBOARD'A KOY
+// YORUM SAYISI
 // =====================================
 
 function updateReviewDashboard(
@@ -842,7 +861,7 @@ function applyBusinessFilters() {
 
 
 // =====================================
-// FİLTRELENEN İŞLETMELERİ GÖSTER
+// FİLTRELENEN İŞLETMELER
 // =====================================
 
 function renderFilteredBusinesses(
@@ -1103,6 +1122,15 @@ function renderBusinessCard(
             <!-- BUTONLAR -->
 
             <div class="application-actions">
+
+                <button
+                    class="edit-button"
+                    type="button"
+                    onclick="openEditBusinessModal(${business.id})"
+                >
+                    ✏️ Düzenle
+                </button>
+
 
                 ${
                     !business.is_approved
@@ -1860,39 +1888,63 @@ async function moveImage(
             );
 
 
-        await supabaseClient
-            .from("business_images")
-            .update({
-                sort_order: -999999
-            })
-            .eq(
-                "id",
-                current.id
-            );
+        const {
+            error: temporaryError
+        } =
+            await supabaseClient
+                .from("business_images")
+                .update({
+                    sort_order: -999999
+                })
+                .eq(
+                    "id",
+                    current.id
+                );
 
 
-        await supabaseClient
-            .from("business_images")
-            .update({
-                sort_order:
-                    currentOrder
-            })
-            .eq(
-                "id",
-                target.id
-            );
+        if (temporaryError) {
+            throw temporaryError;
+        }
 
 
-        await supabaseClient
-            .from("business_images")
-            .update({
-                sort_order:
-                    targetOrder
-            })
-            .eq(
-                "id",
-                current.id
-            );
+        const {
+            error: targetError
+        } =
+            await supabaseClient
+                .from("business_images")
+                .update({
+                    sort_order:
+                        currentOrder
+                })
+                .eq(
+                    "id",
+                    target.id
+                );
+
+
+        if (targetError) {
+            throw targetError;
+        }
+
+
+        const {
+            error: currentError
+        } =
+            await supabaseClient
+                .from("business_images")
+                .update({
+                    sort_order:
+                        targetOrder
+                })
+                .eq(
+                    "id",
+                    current.id
+                );
+
+
+        if (currentError) {
+            throw currentError;
+        }
 
 
         await loadApplications();
@@ -1945,6 +1997,392 @@ function extractStoragePath(
         position + marker.length
     );
 }
+
+
+// =====================================
+// İŞLETME DÜZENLEME PENCERESİNİ AÇ
+// =====================================
+
+function openEditBusinessModal(
+    businessId
+) {
+
+    const business =
+        allBusinesses.find(
+            item =>
+                Number(item.id) ===
+                Number(businessId)
+        );
+
+
+    if (!business) {
+
+        showMessage(
+            "İşletme bulunamadı.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    document.getElementById(
+        "editBusinessId"
+    ).value =
+        business.id;
+
+
+    document.getElementById(
+        "editBusinessName"
+    ).value =
+        business.name || "";
+
+
+    document.getElementById(
+        "editBusinessCategory"
+    ).textContent =
+        business.categories?.name ||
+        "Kategori yok";
+
+
+    document.getElementById(
+        "editBusinessDistrict"
+    ).value =
+        business.district || "";
+
+
+    document.getElementById(
+        "editBusinessAddress"
+    ).value =
+        business.address || "";
+
+
+    document.getElementById(
+        "editBusinessPhone"
+    ).value =
+        business.phone || "";
+
+
+    document.getElementById(
+        "editOwnerName"
+    ).value =
+        business.owner_name || "";
+
+
+    document.getElementById(
+        "editOwnerPhone"
+    ).value =
+        business.owner_phone || "";
+
+
+    document.getElementById(
+        "editOwnerEmail"
+    ).value =
+        business.owner_email || "";
+
+
+    document.getElementById(
+        "editInstagram"
+    ).value =
+        business.instagram || "";
+
+
+    document.getElementById(
+        "editDescription"
+    ).value =
+        business.description || "";
+
+
+    document.getElementById(
+        "editApproved"
+    ).checked =
+        business.is_approved === true;
+
+
+    document.getElementById(
+        "editFeatured"
+    ).checked =
+        business.is_featured === true;
+
+
+    editBusinessModal?.classList.add(
+        "show"
+    );
+
+
+    document.body.style.overflow =
+        "hidden";
+}
+
+
+// =====================================
+// DÜZENLEME PENCERESİNİ KAPAT
+// =====================================
+
+function closeEditBusinessModal() {
+
+    editBusinessModal?.classList.remove(
+        "show"
+    );
+
+
+    document.body.style.overflow =
+        "";
+}
+
+
+// =====================================
+// MODAL DIŞINA TIKLAYINCA KAPAT
+// =====================================
+
+editBusinessModal?.addEventListener(
+    "click",
+    event => {
+
+        if (
+            event.target ===
+            editBusinessModal
+        ) {
+
+            closeEditBusinessModal();
+
+        }
+
+    }
+);
+
+
+// =====================================
+// ESC İLE KAPAT
+// =====================================
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "Escape" &&
+            editBusinessModal?.classList.contains(
+                "show"
+            )
+        ) {
+
+            closeEditBusinessModal();
+
+        }
+
+    }
+);
+
+
+// =====================================
+// İŞLETME DÜZENLEMEYİ KAYDET
+// =====================================
+
+editBusinessForm?.addEventListener(
+    "submit",
+    async event => {
+
+        event.preventDefault();
+
+
+        const id =
+            document.getElementById(
+                "editBusinessId"
+            ).value;
+
+
+        const name =
+            document.getElementById(
+                "editBusinessName"
+            ).value.trim();
+
+
+        const district =
+            document.getElementById(
+                "editBusinessDistrict"
+            ).value.trim();
+
+
+        const address =
+            document.getElementById(
+                "editBusinessAddress"
+            ).value.trim();
+
+
+        const phone =
+            document.getElementById(
+                "editBusinessPhone"
+            ).value.trim();
+
+
+        const ownerName =
+            document.getElementById(
+                "editOwnerName"
+            ).value.trim();
+
+
+        const ownerPhone =
+            document.getElementById(
+                "editOwnerPhone"
+            ).value.trim();
+
+
+        const ownerEmail =
+            document.getElementById(
+                "editOwnerEmail"
+            ).value.trim();
+
+
+        const instagram =
+            document.getElementById(
+                "editInstagram"
+            ).value.trim();
+
+
+        const description =
+            document.getElementById(
+                "editDescription"
+            ).value.trim();
+
+
+        const isApproved =
+            document.getElementById(
+                "editApproved"
+            ).checked;
+
+
+        const isFeatured =
+            document.getElementById(
+                "editFeatured"
+            ).checked;
+
+
+        if (!id) {
+
+            showMessage(
+                "İşletme kimliği bulunamadı.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (!name) {
+
+            showMessage(
+                "İşletme adı boş bırakılamaz.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const saveButton =
+            document.getElementById(
+                "editBusinessSaveButton"
+            );
+
+
+        saveButton.disabled =
+            true;
+
+        saveButton.textContent =
+            "💾 Kaydediliyor...";
+
+
+        try {
+
+            const updateData = {
+
+                name,
+
+                district,
+
+                address,
+
+                phone,
+
+                owner_name:
+                    ownerName,
+
+                owner_phone:
+                    ownerPhone,
+
+                owner_email:
+                    ownerEmail,
+
+                instagram,
+
+                description,
+
+                is_approved:
+                    isApproved,
+
+                is_featured:
+                    isFeatured
+
+            };
+
+
+            const {
+                error
+            } =
+                await supabaseClient
+                    .from("businesses")
+                    .update(
+                        updateData
+                    )
+                    .eq(
+                        "id",
+                        id
+                    );
+
+
+            if (error) {
+                throw error;
+            }
+
+
+            closeEditBusinessModal();
+
+
+            showMessage(
+                "İşletme bilgileri başarıyla güncellendi.",
+                "success"
+            );
+
+
+            await loadApplications();
+
+        } catch (error) {
+
+            console.error(
+                "İşletme güncelleme hatası:",
+                error
+            );
+
+
+            showMessage(
+                "İşletme güncellenemedi: " +
+                error.message,
+                "error"
+            );
+
+        } finally {
+
+            saveButton.disabled =
+                false;
+
+            saveButton.textContent =
+                "💾 Değişiklikleri Kaydet";
+
+        }
+
+    }
+);
 
 
 // =====================================
@@ -2177,14 +2615,21 @@ async function deleteBusiness(
             }
 
 
-            await supabaseClient
-                .from("business_images")
-                .delete()
-                .eq(
-                    "business_id",
-                    id
-                );
+            const {
+                error: imageDeleteError
+            } =
+                await supabaseClient
+                    .from("business_images")
+                    .delete()
+                    .eq(
+                        "business_id",
+                        id
+                    );
 
+
+            if (imageDeleteError) {
+                throw imageDeleteError;
+            }
         }
 
 
@@ -2326,8 +2771,14 @@ function renderReview(
 
 
     const rating =
-        Number(
-            review.rating || 0
+        Math.max(
+            0,
+            Math.min(
+                5,
+                Number(
+                    review.rating || 0
+                )
+            )
         );
 
 
