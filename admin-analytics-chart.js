@@ -1,40 +1,54 @@
 // ============================================================
 // TRABZON ANLIK - ANALYTICS GRAFİĞİ
-// Günlük gerçek ziyaret / görüntülenme grafiği
+// Profesyonel günlük ziyaret / işletme görüntülenme grafiği
 // ============================================================
 
 (function () {
     "use strict";
 
-    function analyticsChartEventType(event) {
-        return String(event?.event_type || "").trim().toLowerCase();
+    // ============================================================
+    // YARDIMCI FONKSİYONLAR
+    // ============================================================
+
+    function eventType(event) {
+        return String(event?.event_type || "")
+            .trim()
+            .toLowerCase();
     }
 
-    function analyticsChartDateKey(value) {
+    function isRealEvent(event) {
+        return eventType(event) !== "test_page_view";
+    }
+
+    function dateKey(value) {
         const date = new Date(value);
 
         if (Number.isNaN(date.getTime())) {
             return null;
         }
 
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-
-        return `${year}-${month}-${day}`;
+        return [
+            date.getFullYear(),
+            String(date.getMonth() + 1).padStart(2, "0"),
+            String(date.getDate()).padStart(2, "0")
+        ].join("-");
     }
 
-    function analyticsChartDisplayDate(dateKey) {
-        const parts = String(dateKey).split("-");
+    function displayDate(key, days) {
+        const parts = String(key).split("-");
 
         if (parts.length !== 3) {
-            return dateKey;
+            return key;
+        }
+
+        if (days >= 90) {
+            return `${parts[2]}.${parts[1]}`;
         }
 
         return `${parts[2]}.${parts[1]}`;
     }
 
-    function analyticsChartStartOfDay(date) {
+    function startOfDay(date) {
         return new Date(
             date.getFullYear(),
             date.getMonth(),
@@ -42,53 +56,48 @@
         );
     }
 
-    // ========================================================
-    // Grafik alanını oluştur
-    // ========================================================
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 
-    function renderAnalyticsChart() {
-        const dashboardSection = document.getElementById("section-dashboard");
+    // ============================================================
+    // AKTİF GÜN SAYISI
+    // ============================================================
 
-        if (!dashboardSection) {
-            return;
-        }
+    let analyticsChartDays = 30;
 
-        // Önceki grafik varsa kaldır
-        const oldChart = document.getElementById("adminAnalyticsChartBox");
+    // ============================================================
+    // VERİYİ HAZIRLA
+    // ============================================================
 
-        if (oldChart) {
-            oldChart.remove();
-        }
-
-        const events = Array.isArray(window.allAnalyticsEvents)
-            ? window.allAnalyticsEvents
-            : [];
-
-        // Test olaylarını tamamen dışarıda bırak
-        const realEvents = events.filter((event) => {
-            return analyticsChartEventType(event) !== "test_page_view";
-        });
+    function prepareChartData(events, days) {
+        const realEvents = (Array.isArray(events) ? events : [])
+            .filter(isRealEvent);
 
         const now = new Date();
 
-        // Son 30 gün
-        const startDate = analyticsChartStartOfDay(
+        const startDate = startOfDay(
             new Date(
                 now.getFullYear(),
                 now.getMonth(),
-                now.getDate() - 29
+                now.getDate() - (days - 1)
             )
         );
 
-        // Son 30 günün tüm günlerini oluştur
         const dailyData = {};
 
-        for (let i = 0; i < 30; i++) {
+        // Günleri oluştur
+        for (let i = 0; i < days; i++) {
             const date = new Date(startDate);
 
             date.setDate(startDate.getDate() + i);
 
-            const key = analyticsChartDateKey(date);
+            const key = dateKey(date);
 
             dailyData[key] = {
                 date: key,
@@ -98,7 +107,7 @@
             };
         }
 
-        // Olayları günlere dağıt
+        // Olayları dağıt
         realEvents.forEach((event) => {
             const eventDate = new Date(event.created_at);
 
@@ -110,15 +119,15 @@
                 return;
             }
 
-            const key = analyticsChartDateKey(eventDate);
+            const key = dateKey(eventDate);
 
             if (!key || !dailyData[key]) {
                 return;
             }
 
-            dailyData[key].total++;
+            const type = eventType(event);
 
-            const type = analyticsChartEventType(event);
+            dailyData[key].total++;
 
             if (type === "page_view") {
                 dailyData[key].visits++;
@@ -134,30 +143,76 @@
             }
         });
 
-        const chartData = Object.values(dailyData).map((item) => {
-            return {
-                date: analyticsChartDisplayDate(item.date),
-                visits: item.visits,
-                businessViews: item.businessViews,
-                total: item.total
-            };
-        });
+        return Object.values(dailyData);
+    }
 
-        // ====================================================
-        // Grafik kutusu
-        // ====================================================
+    // ============================================================
+    // İSTATİSTİK ÖZETİ
+    // ============================================================
+
+    function calculateSummary(data) {
+        return data.reduce(
+            (summary, item) => {
+                summary.visits += Number(item.visits) || 0;
+                summary.businessViews +=
+                    Number(item.businessViews) || 0;
+                summary.total += Number(item.total) || 0;
+
+                return summary;
+            },
+            {
+                visits: 0,
+                businessViews: 0,
+                total: 0
+            }
+        );
+    }
+
+    // ============================================================
+    // GRAFİĞİ OLUŞTUR
+    // ============================================================
+
+    function renderAnalyticsChart() {
+        const dashboardSection =
+            document.getElementById("section-dashboard");
+
+        if (!dashboardSection) {
+            return;
+        }
+
+        const oldChart =
+            document.getElementById("adminAnalyticsChartBox");
+
+        if (oldChart) {
+            oldChart.remove();
+        }
+
+        const events = Array.isArray(window.allAnalyticsEvents)
+            ? window.allAnalyticsEvents
+            : [];
+
+        const data = prepareChartData(
+            events,
+            analyticsChartDays
+        );
+
+        const summary = calculateSummary(data);
+
+        // ========================================================
+        // KUTU
+        // ========================================================
 
         const box = document.createElement("div");
 
         box.id = "adminAnalyticsChartBox";
 
         box.style.cssText = `
-            margin-top: 24px;
-            background: #ffffff;
-            border: 1px solid #e7e9ee;
-            border-radius: 18px;
-            padding: 24px;
-            box-shadow: 0 8px 30px rgba(16, 28, 53, 0.06);
+            margin-top:24px;
+            background:#ffffff;
+            border:1px solid #e7e9ee;
+            border-radius:18px;
+            padding:24px;
+            box-shadow:0 8px 30px rgba(16,28,53,.06);
         `;
 
         box.innerHTML = `
@@ -165,10 +220,10 @@
                 display:flex;
                 justify-content:space-between;
                 align-items:flex-start;
-                gap:15px;
+                gap:18px;
                 flex-wrap:wrap;
-                margin-bottom:20px;
             ">
+
                 <div>
                     <div style="
                         font-size:22px;
@@ -183,67 +238,233 @@
                         color:#70798b;
                         font-size:13px;
                     ">
-                        Son 30 gündeki gerçek kullanıcı hareketleri
+                        Gerçek kullanıcı hareketlerinin günlük analizi
+                    </div>
+                </div>
+
+                <div id="analyticsChartPeriodButtons"
+                    style="
+                        display:flex;
+                        gap:6px;
+                        flex-wrap:wrap;
+                    "
+                >
+
+                    <button
+                        type="button"
+                        data-days="7"
+                        style="
+                            border:1px solid #e7e9ee;
+                            background:${analyticsChartDays === 7 ? "#7b1830" : "#ffffff"};
+                            color:${analyticsChartDays === 7 ? "#ffffff" : "#182033"};
+                            border-radius:9px;
+                            padding:8px 13px;
+                            font-size:12px;
+                            font-weight:700;
+                            cursor:pointer;
+                        "
+                    >
+                        7 Gün
+                    </button>
+
+                    <button
+                        type="button"
+                        data-days="30"
+                        style="
+                            border:1px solid #e7e9ee;
+                            background:${analyticsChartDays === 30 ? "#7b1830" : "#ffffff"};
+                            color:${analyticsChartDays === 30 ? "#ffffff" : "#182033"};
+                            border-radius:9px;
+                            padding:8px 13px;
+                            font-size:12px;
+                            font-weight:700;
+                            cursor:pointer;
+                        "
+                    >
+                        30 Gün
+                    </button>
+
+                    <button
+                        type="button"
+                        data-days="90"
+                        style="
+                            border:1px solid #e7e9ee;
+                            background:${analyticsChartDays === 90 ? "#7b1830" : "#ffffff"};
+                            color:${analyticsChartDays === 90 ? "#ffffff" : "#182033"};
+                            border-radius:9px;
+                            padding:8px 13px;
+                            font-size:12px;
+                            font-weight:700;
+                            cursor:pointer;
+                        "
+                    >
+                        90 Gün
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- ÖZET KARTLARI -->
+
+            <div style="
+                display:grid;
+                grid-template-columns:
+                    repeat(auto-fit,minmax(150px,1fr));
+                gap:12px;
+                margin-top:22px;
+            ">
+
+                <div style="
+                    padding:15px;
+                    border-radius:13px;
+                    background:#f6f7f9;
+                    border:1px solid #e7e9ee;
+                ">
+                    <div style="
+                        font-size:12px;
+                        color:#70798b;
+                    ">
+                        Siteye Giriş
+                    </div>
+
+                    <div style="
+                        margin-top:5px;
+                        font-size:24px;
+                        font-weight:800;
+                        color:#7b1830;
+                    ">
+                        ${summary.visits}
                     </div>
                 </div>
 
                 <div style="
-                    padding:7px 12px;
-                    border-radius:999px;
+                    padding:15px;
+                    border-radius:13px;
                     background:#f6f7f9;
                     border:1px solid #e7e9ee;
-                    color:#70798b;
-                    font-size:12px;
-                    font-weight:700;
                 ">
-                    Son 30 gün
+                    <div style="
+                        font-size:12px;
+                        color:#70798b;
+                    ">
+                        İşletme Görüntülenmesi
+                    </div>
+
+                    <div style="
+                        margin-top:5px;
+                        font-size:24px;
+                        font-weight:800;
+                        color:#101c35;
+                    ">
+                        ${summary.businessViews}
+                    </div>
                 </div>
+
+                <div style="
+                    padding:15px;
+                    border-radius:13px;
+                    background:#f6f7f9;
+                    border:1px solid #e7e9ee;
+                ">
+                    <div style="
+                        font-size:12px;
+                        color:#70798b;
+                    ">
+                        Toplam Gerçek Olay
+                    </div>
+
+                    <div style="
+                        margin-top:5px;
+                        font-size:24px;
+                        font-weight:800;
+                        color:#101c35;
+                    ">
+                        ${summary.total}
+                    </div>
+                </div>
+
             </div>
+
+            <!-- LEJANT -->
 
             <div style="
                 display:flex;
                 flex-wrap:wrap;
                 gap:18px;
-                margin-bottom:18px;
+                margin-top:22px;
+                margin-bottom:12px;
                 font-size:13px;
                 color:#70798b;
             ">
+
                 <span>
-                    ● Siteye giriş
+                    <span style="
+                        display:inline-block;
+                        width:9px;
+                        height:9px;
+                        border-radius:50%;
+                        background:#7b1830;
+                        margin-right:6px;
+                    "></span>
+                    Siteye giriş
                 </span>
 
                 <span>
-                    ● İşletme görüntülenme
+                    <span style="
+                        display:inline-block;
+                        width:9px;
+                        height:9px;
+                        border-radius:50%;
+                        background:#5c1023;
+                        margin-right:6px;
+                    "></span>
+                    İşletme görüntülenmesi
                 </span>
 
                 <span>
-                    ● Toplam gerçek olay
+                    <span style="
+                        display:inline-block;
+                        width:9px;
+                        height:9px;
+                        border-radius:50%;
+                        background:#101c35;
+                        margin-right:6px;
+                    "></span>
+                    Toplam gerçek olay
                 </span>
+
             </div>
+
+            <!-- GRAFİK -->
 
             <div style="
                 position:relative;
                 width:100%;
-                min-height:320px;
                 overflow-x:auto;
                 overflow-y:hidden;
                 border-top:1px solid #eef0f4;
                 padding-top:18px;
             ">
-                <div id="analyticsChartCanvasWrap" style="
-                    position:relative;
-                    min-width:760px;
-                    height:300px;
-                ">
+
+                <div id="analyticsChartCanvasWrap"
+                    style="
+                        position:relative;
+                        min-width:${analyticsChartDays >= 90 ? "1100px" : "760px"};
+                        height:320px;
+                    "
+                >
+
                     <canvas
                         id="adminAnalyticsChartCanvas"
                         style="
                             display:block;
                             width:100%;
-                            height:300px;
+                            height:320px;
                         "
                     ></canvas>
+
                 </div>
+
             </div>
 
             <div style="
@@ -251,63 +472,70 @@
                 color:#70798b;
                 font-size:12px;
             ">
-                Grafik yalnızca gerçek analytics kayıtlarını gösterir.
+                Test kayıtları ve geçersiz analytics olayları grafiğe dahil edilmez.
             </div>
         `;
 
         dashboardSection.appendChild(box);
 
-        drawAnalyticsChart(chartData);
+        // ========================================================
+        // FİLTRE BUTONLARI
+        // ========================================================
 
-        // Pencere boyutu değiştiğinde yeniden çiz
-        if (!window.__trabzonAnalyticsResizeBound) {
-            window.__trabzonAnalyticsResizeBound = true;
+        const buttons =
+            box.querySelectorAll(
+                "#analyticsChartPeriodButtons button"
+            );
 
-            window.addEventListener("resize", function () {
-                const currentEvents = Array.isArray(window.allAnalyticsEvents)
-                    ? window.allAnalyticsEvents
-                    : [];
+        buttons.forEach((button) => {
+            button.addEventListener("click", function () {
+                const days =
+                    Number(this.dataset.days);
 
-                if (currentEvents.length) {
-                    renderAnalyticsChart();
+                if (![7, 30, 90].includes(days)) {
+                    return;
                 }
+
+                analyticsChartDays = days;
+
+                renderAnalyticsChart();
             });
-        }
+        });
+
+        drawAnalyticsChart(data);
     }
 
-    // ========================================================
-    // Canvas grafik çizimi
-    // ========================================================
+    // ============================================================
+    // CANVAS GRAFİĞİ
+    // ============================================================
 
     function drawAnalyticsChart(data) {
-        const canvas = document.getElementById(
-            "adminAnalyticsChartCanvas"
-        );
+        const canvas =
+            document.getElementById(
+                "adminAnalyticsChartCanvas"
+            );
 
-        if (!canvas) {
-            return;
-        }
+        const wrapper =
+            document.getElementById(
+                "analyticsChartCanvasWrap"
+            );
 
-        const wrapper = document.getElementById(
-            "analyticsChartCanvasWrap"
-        );
-
-        if (!wrapper) {
+        if (!canvas || !wrapper) {
             return;
         }
 
         const width = Math.max(
-            760,
+            analyticsChartDays >= 90 ? 1100 : 760,
             wrapper.clientWidth || 760
         );
 
-        const height = 300;
+        const height = 320;
 
-        const devicePixelRatioValue =
+        const dpr =
             window.devicePixelRatio || 1;
 
-        canvas.width = width * devicePixelRatioValue;
-        canvas.height = height * devicePixelRatioValue;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
 
         canvas.style.width = width + "px";
         canvas.style.height = height + "px";
@@ -318,31 +546,44 @@
             return;
         }
 
-        ctx.scale(
-            devicePixelRatioValue,
-            devicePixelRatioValue
+        ctx.setTransform(
+            dpr,
+            0,
+            0,
+            dpr,
+            0,
+            0
         );
 
-        ctx.clearRect(0, 0, width, height);
+        ctx.clearRect(
+            0,
+            0,
+            width,
+            height
+        );
 
-        // ----------------------------------------------------
-        // Grafik ölçüleri
-        // ----------------------------------------------------
+        // ========================================================
+        // ÖLÇÜLER
+        // ========================================================
 
-        const paddingLeft = 45;
-        const paddingRight = 20;
-        const paddingTop = 20;
-        const paddingBottom = 42;
+        const paddingLeft = 48;
+        const paddingRight = 24;
+        const paddingTop = 22;
+        const paddingBottom = 48;
 
         const chartWidth =
-            width - paddingLeft - paddingRight;
+            width -
+            paddingLeft -
+            paddingRight;
 
         const chartHeight =
-            height - paddingTop - paddingBottom;
+            height -
+            paddingTop -
+            paddingBottom;
 
-        // ----------------------------------------------------
-        // Maksimum değer
-        // ----------------------------------------------------
+        // ========================================================
+        // MAX DEĞER
+        // ========================================================
 
         let maxValue = 0;
 
@@ -355,72 +596,38 @@
             );
         });
 
-        if (maxValue < 1) {
-            maxValue = 1;
-        }
-
-        // Daha okunabilir eksen
-        maxValue = Math.ceil(maxValue / 5) * 5;
-
-        if (maxValue === 0) {
+        if (maxValue <= 0) {
             maxValue = 5;
+        } else {
+            const step =
+                maxValue <= 10
+                    ? 5
+                    : maxValue <= 50
+                        ? 10
+                        : 10;
+
+            maxValue =
+                Math.ceil(maxValue / step) * step;
         }
 
-        // ----------------------------------------------------
-        // Yatay çizgiler
-        // ----------------------------------------------------
-
-        ctx.font = "12px Arial";
-        ctx.textAlign = "right";
-        ctx.textBaseline = "middle";
-
-        for (let i = 0; i <= 5; i++) {
-            const value = (maxValue / 5) * i;
-
-            const y =
-                paddingTop +
-                chartHeight -
-                (value / maxValue) * chartHeight;
-
-            ctx.beginPath();
-            ctx.moveTo(paddingLeft, y);
-            ctx.lineTo(
-                width - paddingRight,
-                y
-            );
-
-            ctx.strokeStyle = "#eef0f4";
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            ctx.fillStyle = "#70798b";
-
-            ctx.fillText(
-                String(Math.round(value)),
-                paddingLeft - 10,
-                y
-            );
-        }
-
-        // ----------------------------------------------------
-        // X ekseni
-        // ----------------------------------------------------
-
-        ctx.textAlign = "center";
-        ctx.textBaseline = "top";
-        ctx.fillStyle = "#70798b";
-        ctx.font = "11px Arial";
+        // ========================================================
+        // NOKTA KOORDİNATLARI
+        // ========================================================
 
         const pointCount = data.length;
 
         function getX(index) {
             if (pointCount <= 1) {
-                return paddingLeft + chartWidth / 2;
+                return (
+                    paddingLeft +
+                    chartWidth / 2
+                );
             }
 
             return (
                 paddingLeft +
-                (index / (pointCount - 1)) *
+                (index /
+                    (pointCount - 1)) *
                     chartWidth
             );
         }
@@ -429,38 +636,115 @@
             return (
                 paddingTop +
                 chartHeight -
-                ((Number(value) || 0) / maxValue) *
+                ((Number(value) || 0) /
+                    maxValue) *
                     chartHeight
             );
         }
 
-        // Her 5 günde bir tarih etiketi
+        // ========================================================
+        // Y EKSENİ
+        // ========================================================
+
+        ctx.font = "12px Arial";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+
+        for (let i = 0; i <= 5; i++) {
+            const value =
+                (maxValue / 5) * i;
+
+            const y =
+                paddingTop +
+                chartHeight -
+                (value / maxValue) *
+                    chartHeight;
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                paddingLeft,
+                y
+            );
+
+            ctx.lineTo(
+                width - paddingRight,
+                y
+            );
+
+            ctx.strokeStyle =
+                "#eef0f4";
+
+            ctx.lineWidth = 1;
+
+            ctx.stroke();
+
+            ctx.fillStyle =
+                "#70798b";
+
+            ctx.fillText(
+                String(Math.round(value)),
+                paddingLeft - 10,
+                y
+            );
+        }
+
+        // ========================================================
+        // X EKSENİ
+        // ========================================================
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.font = "11px Arial";
+        ctx.fillStyle = "#70798b";
+
+        let labelEvery = 5;
+
+        if (analyticsChartDays === 7) {
+            labelEvery = 1;
+        } else if (analyticsChartDays === 30) {
+            labelEvery = 5;
+        } else if (analyticsChartDays === 90) {
+            labelEvery = 10;
+        }
+
         data.forEach((item, index) => {
             if (
                 index === 0 ||
                 index === data.length - 1 ||
-                index % 5 === 0
+                index % labelEvery === 0
             ) {
-                const x = getX(index);
-
                 ctx.fillText(
-                    item.date,
-                    x,
-                    height - paddingBottom + 14
+                    displayDate(
+                        item.date,
+                        analyticsChartDays
+                    ),
+                    getX(index),
+                    height -
+                        paddingBottom +
+                        16
                 );
             }
         });
 
-        // ----------------------------------------------------
-        // Çizgi yardımcı fonksiyonu
-        // ----------------------------------------------------
+        // ========================================================
+        // ÇİZGİ ÇİZ
+        // ========================================================
 
-        function drawLine(dataKey, lineColor, lineWidth) {
+        function drawLine(
+            key,
+            lineColor,
+            lineWidth
+        ) {
+            if (!data.length) {
+                return;
+            }
+
             ctx.beginPath();
 
             data.forEach((item, index) => {
                 const x = getX(index);
-                const y = getY(item[dataKey]);
+                const y = getY(item[key]);
 
                 if (index === 0) {
                     ctx.moveTo(x, y);
@@ -473,28 +757,46 @@
             ctx.lineWidth = lineWidth;
             ctx.lineJoin = "round";
             ctx.lineCap = "round";
+
             ctx.stroke();
 
             // Noktalar
             data.forEach((item, index) => {
                 const x = getX(index);
-                const y = getY(item[dataKey]);
+                const y = getY(item[key]);
 
                 ctx.beginPath();
-                ctx.arc(x, y, 3.5, 0, Math.PI * 2);
 
-                ctx.fillStyle = lineColor;
+                ctx.arc(
+                    x,
+                    y,
+                    analyticsChartDays === 90
+                        ? 2.5
+                        : 3.5,
+                    0,
+                    Math.PI * 2
+                );
+
+                ctx.fillStyle =
+                    lineColor;
+
                 ctx.fill();
             });
         }
 
-        // ----------------------------------------------------
-        // Üç veri serisi
-        // ----------------------------------------------------
+        // ========================================================
+        // ÇİZGİLER
+        // ========================================================
 
         drawLine(
             "total",
             "#101c35",
+            2
+        );
+
+        drawLine(
+            "businessViews",
+            "#5c1023",
             2
         );
 
@@ -504,60 +806,106 @@
             3
         );
 
-        drawLine(
-            "businessViews",
-            "#5c1023",
-            2
-        );
+        // ========================================================
+        // VERİ YOKSA MESAJ
+        // ========================================================
+
+        const hasData =
+            data.some((item) => {
+                return (
+                    item.visits > 0 ||
+                    item.businessViews > 0 ||
+                    item.total > 0
+                );
+            });
+
+        if (!hasData) {
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.font = "14px Arial";
+            ctx.fillStyle = "#70798b";
+
+            ctx.fillText(
+                "Bu tarih aralığında gerçek analytics verisi bulunmuyor.",
+                width / 2,
+                height / 2
+            );
+        }
     }
 
-    // ========================================================
-    // Admin analytics kutusu oluşturulduktan sonra grafiği
-    // otomatik ekle
-    // ========================================================
+    // ============================================================
+    // ANALYTICS KUTUSUNA HOOK
+    // ============================================================
 
     function installAnalyticsChartHook() {
         if (
-            typeof window.renderAnalyticsBox !== "function" ||
+            typeof window.renderAnalyticsBox !==
+                "function" ||
             window.__trabzonAnalyticsChartHookInstalled
         ) {
             return;
         }
 
-        window.__trabzonAnalyticsChartHookInstalled = true;
+        window.__trabzonAnalyticsChartHookInstalled =
+            true;
 
         const originalRenderAnalyticsBox =
             window.renderAnalyticsBox;
 
-        window.renderAnalyticsBox = function (events) {
-            originalRenderAnalyticsBox(events);
+        window.renderAnalyticsBox =
+            function (events) {
+                originalRenderAnalyticsBox(events);
 
-            setTimeout(function () {
-                renderAnalyticsChart();
-            }, 0);
-        };
+                setTimeout(() => {
+                    renderAnalyticsChart();
+                }, 0);
+            };
     }
 
-    // ========================================================
-    // Script yüklendiğinde hook kur
-    // ========================================================
+    // ============================================================
+    // SAYFA YÜKLENDİĞİNDE
+    // ============================================================
 
     installAnalyticsChartHook();
 
-    // Analytics dosyası sonradan yüklenirse tekrar dene
     document.addEventListener(
         "DOMContentLoaded",
         function () {
             installAnalyticsChartHook();
 
-            setTimeout(function () {
+            setTimeout(() => {
                 if (
-                    Array.isArray(window.allAnalyticsEvents) &&
-                    window.allAnalyticsEvents.length
+                    Array.isArray(
+                        window.allAnalyticsEvents
+                    )
                 ) {
                     renderAnalyticsChart();
                 }
             }, 500);
+        }
+    );
+
+    // ============================================================
+    // PENCERE BOYUTU
+    // ============================================================
+
+    let resizeTimer = null;
+
+    window.addEventListener(
+        "resize",
+        function () {
+            clearTimeout(resizeTimer);
+
+            resizeTimer = setTimeout(() => {
+                const chart =
+                    document.getElementById(
+                        "adminAnalyticsChartBox"
+                    );
+
+                if (chart) {
+                    renderAnalyticsChart();
+                }
+            }, 200);
         }
     );
 
