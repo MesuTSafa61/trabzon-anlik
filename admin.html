@@ -4,37 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trabzon Anlık - Admin Paneli</title>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
-
         body {
             font-family: Arial, Helvetica, sans-serif;
             background: #f4f6f9;
             color: #1f2937;
         }
-
         button,
         input,
         select,
         textarea {
             font: inherit;
         }
-
         button {
             cursor: pointer;
         }
-
         /* =====================================================
            LOGIN
         ===================================================== */
-
         #loginScreen {
             min-height: 100vh;
             display: flex;
@@ -43,7 +36,6 @@
             padding: 20px;
             background: linear-gradient(135deg, #111827, #1f2937);
         }
-
         .login-box {
             width: 100%;
             max-width: 420px;
@@ -52,31 +44,26 @@
             padding: 35px;
             box-shadow: 0 20px 60px rgba(0,0,0,.25);
         }
-
         .login-logo {
             text-align: center;
             font-size: 30px;
             font-weight: 800;
             margin-bottom: 8px;
         }
-
         .login-subtitle {
             text-align: center;
             color: #6b7280;
             margin-bottom: 28px;
         }
-
         .form-group {
             margin-bottom: 16px;
         }
-
         .form-group label {
             display: block;
             margin-bottom: 7px;
             font-size: 14px;
             font-weight: 700;
         }
-
         .form-control {
             width: 100%;
             border: 1px solid #d1d5db;
@@ -86,12 +73,10 @@
             background: #fff;
             transition: .2s;
         }
-
         .form-control:focus {
             border-color: #2563eb;
             box-shadow: 0 0 0 3px rgba(37,99,235,.1);
         }
-
         .login-btn {
             width: 100%;
             border: 0;
@@ -102,26 +87,21 @@
             font-weight: 700;
             margin-top: 5px;
         }
-
         .login-btn:hover {
             background: #1d4ed8;
         }
-
         #loginMessage {
             margin-top: 15px;
             text-align: center;
             font-size: 14px;
         }
-
         /* =====================================================
            LAYOUT
         ===================================================== */
-
         #adminPanel {
             display: none;
             min-height: 100vh;
         }
-
         .sidebar {
             position: fixed;
             left: 0;
@@ -135,14 +115,12 @@
             flex-direction: column;
             transition: transform .25s ease;
         }
-
         .sidebar-logo {
             padding: 25px 22px;
             font-size: 21px;
             font-weight: 800;
             border-bottom: 1px solid rgba(255,255,255,.08);
         }
-
         .sidebar-logo small {
             display: block;
             color: #9ca3af;
@@ -150,13 +128,11 @@
             margin-top: 5px;
             font-weight: 500;
         }
-
         .menu {
             padding: 15px 10px;
             flex: 1;
             overflow-y: auto;
         }
-
         .menu-title {
             color: #6b7280;
             font-size: 11px;
@@ -164,7 +140,6 @@
             padding: 15px 12px 8px;
             text-transform: uppercase;
         }
-
         .menu-item {
             width: 100%;
             border: 0;
@@ -180,28 +155,23 @@
             font-weight: 600;
             transition: .2s;
         }
-
         .menu-item:hover {
             background: #1f2937;
             color: #fff;
         }
-
         .menu-item.active {
             background: #2563eb;
             color: #fff;
         }
-
         .menu-icon {
             width: 23px;
             text-align: center;
             font-size: 18px;
         }
-
         .sidebar-bottom {
             padding: 12px 10px 18px;
             border-top: 1px solid rgba(255,255,255,.08);
         }
-
         .logout-btn {
             width: 100%;
             border: 0;
@@ -211,12 +181,10 @@
             border-radius: 10px;
             font-weight: 700;
         }
-
         .main {
             margin-left: 250px;
             min-height: 100vh;
         }
-
         .topbar {
             height: 70px;
             background: #fff;
@@ -229,12 +197,10 @@
             top: 0;
             z-index: 100;
         }
-
         .topbar-title {
             font-size: 22px;
             font-weight: 800;
         }
-
         .mobile-menu-btn {
             display: none;
             border: 0;
@@ -244,30 +210,24 @@
             padding: 9px 12px;
             font-size: 20px;
         }
-
         .content {
             padding: 28px;
         }
-
         .section {
             display: none;
         }
-
         .section.active {
             display: block;
         }
-
         /* =====================================================
            DASHBOARD
         ===================================================== */
-
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 18px;
             margin-bottom: 25px;
         }
-
         .stat-card {
             background: #fff;
             border: 1px solid #e5e7eb;
@@ -275,28 +235,23 @@
             padding: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,.04);
         }
-
         .stat-icon {
             font-size: 26px;
             margin-bottom: 12px;
         }
-
         .stat-label {
             color: #6b7280;
             font-size: 13px;
             font-weight: 600;
         }
-
         .stat-value {
             font-size: 30px;
             font-weight: 800;
             margin-top: 5px;
         }
-
         /* =====================================================
            SECTION HEADER
         ===================================================== */
-
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -304,17 +259,14 @@
             gap: 15px;
             margin-bottom: 20px;
         }
-
         .section-header h2 {
             font-size: 24px;
         }
-
         .section-header p {
             color: #6b7280;
             font-size: 14px;
             margin-top: 4px;
         }
-
         .refresh-btn {
             border: 1px solid #d1d5db;
             background: #fff;
@@ -322,11 +274,40 @@
             border-radius: 9px;
             font-weight: 700;
         }
-
+        /* =====================================================
+           ANALYTICS
+        ===================================================== */
+        #section-analytics {
+            position: relative;
+        }
+        .analytics-intro {
+            background: linear-gradient(135deg, #101c35, #182744);
+            color: #fff;
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 30px rgba(16,28,53,.12);
+        }
+        .analytics-intro h2 {
+            font-size: 25px;
+            margin-bottom: 6px;
+        }
+        .analytics-intro p {
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+        /*
+         * Analytics JS dosyaları mevcut kutuları dashboard'a
+         * oluşturmaya devam ediyor.
+         * Aşağıdaki taşıma sistemi onları otomatik olarak
+         * bu bölüme alır.
+         */
+        #analyticsContent {
+            display: block;
+        }
         /* =====================================================
            FILTERS
         ===================================================== */
-
         .filters {
             background: #fff;
             border: 1px solid #e5e7eb;
@@ -337,22 +318,18 @@
             gap: 12px;
             margin-bottom: 20px;
         }
-
         .filter-result {
             grid-column: 1 / -1;
             font-size: 13px;
             color: #6b7280;
         }
-
         /* =====================================================
            BUSINESS CARDS
         ===================================================== */
-
         #applications {
             display: grid;
             gap: 18px;
         }
-
         .business-card {
             background: #fff;
             border: 1px solid #e5e7eb;
@@ -360,32 +337,27 @@
             padding: 20px;
             box-shadow: 0 4px 15px rgba(0,0,0,.04);
         }
-
         .business-top {
             display: flex;
             justify-content: space-between;
             gap: 15px;
             margin-bottom: 15px;
         }
-
         .business-title {
             font-size: 20px;
             font-weight: 800;
         }
-
         .business-meta {
             color: #6b7280;
             font-size: 13px;
             margin-top: 5px;
         }
-
         .badges {
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
             justify-content: flex-end;
         }
-
         .badge {
             padding: 5px 9px;
             border-radius: 20px;
@@ -393,27 +365,22 @@
             font-weight: 800;
             white-space: nowrap;
         }
-
         .badge-green {
             background: #dcfce7;
             color: #166534;
         }
-
         .badge-red {
             background: #fee2e2;
             color: #991b1b;
         }
-
         .badge-yellow {
             background: #fef3c7;
             color: #92400e;
         }
-
         .badge-blue {
             background: #dbeafe;
             color: #1e40af;
         }
-
         .business-info {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -421,11 +388,9 @@
             margin-bottom: 17px;
             font-size: 14px;
         }
-
         .business-info strong {
             color: #374151;
         }
-
         .description {
             background: #f9fafb;
             border-radius: 9px;
@@ -433,7 +398,6 @@
             font-size: 14px;
             margin-bottom: 15px;
         }
-
         .business-actions {
             display: flex;
             flex-wrap: wrap;
@@ -441,7 +405,6 @@
             border-top: 1px solid #eee;
             padding-top: 15px;
         }
-
         .action-btn {
             border: 0;
             padding: 9px 12px;
@@ -450,38 +413,30 @@
             font-size: 13px;
             font-weight: 700;
         }
-
         .btn-blue {
             background: #2563eb;
         }
-
         .btn-green {
             background: #16a34a;
         }
-
         .btn-red {
             background: #dc2626;
         }
-
         .btn-yellow {
             background: #d97706;
         }
-
         .btn-gray {
             background: #4b5563;
         }
-
         /* =====================================================
            GALLERY
         ===================================================== */
-
         .gallery {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
             gap: 10px;
             margin-top: 15px;
         }
-
         .gallery-item {
             position: relative;
             height: 110px;
@@ -489,13 +444,11 @@
             overflow: hidden;
             background: #eee;
         }
-
         .gallery-item img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-
         .cover-label {
             position: absolute;
             left: 5px;
@@ -507,7 +460,6 @@
             font-size: 10px;
             font-weight: 700;
         }
-
         .gallery-buttons {
             position: absolute;
             bottom: 5px;
@@ -516,7 +468,6 @@
             display: flex;
             gap: 3px;
         }
-
         .gallery-buttons button {
             flex: 1;
             border: 0;
@@ -526,7 +477,6 @@
             padding: 5px;
             font-size: 11px;
         }
-
         .upload-box {
             margin-top: 15px;
             padding: 15px;
@@ -534,48 +484,39 @@
             border-radius: 10px;
             background: #f8fafc;
         }
-
         /* =====================================================
            REVIEWS
         ===================================================== */
-
         #reviewsList {
             display: grid;
             gap: 15px;
         }
-
         .review-card {
             background: #fff;
             border: 1px solid #e5e7eb;
             border-radius: 14px;
             padding: 18px;
         }
-
         .review-header {
             display: flex;
             justify-content: space-between;
             gap: 15px;
             margin-bottom: 8px;
         }
-
         .review-name {
             font-weight: 800;
         }
-
         .review-stars {
             font-size: 15px;
         }
-
         .review-comment {
             color: #4b5563;
             line-height: 1.5;
             margin-bottom: 12px;
         }
-
         /* =====================================================
            EDIT MODAL
         ===================================================== */
-
         .modal-overlay {
             display: none;
             position: fixed;
@@ -585,13 +526,11 @@
             padding: 20px;
             overflow-y: auto;
         }
-
         .modal-overlay.open {
             display: flex;
             align-items: flex-start;
             justify-content: center;
         }
-
         .edit-modal {
             width: 100%;
             max-width: 900px;
@@ -600,7 +539,6 @@
             margin: 30px auto;
             box-shadow: 0 25px 70px rgba(0,0,0,.3);
         }
-
         .modal-header {
             padding: 20px 24px;
             border-bottom: 1px solid #e5e7eb;
@@ -608,11 +546,9 @@
             justify-content: space-between;
             align-items: center;
         }
-
         .modal-header h3 {
             font-size: 20px;
         }
-
         .modal-close {
             border: 0;
             background: #f3f4f6;
@@ -621,21 +557,17 @@
             border-radius: 50%;
             font-size: 18px;
         }
-
         .modal-body {
             padding: 24px;
         }
-
         .edit-form-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 16px;
         }
-
         .full-width {
             grid-column: 1 / -1;
         }
-
         .modal-footer {
             border-top: 1px solid #e5e7eb;
             padding: 18px 24px;
@@ -643,28 +575,23 @@
             justify-content: flex-end;
             gap: 10px;
         }
-
         .modal-btn {
             border: 0;
             border-radius: 9px;
             padding: 11px 17px;
             font-weight: 700;
         }
-
         .cancel-btn {
             background: #e5e7eb;
             color: #374151;
         }
-
         .save-btn {
             background: #2563eb;
             color: #fff;
         }
-
         /* =====================================================
            EMPTY / LOADING
         ===================================================== */
-
         .empty {
             background: #fff;
             border: 1px dashed #d1d5db;
@@ -673,134 +600,114 @@
             text-align: center;
             color: #6b7280;
         }
-
         .loading {
             text-align: center;
             padding: 40px;
             color: #6b7280;
         }
-
         /* =====================================================
            MOBILE
         ===================================================== */
-
         @media (max-width: 1100px) {
             .stats-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
-
             .filters {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
-
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
                 box-shadow: 10px 0 30px rgba(0,0,0,.2);
             }
-
             .sidebar.open {
                 transform: translateX(0);
             }
-
             .main {
                 margin-left: 0;
             }
-
             .mobile-menu-btn {
                 display: block;
             }
-
             .topbar {
                 padding: 0 15px;
             }
-
             .topbar-title {
                 font-size: 18px;
             }
-
             .content {
                 padding: 15px;
             }
-
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
             }
-
             .stat-card {
                 padding: 15px;
             }
-
             .stat-value {
                 font-size: 25px;
             }
-
             .filters {
                 grid-template-columns: 1fr;
             }
-
             .business-top {
                 flex-direction: column;
             }
-
             .badges {
                 justify-content: flex-start;
             }
-
             .business-info {
                 grid-template-columns: 1fr;
             }
-
             .edit-form-grid {
                 grid-template-columns: 1fr;
             }
-
             .full-width {
                 grid-column: auto;
             }
-
             .section-header {
                 align-items: flex-start;
             }
+            .analytics-intro {
+                padding: 20px;
+            }
+            .analytics-intro h2 {
+                font-size: 21px;
+            }
         }
-
         @media (max-width: 450px) {
             .stats-grid {
                 grid-template-columns: 1fr 1fr;
             }
-
             .stat-label {
                 font-size: 11px;
             }
-
             .stat-value {
                 font-size: 22px;
             }
-
             .business-actions {
                 flex-direction: column;
             }
-
             .action-btn {
                 width: 100%;
             }
         }
     </style>
 </head>
-
 <body>
-
 <!-- =========================================================
      LOGIN
 ========================================================= -->
-
 <div id="loginScreen">
     <div class="login-box">
-        <div class="login-logo">Trabzon Anlık</div>
-        <div class="login-subtitle">Yönetim Paneli</div>
-
+        <div class="login-logo">
+            Trabzon Anlık
+        </div>
+        <div class="login-subtitle">
+            Yönetim Paneli
+        </div>
         <form id="loginForm">
             <div class="form-group">
                 <label>E-posta</label>
@@ -812,7 +719,6 @@
                     required
                 >
             </div>
-
             <div class="form-group">
                 <label>Şifre</label>
                 <input
@@ -823,274 +729,424 @@
                     required
                 >
             </div>
-
-            <button class="login-btn" type="submit">
+            <button
+                class="login-btn"
+                type="submit"
+            >
                 Giriş Yap
             </button>
-
             <div id="loginMessage"></div>
         </form>
     </div>
 </div>
-
-
 <!-- =========================================================
      ADMIN PANEL
 ========================================================= -->
-
 <div id="adminPanel">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar" id="sidebar">
-
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+    <aside
+        class="sidebar"
+        id="sidebar"
+    >
         <div class="sidebar-logo">
             Trabzon Anlık
-            <small>Yönetim Paneli</small>
+            <small>
+                Yönetim Paneli
+            </small>
         </div>
-
         <nav class="menu">
-
-            <div class="menu-title">Genel</div>
-
-            <button class="menu-item active" data-section="dashboard">
-                <span class="menu-icon">📊</span>
+            <!-- GENEL -->
+            <div class="menu-title">
+                Genel
+            </div>
+            <button
+                class="menu-item active"
+                data-section="dashboard"
+            >
+                <span class="menu-icon">
+                    📊
+                </span>
                 Dashboard
             </button>
-
-
-            <div class="menu-title">İşletme Yönetimi</div>
-
-            <button class="menu-item" data-section="businesses">
-                <span class="menu-icon">🏪</span>
+            <!-- İŞLETME -->
+            <div class="menu-title">
+                İşletme Yönetimi
+            </div>
+            <button
+                class="menu-item"
+                data-section="businesses"
+            >
+                <span class="menu-icon">
+                    🏪
+                </span>
                 İşletmeler
             </button>
-
-            <button class="menu-item" data-section="pending">
-                <span class="menu-icon">⏳</span>
+            <button
+                class="menu-item"
+                data-section="pending"
+            >
+                <span class="menu-icon">
+                    ⏳
+                </span>
                 Bekleyen Başvurular
             </button>
-
-            <button class="menu-item" data-section="featured">
-                <span class="menu-icon">⭐</span>
+            <button
+                class="menu-item"
+                data-section="featured"
+            >
+                <span class="menu-icon">
+                    ⭐
+                </span>
                 Öne Çıkanlar
             </button>
-
-
-            <div class="menu-title">İçerik</div>
-
-            <button class="menu-item" data-section="reviews">
-                <span class="menu-icon">💬</span>
+            <!-- İÇERİK -->
+            <div class="menu-title">
+                İçerik
+            </div>
+            <button
+                class="menu-item"
+                data-section="reviews"
+            >
+                <span class="menu-icon">
+                    💬
+                </span>
                 Yorumlar
             </button>
-
-            <button class="menu-item" data-section="photos">
-                <span class="menu-icon">🖼️</span>
+            <button
+                class="menu-item"
+                data-section="photos"
+            >
+                <span class="menu-icon">
+                    🖼️
+                </span>
                 Fotoğraf Yönetimi
             </button>
-
+            <!-- RAPORLAMA -->
+            <div class="menu-title">
+                Raporlama
+            </div>
+            <button
+                class="menu-item"
+                data-section="analytics"
+            >
+                <span class="menu-icon">
+                    📈
+                </span>
+                Analytics
+            </button>
         </nav>
-
         <div class="sidebar-bottom">
-            <button class="logout-btn" id="logoutBtn">
+            <button
+                class="logout-btn"
+                id="logoutBtn"
+            >
                 🚪 Çıkış Yap
             </button>
         </div>
-
     </aside>
-
-
-    <!-- MAIN -->
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
     <main class="main">
-
         <header class="topbar">
-            <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
-
-            <div class="topbar-title" id="pageTitle">
+            <button
+                class="mobile-menu-btn"
+                id="mobileMenuBtn"
+            >
+                ☰
+            </button>
+            <div
+                class="topbar-title"
+                id="pageTitle"
+            >
                 Dashboard
             </div>
-
-            <button class="refresh-btn" id="refreshBtn">
+            <button
+                class="refresh-btn"
+                id="refreshBtn"
+            >
                 🔄 Yenile
             </button>
         </header>
-
-
         <div class="content">
-
             <!-- =================================================
                  DASHBOARD
             ================================================== -->
-
-            <section class="section active" id="section-dashboard">
-
+            <section
+                class="section active"
+                id="section-dashboard"
+            >
                 <div class="section-header">
                     <div>
-                        <h2>Dashboard</h2>
-                        <p>Trabzon Anlık genel durum</p>
+                        <h2>
+                            Dashboard
+                        </h2>
+                        <p>
+                            Trabzon Anlık genel durum
+                        </p>
                     </div>
                 </div>
-
                 <div class="stats-grid">
-
                     <div class="stat-card">
-                        <div class="stat-icon">🏪</div>
-                        <div class="stat-label">Toplam İşletme</div>
-                        <div class="stat-value" id="statTotalBusinesses">0</div>
+                        <div class="stat-icon">
+                            🏪
+                        </div>
+                        <div class="stat-label">
+                            Toplam İşletme
+                        </div>
+                        <div
+                            class="stat-value"
+                            id="statTotalBusinesses"
+                        >
+                            0
+                        </div>
                     </div>
-
                     <div class="stat-card">
-                        <div class="stat-icon">⏳</div>
-                        <div class="stat-label">Bekleyen İşletme</div>
-                        <div class="stat-value" id="statPendingBusinesses">0</div>
+                        <div class="stat-icon">
+                            ⏳
+                        </div>
+                        <div class="stat-label">
+                            Bekleyen İşletme
+                        </div>
+                        <div
+                            class="stat-value"
+                            id="statPendingBusinesses"
+                        >
+                            0
+                        </div>
                     </div>
-
                     <div class="stat-card">
-                        <div class="stat-icon">✅</div>
-                        <div class="stat-label">Onaylı İşletme</div>
-                        <div class="stat-value" id="statApprovedBusinesses">0</div>
+                        <div class="stat-icon">
+                            ✅
+                        </div>
+                        <div class="stat-label">
+                            Onaylı İşletme
+                        </div>
+                        <div
+                            class="stat-value"
+                            id="statApprovedBusinesses"
+                        >
+                            0
+                        </div>
                     </div>
-
                     <div class="stat-card">
-                        <div class="stat-icon">⭐</div>
-                        <div class="stat-label">Öne Çıkan İşletme</div>
-                        <div class="stat-value" id="statFeaturedBusinesses">0</div>
+                        <div class="stat-icon">
+                            ⭐
+                        </div>
+                        <div class="stat-label">
+                            Öne Çıkan İşletme
+                        </div>
+                        <div
+                            class="stat-value"
+                            id="statFeaturedBusinesses"
+                        >
+                            0
+                        </div>
                     </div>
-
                     <div class="stat-card">
-                        <div class="stat-icon">💬</div>
-                        <div class="stat-label">Toplam Yorum</div>
-                        <div class="stat-value" id="statReviews">0</div>
+                        <div class="stat-icon">
+                            💬
+                        </div>
+                        <div class="stat-label">
+                            Toplam Yorum
+                        </div>
+                        <div
+                            class="stat-value"
+                            id="statReviews"
+                        >
+                            0
+                        </div>
                     </div>
-
                 </div>
-
             </section>
-
-
+            <!-- =================================================
+                 ANALYTICS
+            ================================================== -->
+            <section
+                class="section"
+                id="section-analytics"
+            >
+                <div class="section-header">
+                    <div>
+                        <h2>
+                            📈 Analytics
+                        </h2>
+                        <p>
+                            Trabzon Anlık ziyaretçi ve işletme görüntülenme istatistikleri
+                        </p>
+                    </div>
+                </div>
+                <div class="analytics-intro">
+                    <h2>
+                        📊 Site İstatistikleri
+                    </h2>
+                    <p>
+                        Ziyaretçi hareketlerini, işletme görüntülenmelerini ve günlük performansı buradan takip edebilirsin.
+                    </p>
+                </div>
+                <div id="analyticsContent"></div>
+            </section>
             <!-- =================================================
                  BUSINESSES
             ================================================== -->
-
-            <section class="section" id="section-businesses">
-
+            <section
+                class="section"
+                id="section-businesses"
+            >
                 <div class="section-header">
                     <div>
-                        <h2>🏪 İşletmeler</h2>
-                        <p>Tüm işletmeleri buradan yönetebilirsin.</p>
+                        <h2>
+                            🏪 İşletmeler
+                        </h2>
+                        <p>
+                            Tüm işletmeleri buradan yönetebilirsin.
+                        </p>
                     </div>
                 </div>
-
                 <div class="filters">
-
                     <input
                         id="businessSearch"
                         class="form-control"
                         type="text"
                         placeholder="🔍 İşletme ara..."
                     >
-
-                    <select id="businessCategoryFilter" class="form-control">
-                        <option value="">Tüm Kategoriler</option>
+                    <select
+                        id="businessCategoryFilter"
+                        class="form-control"
+                    >
+                        <option value="">
+                            Tüm Kategoriler
+                        </option>
                     </select>
-
-                    <select id="businessStatusFilter" class="form-control">
-                        <option value="">Tüm Durumlar</option>
-                        <option value="approved">Onaylı</option>
-                        <option value="pending">Bekleyen</option>
+                    <select
+                        id="businessStatusFilter"
+                        class="form-control"
+                    >
+                        <option value="">
+                            Tüm Durumlar
+                        </option>
+                        <option value="approved">
+                            Onaylı
+                        </option>
+                        <option value="pending">
+                            Bekleyen
+                        </option>
                     </select>
-
-                    <select id="businessFeaturedFilter" class="form-control">
-                        <option value="">Tüm İşletmeler</option>
-                        <option value="featured">Öne Çıkanlar</option>
-                        <option value="normal">Normal</option>
+                    <select
+                        id="businessFeaturedFilter"
+                        class="form-control"
+                    >
+                        <option value="">
+                            Tüm İşletmeler
+                        </option>
+                        <option value="featured">
+                            Öne Çıkanlar
+                        </option>
+                        <option value="normal">
+                            Normal
+                        </option>
                     </select>
-
-                    <div class="filter-result" id="filterResultCount">
+                    <div
+                        class="filter-result"
+                        id="filterResultCount"
+                    >
                         0 işletme
                     </div>
-
                 </div>
-
                 <div id="applications">
-                    <div class="loading">İşletmeler yükleniyor...</div>
+                    <div class="loading">
+                        İşletmeler yükleniyor...
+                    </div>
                 </div>
-
             </section>
-
-
             <!-- =================================================
                  PENDING
             ================================================== -->
-
-            <section class="section" id="section-pending">
-
+            <section
+                class="section"
+                id="section-pending"
+            >
                 <div class="section-header">
                     <div>
-                        <h2>⏳ Bekleyen Başvurular</h2>
-                        <p>Henüz onaylanmamış işletmeler.</p>
+                        <h2>
+                            ⏳ Bekleyen Başvurular
+                        </h2>
+                        <p>
+                            Henüz onaylanmamış işletmeler.
+                        </p>
                     </div>
                 </div>
-
                 <div id="pendingApplications">
-                    <div class="loading">Yükleniyor...</div>
+                    <div class="loading">
+                        Yükleniyor...
+                    </div>
                 </div>
-
             </section>
-
-
             <!-- =================================================
                  FEATURED
             ================================================== -->
-
-            <section class="section" id="section-featured">
-
+            <section
+                class="section"
+                id="section-featured"
+            >
                 <div class="section-header">
                     <div>
-                        <h2>⭐ Öne Çıkanlar</h2>
-                        <p>Öne çıkarılmış işletmeler.</p>
+                        <h2>
+                            ⭐ Öne Çıkanlar
+                        </h2>
+                        <p>
+                            Öne çıkarılmış işletmeler.
+                        </p>
                     </div>
                 </div>
-
                 <div id="featuredApplications">
-                    <div class="loading">Yükleniyor...</div>
+                    <div class="loading">
+                        Yükleniyor...
+                    </div>
                 </div>
-
             </section>
-
-
             <!-- =================================================
                  REVIEWS
             ================================================== -->
-
-            <section class="section" id="section-reviews">
-
+            <section
+                class="section"
+                id="section-reviews"
+            >
                 <div class="section-header">
                     <div>
-                        <h2>💬 Yorumlar</h2>
-                        <p>İşletme yorumlarını buradan yönetebilirsin.</p>
+                        <h2>
+                            💬 Yorumlar
+                        </h2>
+                        <p>
+                            İşletme yorumlarını buradan yönetebilirsin.
+                        </p>
                     </div>
                 </div>
-
                 <div id="reviewsList">
-                    <div class="loading">Yorumlar yükleniyor...</div>
+                    <div class="loading">
+                        Yorumlar yükleniyor...
+                    </div>
                 </div>
-
             </section>
-
-
             <!-- =================================================
                  PHOTOS
             ================================================== -->
-
-            <section class="section" id="section-photos">
-
+            <section
+                class="section"
+                id="section-photos"
+            >
                 <div class="section-header">
                     <div>
-                        <h2>🖼️ Fotoğraf Yönetimi</h2>
-                        <p>İşletmelerin fotoğraflarını buradan yönetebilirsin.</p>
+                        <h2>
+                            🖼️ Fotoğraf Yönetimi
+                        </h2>
+                        <p>
+                            İşletmelerin fotoğraflarını buradan yönetebilirsin.
+                        </p>
                     </div>
                 </div>
-
                 <div class="filters">
                     <input
                         id="photoBusinessSearch"
@@ -1099,29 +1155,27 @@
                         placeholder="🔍 İşletme ara..."
                     >
                 </div>
-
                 <div id="photoBusinesses">
-                    <div class="loading">Yükleniyor...</div>
+                    <div class="loading">
+                        Yükleniyor...
+                    </div>
                 </div>
-
             </section>
-
         </div>
     </main>
 </div>
-
-
 <!-- =========================================================
      EDIT MODAL
 ========================================================= -->
-
-<div class="modal-overlay" id="editBusinessModal">
-
+<div
+    class="modal-overlay"
+    id="editBusinessModal"
+>
     <div class="edit-modal">
-
         <div class="modal-header">
-            <h3>✏️ İşletmeyi Düzenle</h3>
-
+            <h3>
+                ✏️ İşletmeyi Düzenle
+            </h3>
             <button
                 type="button"
                 class="modal-close"
@@ -1130,124 +1184,145 @@
                 ×
             </button>
         </div>
-
         <form id="editBusinessForm">
-
-            <input type="hidden" id="editBusinessId">
-
+            <input
+                type="hidden"
+                id="editBusinessId"
+            >
             <div class="modal-body">
-
                 <div class="edit-form-grid">
-
                     <div class="form-group">
-                        <label>İşletme Adı</label>
+                        <label>
+                            İşletme Adı
+                        </label>
                         <input
                             id="editBusinessName"
                             class="form-control"
                             required
                         >
                     </div>
-
                     <div class="form-group">
-                        <label>Kategori</label>
+                        <label>
+                            Kategori
+                        </label>
                         <select
                             id="editBusinessCategory"
                             class="form-control"
                             required
                         ></select>
                     </div>
-
                     <div class="form-group">
-                        <label>İlçe</label>
+                        <label>
+                            İlçe
+                        </label>
                         <input
                             id="editBusinessDistrict"
                             class="form-control"
                         >
                     </div>
-
                     <div class="form-group">
-                        <label>Telefon</label>
+                        <label>
+                            Telefon
+                        </label>
                         <input
                             id="editBusinessPhone"
                             class="form-control"
                             type="tel"
                         >
                     </div>
-
                     <div class="form-group full-width">
-                        <label>Adres</label>
+                        <label>
+                            Adres
+                        </label>
                         <input
                             id="editBusinessAddress"
                             class="form-control"
                         >
                     </div>
-
                     <div class="form-group">
-                        <label>İşletme Sahibi</label>
+                        <label>
+                            İşletme Sahibi
+                        </label>
                         <input
                             id="editBusinessOwnerName"
                             class="form-control"
                         >
                     </div>
-
                     <div class="form-group">
-                        <label>Sahibi Telefonu</label>
+                        <label>
+                            Sahibi Telefonu
+                        </label>
                         <input
                             id="editBusinessOwnerPhone"
                             class="form-control"
                             type="tel"
                         >
                     </div>
-
                     <div class="form-group">
-                        <label>Sahibi E-posta</label>
+                        <label>
+                            Sahibi E-posta
+                        </label>
                         <input
                             id="editBusinessOwnerEmail"
                             class="form-control"
                             type="email"
                         >
                     </div>
-
                     <div class="form-group">
-                        <label>Instagram</label>
+                        <label>
+                            Instagram
+                        </label>
                         <input
                             id="editBusinessInstagram"
                             class="form-control"
                             placeholder="@kullaniciadi"
                         >
                     </div>
-
                     <div class="form-group full-width">
-                        <label>Açıklama</label>
+                        <label>
+                            Açıklama
+                        </label>
                         <textarea
                             id="editBusinessDescription"
                             class="form-control"
                             rows="5"
                         ></textarea>
                     </div>
-
                     <div class="form-group">
-                        <label>Onay Durumu</label>
-                        <select id="editBusinessApproved" class="form-control">
-                            <option value="true">✅ Onaylı</option>
-                            <option value="false">⏳ Bekliyor</option>
+                        <label>
+                            Onay Durumu
+                        </label>
+                        <select
+                            id="editBusinessApproved"
+                            class="form-control"
+                        >
+                            <option value="true">
+                                ✅ Onaylı
+                            </option>
+                            <option value="false">
+                                ⏳ Bekliyor
+                            </option>
                         </select>
                     </div>
-
                     <div class="form-group">
-                        <label>Öne Çıkarma</label>
-                        <select id="editBusinessFeatured" class="form-control">
-                            <option value="false">Normal</option>
-                            <option value="true">⭐ Öne Çıkar</option>
+                        <label>
+                            Öne Çıkarma
+                        </label>
+                        <select
+                            id="editBusinessFeatured"
+                            class="form-control"
+                        >
+                            <option value="false">
+                                Normal
+                            </option>
+                            <option value="true">
+                                ⭐ Öne Çıkar
+                            </option>
                         </select>
                     </div>
-
                 </div>
-
             </div>
-
             <div class="modal-footer">
-
                 <button
                     type="button"
                     class="modal-btn cancel-btn"
@@ -1255,33 +1330,105 @@
                 >
                     Vazgeç
                 </button>
-
                 <button
                     type="submit"
                     class="modal-btn save-btn"
                 >
                     💾 Değişiklikleri Kaydet
                 </button>
-
             </div>
-
         </form>
-
     </div>
 </div>
-
-
+<!-- =========================================================
+     JS
+========================================================= -->
 <script src="admin.js?v=6"></script>
-
 <script src="admin-analytics.js"></script>
-
 <script src="admin-analytics-chart.js"></script>
-
 <script src="admin-analytics-filter.js"></script>
-
 <script src="admin-analytics-businesses.js"></script>
-
-
-
+<!-- =========================================================
+     ANALYTICS TAŞIMA SİSTEMİ
+     
+     Mevcut analytics JS dosyalarına dokunmadan,
+     onların oluşturduğu kutuları Dashboard'dan
+     Analytics bölümüne taşır.
+========================================================= -->
+<script>
+(function () {
+    "use strict";
+    function moveAnalyticsElements() {
+        const analyticsSection =
+            document.getElementById("section-analytics");
+        if (!analyticsSection) {
+            return;
+        }
+        const analyticsContent =
+            document.getElementById("analyticsContent");
+        if (!analyticsContent) {
+            return;
+        }
+        const elementIds = [
+            "adminAnalyticsFilterBox",
+            "adminAnalyticsBox",
+            "adminAnalyticsChartBox"
+        ];
+        elementIds.forEach(function (id) {
+            const element =
+                document.getElementById(id);
+            if (!element) {
+                return;
+            }
+            if (
+                element.parentElement !== analyticsContent
+            ) {
+                analyticsContent.appendChild(element);
+            }
+        });
+    }
+    function setupAnalyticsMover() {
+        moveAnalyticsElements();
+        const dashboard =
+            document.getElementById("section-dashboard");
+        if (!dashboard) {
+            return;
+        }
+        const observer =
+            new MutationObserver(function () {
+                moveAnalyticsElements();
+            });
+        observer.observe(
+            dashboard,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+        setTimeout(
+            moveAnalyticsElements,
+            300
+        );
+        setTimeout(
+            moveAnalyticsElements,
+            1000
+        );
+        setTimeout(
+            moveAnalyticsElements,
+            2000
+        );
+    }
+    if (
+        document.readyState === "loading"
+    ) {
+        document.addEventListener(
+            "DOMContentLoaded",
+            setupAnalyticsMover
+        );
+    } else {
+        setupAnalyticsMover();
+    }
+})();
+</script>
 </body>
 </html>
