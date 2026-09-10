@@ -1,96 +1,109 @@
 // ============================================================
 // TRABZON ANLIK - ANALYTICS TARİH FİLTRESİ
-// Tüm Analytics sistemini ortak tarih filtresiyle yönetir.
+// ============================================================
+// 7 / 30 / 90 / Bugün / Tüm Zamanlar
+// Filtre değişince tüm analytics anında güncellenir.
+// Supabase'den tekrar veri çekmez.
 // ============================================================
 
 (function () {
+
     "use strict";
 
     // ============================================================
     // AYARLAR
     // ============================================================
 
-    let selectedRange = "30";
+    let selectedRange =
+        window.__trabzonAnalyticsSelectedRange || "30";
 
     let filterInitialized = false;
-
-    // ============================================================
-    // GLOBAL FİLTRE DURUMU
-    // Diğer analytics dosyaları buradan okuyabilir.
-    // ============================================================
-
-    window.__trabzonAnalyticsSelectedRange = selectedRange;
-
-    // ============================================================
-    // EVENT TÜRÜ
-    // ============================================================
-
-    function normalizeEventType(event) {
-        return String(event?.event_type || "")
-            .trim()
-            .toLowerCase();
-    }
-
-    // ============================================================
-    // GERÇEK EVENT
-    // ============================================================
-
-    function isRealEvent(event) {
-        return (
-            event &&
-            normalizeEventType(event) !== "test_page_view"
-        );
-    }
 
     // ============================================================
     // TARİH FİLTRESİ
     // ============================================================
 
-    function getFilteredEvents(events) {
+    function getFilteredEvents(events, range) {
 
         if (!Array.isArray(events)) {
             return [];
         }
 
-        const realEvents = events.filter(isRealEvent);
+        const realEvents =
+            events.filter(function (event) {
 
-        // Tüm zamanlar
-        if (selectedRange === "all") {
+                return (
+                    event &&
+                    String(event.event_type || "")
+                        .trim()
+                        .toLowerCase() !==
+                    "test_page_view"
+                );
+
+            });
+
+        const currentRange =
+            String(
+                range ||
+                selectedRange ||
+                "30"
+            );
+
+        // --------------------------------------------------------
+        // TÜM ZAMANLAR
+        // --------------------------------------------------------
+
+        if (currentRange === "all") {
             return realEvents;
         }
 
-        const days = Number(selectedRange);
+        const days =
+            Number(currentRange);
 
         if (!Number.isFinite(days)) {
             return realEvents;
         }
 
-        const now = new Date();
+        // --------------------------------------------------------
+        // BUGÜNÜN BAŞLANGICI
+        // --------------------------------------------------------
 
-        const todayStart = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate(),
-            0,
-            0,
-            0,
-            0
-        );
+        const now =
+            new Date();
+
+        const todayStart =
+            new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate(),
+                0,
+                0,
+                0,
+                0
+            );
 
         let startDate;
 
+        // Bugün
         if (days === 1) {
 
-            startDate = todayStart;
+            startDate =
+                todayStart;
 
         } else {
 
-            startDate = new Date(todayStart);
+            startDate =
+                new Date(todayStart);
 
             startDate.setDate(
-                startDate.getDate() - (days - 1)
+                startDate.getDate() -
+                (days - 1)
             );
         }
+
+        // --------------------------------------------------------
+        // EVENTLERİ FİLTRELE
+        // --------------------------------------------------------
 
         return realEvents.filter(function (event) {
 
@@ -99,45 +112,40 @@
             }
 
             const eventDate =
-                new Date(event.created_at);
+                new Date(
+                    event.created_at
+                );
 
-            if (Number.isNaN(eventDate.getTime())) {
+            if (
+                Number.isNaN(
+                    eventDate.getTime()
+                )
+            ) {
                 return false;
             }
 
             return eventDate >= startDate;
+
         });
     }
 
     // ============================================================
-    // DIŞARIDAN FİLTREYİ OKUMA
-    // ============================================================
-
-    window.getTrabzonAnalyticsSelectedRange =
-        function () {
-            return selectedRange;
-        };
-
-    // ============================================================
-    // DIŞARIDAN EVENTLERİ FİLTRELEME
-    // ============================================================
-
-    window.getTrabzonFilteredAnalyticsEvents =
-        function (events) {
-            return getFilteredEvents(events);
-        };
-
-    // ============================================================
-    // FİLTRE BAŞLIĞI
+    // FİLTRE KUTUSUNU OLUŞTUR
     // ============================================================
 
     function createFilterBox() {
 
+        // Zaten varsa tekrar oluşturma
         if (
             document.getElementById(
                 "adminAnalyticsFilterBox"
             )
         ) {
+
+            filterInitialized = true;
+
+            updateActiveButton();
+
             return;
         }
 
@@ -151,7 +159,9 @@
         }
 
         const box =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
         box.id =
             "adminAnalyticsFilterBox";
@@ -163,11 +173,11 @@
                 <div>
 
                     <div class="analytics-filter-title">
-                        📅 İstatistik Dönemi
+                        📅 Analytics Dönemi
                     </div>
 
                     <div class="analytics-filter-subtitle">
-                        Tüm istatistikleri seçtiğin döneme göre anında güncelle
+                        İstatistikleri istediğin tarih aralığına göre görüntüle
                     </div>
 
                 </div>
@@ -192,7 +202,7 @@
 
                 <button
                     type="button"
-                    class="analytics-filter-btn active"
+                    class="analytics-filter-btn"
                     data-range="30">
                     Son 30 Gün
                 </button>
@@ -212,12 +222,43 @@
                 </button>
 
             </div>
-
         `;
 
-        dashboard.appendChild(box);
+        // --------------------------------------------------------
+        // ANALYTICS KUTUSUNDAN ÖNCE EKLE
+        // --------------------------------------------------------
+
+        const analyticsBox =
+            document.getElementById(
+                "adminAnalyticsBox"
+            );
+
+        if (
+            analyticsBox &&
+            analyticsBox.parentNode === dashboard
+        ) {
+
+            dashboard.insertBefore(
+                box,
+                analyticsBox
+            );
+
+        } else {
+
+            dashboard.appendChild(
+                box
+            );
+        }
+
+        // --------------------------------------------------------
+        // STİLLER
+        // --------------------------------------------------------
 
         addFilterStyles();
+
+        // --------------------------------------------------------
+        // BUTONLAR
+        // --------------------------------------------------------
 
         const buttons =
             box.querySelectorAll(
@@ -239,32 +280,9 @@
                         return;
                     }
 
-                    // Yeni filtreyi kaydet
-                    selectedRange = range;
-
-                    // Global durumu güncelle
-                    window.__trabzonAnalyticsSelectedRange =
-                        selectedRange;
-
-                    // Aktif buton
-                    buttons.forEach(
-                        function (item) {
-                            item.classList.remove(
-                                "active"
-                            );
-                        }
+                    changeAnalyticsRange(
+                        range
                     );
-
-                    button.classList.add(
-                        "active"
-                    );
-
-                    // ====================================================
-                    // EN ÖNEMLİ KISIM
-                    // Yenilemeden bütün Analytics'i yeniden oluştur.
-                    // ====================================================
-
-                    refreshEntireAnalytics();
 
                 }
             );
@@ -272,143 +290,257 @@
         });
 
         filterInitialized = true;
+
+        updateActiveButton();
     }
 
     // ============================================================
-    // TÜM ANALYTICS'İ YENİLE
+    // AKTİF BUTONU GÜNCELLE
     // ============================================================
 
-    function refreshEntireAnalytics() {
+    function updateActiveButton() {
 
-        const allEvents =
-            window.__trabzonAnalyticsAllEvents ||
-            window.allAnalyticsEvents ||
-            [];
+        const box =
+            document.getElementById(
+                "adminAnalyticsFilterBox"
+            );
 
-        if (!Array.isArray(allEvents)) {
+        if (!box) {
             return;
         }
 
-        const filteredEvents =
-            getFilteredEvents(allEvents);
+        const buttons =
+            box.querySelectorAll(
+                ".analytics-filter-btn"
+            );
+
+        buttons.forEach(function (button) {
+
+            const buttonRange =
+                button.getAttribute(
+                    "data-range"
+                );
+
+            if (
+                String(buttonRange) ===
+                String(selectedRange)
+            ) {
+
+                button.classList.add(
+                    "active"
+                );
+
+            } else {
+
+                button.classList.remove(
+                    "active"
+                );
+            }
+
+        });
+    }
+
+    // ============================================================
+    // FİLTRE DEĞİŞTİR
+    // ============================================================
+
+    async function changeAnalyticsRange(
+        range
+    ) {
+
+        selectedRange =
+            String(range || "30");
 
         // --------------------------------------------------------
-        // Ana Analytics kutusu
+        // GLOBAL OLARAK SAKLA
         // --------------------------------------------------------
+
+        window.__trabzonAnalyticsSelectedRange =
+            selectedRange;
+
+        // --------------------------------------------------------
+        // AKTİF BUTONU DEĞİŞTİR
+        // --------------------------------------------------------
+
+        updateActiveButton();
+
+        // --------------------------------------------------------
+        // TÜM GERÇEK EVENTLERİ AL
+        // --------------------------------------------------------
+
+        const allEvents =
+            Array.isArray(
+                window.__trabzonAnalyticsAllEvents
+            )
+                ? window.__trabzonAnalyticsAllEvents
+                : [];
+
+        // --------------------------------------------------------
+        // VERİ YOKSA
+        // --------------------------------------------------------
+
+        if (!allEvents.length) {
+
+            console.warn(
+                "Analytics filtreleme: Henüz veri bulunamadı."
+            );
+
+            // Eğer ana sistem hazırsa tekrar yüklemeyi dene
+            if (
+                typeof window.loadAnalytics ===
+                "function"
+            ) {
+
+                try {
+
+                    await window.loadAnalytics();
+
+                } catch (error) {
+
+                    console.error(
+                        "Analytics yeniden yüklenemedi:",
+                        error
+                    );
+                }
+
+            }
+
+            return;
+        }
+
+        // --------------------------------------------------------
+        // FİLTRELE
+        // --------------------------------------------------------
+
+        let filteredEvents = [];
 
         if (
-            typeof window.__trabzonOriginalAnalyticsRender ===
+            typeof window.getAnalyticsFilteredEvents ===
             "function"
         ) {
 
-            window.__trabzonOriginalAnalyticsRender(
+            filteredEvents =
+                window.getAnalyticsFilteredEvents(
+                    allEvents,
+                    selectedRange
+                );
+
+        } else {
+
+            filteredEvents =
+                getFilteredEvents(
+                    allEvents,
+                    selectedRange
+                );
+        }
+
+        // --------------------------------------------------------
+        // GLOBAL FİLTRELİ VERİ
+        // --------------------------------------------------------
+
+        window.__trabzonAnalyticsFilteredEvents =
+            filteredEvents;
+
+        // Eski grafik sistemiyle uyumluluk
+        window.allAnalyticsEvents =
+            filteredEvents;
+
+        // Grafik sistemleri için ayrıca
+        window.__trabzonAnalyticsChartEvents =
+            filteredEvents;
+
+        // --------------------------------------------------------
+        // ANA ANALYTICS SİSTEMİNİ ÇALIŞTIR
+        // --------------------------------------------------------
+
+        if (
+            typeof window.applyAnalyticsDateFilter ===
+            "function"
+        ) {
+
+            try {
+
+                await window.applyAnalyticsDateFilter(
+                    selectedRange
+                );
+
+                return;
+
+            } catch (error) {
+
+                console.error(
+                    "Analytics tarih filtresi hatası:",
+                    error
+                );
+            }
+        }
+
+        // --------------------------------------------------------
+        // YEDEK SİSTEM
+        // --------------------------------------------------------
+
+        if (
+            typeof window.updateAnalyticsDashboardStats ===
+            "function"
+        ) {
+
+            window.updateAnalyticsDashboardStats(
                 filteredEvents
             );
+        }
 
-        } else if (
+        if (
             typeof window.renderAnalyticsBox ===
             "function"
         ) {
 
-            // Güvenli fallback
-            window.renderAnalyticsBox(
+            await window.renderAnalyticsBox(
                 filteredEvents
             );
         }
 
-        // --------------------------------------------------------
         // Grafik
-        // --------------------------------------------------------
-
-        setTimeout(function () {
-
-            if (
-                typeof window.__trabzonRenderAnalyticsChart ===
-                "function"
-            ) {
-
-                window.__trabzonRenderAnalyticsChart();
-
-            }
-
-        }, 20);
-
-        // --------------------------------------------------------
-        // Filtre değiştiğinde ekranın üst kısmına hafifçe
-        // güncelleme hissi ver.
-        // --------------------------------------------------------
-
-        const analyticsBox =
-            document.getElementById(
-                "adminAnalyticsBox"
-            );
-
-        if (analyticsBox) {
-
-            analyticsBox.style.opacity = "0.55";
-
-            analyticsBox.style.transition =
-                "opacity .15s ease";
+        if (
+            typeof window.renderAnalyticsChart ===
+            "function"
+        ) {
 
             setTimeout(function () {
 
-                analyticsBox.style.opacity = "1";
+                try {
 
-            }, 120);
+                    window.renderAnalyticsChart(
+                        filteredEvents
+                    );
+
+                } catch (error) {
+
+                    console.error(
+                        "Analytics grafik güncelleme hatası:",
+                        error
+                    );
+                }
+
+            }, 0);
         }
     }
 
     // ============================================================
-    // RENDER HOOK
+    // DIŞARIDAN FİLTRE DEĞİŞTİRME
     // ============================================================
 
-    function installRenderHook() {
+    window.changeAnalyticsRange =
+        changeAnalyticsRange;
 
-        if (
-            typeof window.renderAnalyticsBox !==
-            "function"
-        ) {
-            return;
-        }
+    // Eski isimle uyumluluk
+    window.refreshAnalytics =
+        function () {
 
-        if (
-            window.renderAnalyticsBox.__trabzonFilterWrapped
-        ) {
-            return;
-        }
-
-        // Ana render fonksiyonunu sakla
-        const originalFunction =
-            window.renderAnalyticsBox;
-
-        window.__trabzonOriginalAnalyticsRender =
-            originalFunction;
-
-        function wrappedRenderAnalyticsBox(
-            events
-        ) {
-
-            // Supabase'den gelen TÜM eventleri sakla
-            window.__trabzonAnalyticsAllEvents =
-                Array.isArray(events)
-                    ? events.slice()
-                    : [];
-
-            // Mevcut seçili filtreyi uygula
-            const filteredEvents =
-                getFilteredEvents(events);
-
-            return originalFunction(
-                filteredEvents
+            return changeAnalyticsRange(
+                selectedRange
             );
-        }
 
-        wrappedRenderAnalyticsBox
-            .__trabzonFilterWrapped = true;
-
-        window.renderAnalyticsBox =
-            wrappedRenderAnalyticsBox;
-    }
+        };
 
     // ============================================================
     // STİLLER
@@ -421,11 +553,14 @@
                 "analyticsFilterStyles"
             )
         ) {
+
             return;
         }
 
         const style =
-            document.createElement("style");
+            document.createElement(
+                "style"
+            );
 
         style.id =
             "analyticsFilterStyles";
@@ -433,172 +568,100 @@
         style.textContent = `
 
             #adminAnalyticsFilterBox {
-
-                background:#ffffff;
-
-                border:1px solid #e7e9ee;
-
-                border-radius:18px;
-
+                margin-top:20px;
+                margin-bottom:20px;
                 padding:20px;
-
-                margin:20px 0;
-
+                background:#ffffff;
+                border:1px solid #e7e9ee;
+                border-radius:18px;
                 box-shadow:
-                    0 6px 20px
-                    rgba(16,28,53,.05);
-
+                    0 8px 30px
+                    rgba(16,28,53,0.05);
             }
 
             .analytics-filter-header {
-
                 display:flex;
-
                 align-items:center;
-
-                justify-content:space-between;
-
+                justify-content:
+                    space-between;
                 gap:15px;
-
-                margin-bottom:16px;
-
             }
 
             .analytics-filter-title {
-
                 color:#101c35;
-
-                font-size:18px;
-
+                font-size:17px;
                 font-weight:800;
-
-                line-height:1.3;
-
             }
 
             .analytics-filter-subtitle {
-
+                margin-top:4px;
                 color:#70798b;
-
-                font-size:13px;
-
-                margin-top:5px;
-
+                font-size:12px;
             }
 
             .analytics-filter-buttons {
-
                 display:flex;
-
                 flex-wrap:wrap;
-
                 gap:9px;
-
+                margin-top:16px;
             }
 
             .analytics-filter-btn {
-
                 appearance:none;
-
-                border:1px solid #e7e9ee;
-
+                border:1px solid #e1e4ea;
                 background:#f6f7f9;
-
                 color:#182033;
-
-                border-radius:10px;
-
-                padding:10px 15px;
-
-                font-size:13px;
-
+                border-radius:999px;
+                padding:9px 15px;
+                font-size:12px;
                 font-weight:700;
-
                 cursor:pointer;
-
                 transition:
-                    background .2s ease,
-                    color .2s ease,
-                    border-color .2s ease,
-                    transform .2s ease;
-
+                    all 0.18s ease;
             }
 
             .analytics-filter-btn:hover {
-
-                transform:
-                    translateY(-1px);
-
                 border-color:#7b1830;
-
+                color:#7b1830;
             }
 
             .analytics-filter-btn.active {
-
                 background:#7b1830;
-
                 border-color:#7b1830;
-
                 color:#ffffff;
-
             }
 
-            @media (max-width:700px) {
+            .analytics-filter-btn:active {
+                transform:scale(0.97);
+            }
+
+            @media (max-width:600px) {
 
                 #adminAnalyticsFilterBox {
-
                     padding:16px;
-
                     border-radius:15px;
-
-                }
-
-                .analytics-filter-title {
-
-                    font-size:16px;
-
-                }
-
-                .analytics-filter-subtitle {
-
-                    font-size:12px;
-
                 }
 
                 .analytics-filter-buttons {
-
-                    display:grid;
-
-                    grid-template-columns:
-                        repeat(
-                            2,
-                            minmax(0,1fr)
-                        );
-
+                    gap:7px;
                 }
 
                 .analytics-filter-btn {
-
-                    width:100%;
-
-                    padding:11px 8px;
-
-                    font-size:12px;
-
+                    padding:8px 12px;
+                    font-size:11px;
                 }
 
-                .analytics-filter-btn:last-child {
-
-                    grid-column:
-                        span 2;
-
+                .analytics-filter-title {
+                    font-size:16px;
                 }
 
             }
 
         `;
 
-        document.head.appendChild(style);
+        document.head.appendChild(
+            style
+        );
     }
 
     // ============================================================
@@ -607,13 +670,13 @@
 
     function init() {
 
-        installRenderHook();
+        addFilterStyles();
 
         createFilterBox();
 
+        // Analytics kutusu daha sonra oluşuyorsa
+        // birkaç kez kontrol et.
         setTimeout(function () {
-
-            installRenderHook();
 
             createFilterBox();
 
@@ -621,51 +684,34 @@
 
         setTimeout(function () {
 
-            installRenderHook();
-
             createFilterBox();
 
-        }, 1000);
+        }, 800);
 
         setTimeout(function () {
 
-            installRenderHook();
-
             createFilterBox();
 
-        }, 2000);
+        }, 1500);
     }
 
     // ============================================================
-    // DOM READY
+    // DOM HAZIR
     // ============================================================
 
-    document.addEventListener(
-        "DOMContentLoaded",
-        init
-    );
+    if (
+        document.readyState ===
+        "loading"
+    ) {
 
-    // ============================================================
-    // ANALYTICS SONRADAN YÜKLENİRSE
-    // ============================================================
+        document.addEventListener(
+            "DOMContentLoaded",
+            init
+        );
 
-    const retryIntervals = [
-        500,
-        1500,
-        3000,
-        5000
-    ];
+    } else {
 
-    retryIntervals.forEach(function (delay) {
-
-        setTimeout(function () {
-
-            installRenderHook();
-
-            createFilterBox();
-
-        }, delay);
-
-    });
+        init();
+    }
 
 })();
