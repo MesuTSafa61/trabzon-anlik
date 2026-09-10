@@ -715,3 +715,95 @@
     }
 
 })();
+
+
+// ============================================================
+// ANALYTICS ÜST BAŞLIK DÜZELTMESİ
+// ============================================================
+
+(function () {
+
+    function fixAnalyticsPageTitle() {
+
+        const title =
+            document.getElementById("pageTitle");
+
+        if (!title) {
+            return;
+        }
+
+        const activeMenu =
+            document.querySelector(
+                ".menu-item.active"
+            );
+
+        if (!activeMenu) {
+            return;
+        }
+
+        const menuText =
+            activeMenu.textContent
+                .trim()
+                .toLowerCase();
+
+        if (
+            menuText.includes("analytics") ||
+            menuText.includes("analiz")
+        ) {
+
+            title.textContent = "Analytics";
+
+        }
+
+    }
+
+
+    // İlk açılış
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            setTimeout(
+                fixAnalyticsPageTitle,
+                300
+            );
+
+            setTimeout(
+                fixAnalyticsPageTitle,
+                1000
+            );
+
+        }
+    );
+
+
+    // Menüye her tıklamada kontrol et
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const menuItem =
+                event.target.closest(
+                    ".menu-item"
+                );
+
+            if (!menuItem) {
+                return;
+            }
+
+            setTimeout(
+                fixAnalyticsPageTitle,
+                50
+            );
+
+        }
+    );
+
+
+    // Güvenlik için periyodik kontrol
+    setInterval(
+        fixAnalyticsPageTitle,
+        1000
+    );
+
+})();
