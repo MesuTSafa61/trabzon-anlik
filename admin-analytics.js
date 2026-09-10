@@ -2,6 +2,7 @@
 // TRABZON ANLIK - ADMIN ANALYTICS
 // Analytics sistemi
 // Türkçe arayüz + gerçek işletme isimleri
+// Tarih filtresi uyumlu sürüm
 // ============================================================
 
 function normalizeAnalyticsEventType(value) {
@@ -9,7 +10,23 @@ function normalizeAnalyticsEventType(value) {
 }
 
 // ============================================================
-// ANALYTICS YARDIMCI FONKSİYONLARI
+// ANALYTICS GLOBAL VERİ
+// ============================================================
+
+// Supabase'den gelen TÜM gerçek analytics kayıtları burada tutulur.
+// Tarih filtresi değiştiğinde veri buradan tekrar filtrelenir.
+window.__trabzonAnalyticsAllEvents = [];
+window.__trabzonAnalyticsFilteredEvents = [];
+window.__trabzonAnalyticsSelectedRange = "30";
+
+// Eski sistemle uyumluluk
+window.allAnalyticsEvents =
+    Array.isArray(window.allAnalyticsEvents)
+        ? window.allAnalyticsEvents
+        : [];
+
+// ============================================================
+// SUPABASE
 // ============================================================
 
 const ANALYTICS_SUPABASE_URL =
@@ -26,14 +43,23 @@ let analyticsBusinessNamesLoading = false;
 // ============================================================
 
 function getAnalyticsEventLabel(type) {
+
     const normalized =
         normalizeAnalyticsEventType(type);
 
     const labels = {
-        "page_view": "Sayfa Görüntülenmesi",
-        "business_view": "İşletme Görüntülenmesi",
-        "business_click": "İşletme Tıklaması",
-        "test_page_view": "Test Kaydı"
+
+        "page_view":
+            "Sayfa Görüntülenmesi",
+
+        "business_view":
+            "İşletme Görüntülenmesi",
+
+        "business_click":
+            "İşletme Tıklaması",
+
+        "test_page_view":
+            "Test Kaydı"
     };
 
     return (
@@ -47,7 +73,9 @@ function getAnalyticsEventLabel(type) {
 // ============================================================
 
 function findAnalyticsBusinessInGlobals(businessId) {
+
     const sources = [
+
         window.allBusinesses,
         window.businesses,
         window.__allBusinesses,
@@ -55,23 +83,29 @@ function findAnalyticsBusinessInGlobals(businessId) {
     ];
 
     for (let i = 0; i < sources.length; i++) {
+
         const list = sources[i];
 
         if (!Array.isArray(list)) {
             continue;
         }
 
-        const found = list.find(function (business) {
-            return (
-                business &&
-                String(business.id) === String(businessId)
-            );
-        });
+        const found =
+            list.find(function (business) {
+
+                return (
+                    business &&
+                    String(business.id) ===
+                    String(businessId)
+                );
+
+            });
 
         if (
             found &&
             found.name
         ) {
+
             return String(found.name);
         }
     }
@@ -84,6 +118,7 @@ function findAnalyticsBusinessInGlobals(businessId) {
 // ============================================================
 
 async function loadAnalyticsBusinessNames(events) {
+
     if (!Array.isArray(events)) {
         return;
     }
@@ -91,6 +126,7 @@ async function loadAnalyticsBusinessNames(events) {
     const ids = [];
 
     events.forEach(function (event) {
+
         const type =
             normalizeAnalyticsEventType(
                 event.event_type
@@ -117,14 +153,16 @@ async function loadAnalyticsBusinessNames(events) {
         if (!ids.includes(id)) {
             ids.push(id);
         }
+
     });
 
     if (!ids.length) {
         return;
     }
 
-    // Önce global listelerden doldur
+    // Önce global listeler
     ids.forEach(function (id) {
+
         if (analyticsBusinessNames[id]) {
             return;
         }
@@ -133,14 +171,18 @@ async function loadAnalyticsBusinessNames(events) {
             findAnalyticsBusinessInGlobals(id);
 
         if (globalName) {
+
             analyticsBusinessNames[id] =
                 globalName;
         }
+
     });
 
     const missingIds =
         ids.filter(function (id) {
+
             return !analyticsBusinessNames[id];
+
         });
 
     if (!missingIds.length) {
@@ -154,6 +196,7 @@ async function loadAnalyticsBusinessNames(events) {
     analyticsBusinessNamesLoading = true;
 
     try {
+
         const filter =
             missingIds.join(",");
 
@@ -172,6 +215,7 @@ async function loadAnalyticsBusinessNames(events) {
                     method: "GET",
 
                     headers: {
+
                         "apikey":
                             ANALYTICS_SUPABASE_KEY,
 
@@ -186,6 +230,7 @@ async function loadAnalyticsBusinessNames(events) {
             );
 
         if (!response.ok) {
+
             throw new Error(
                 "İşletme isimleri alınamadı: HTTP " +
                 response.status
@@ -196,28 +241,34 @@ async function loadAnalyticsBusinessNames(events) {
             await response.json();
 
         if (Array.isArray(data)) {
+
             data.forEach(function (business) {
+
                 if (
                     business &&
                     business.id !== null &&
                     business.id !== undefined &&
                     business.name
                 ) {
+
                     analyticsBusinessNames[
                         String(business.id)
                     ] =
                         String(business.name);
                 }
+
             });
         }
 
     } catch (error) {
+
         console.error(
             "Analytics işletme isimleri yüklenemedi:",
             error
         );
 
     } finally {
+
         analyticsBusinessNamesLoading =
             false;
     }
@@ -228,11 +279,13 @@ async function loadAnalyticsBusinessNames(events) {
 // ============================================================
 
 function getAnalyticsBusinessName(businessId) {
+
     if (
         businessId === null ||
         businessId === undefined ||
         businessId === ""
     ) {
+
         return "-";
     }
 
@@ -242,6 +295,7 @@ function getAnalyticsBusinessName(businessId) {
     if (
         analyticsBusinessNames[id]
     ) {
+
         return analyticsBusinessNames[id];
     }
 
@@ -249,13 +303,13 @@ function getAnalyticsBusinessName(businessId) {
         findAnalyticsBusinessInGlobals(id);
 
     if (globalName) {
+
         analyticsBusinessNames[id] =
             globalName;
 
         return globalName;
     }
 
-    // Teknik ID'yi artık kullanıcıya göstermiyoruz.
     return "İşletme adı yükleniyor";
 }
 
@@ -264,6 +318,7 @@ function getAnalyticsBusinessName(businessId) {
 // ============================================================
 
 function analyticsEscapeHtml(value) {
+
     return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -273,202 +328,500 @@ function analyticsEscapeHtml(value) {
 }
 
 // ============================================================
+// TARİH FİLTRESİ YARDIMCISI
+// ============================================================
+
+function getAnalyticsFilteredEvents(
+    events,
+    range
+) {
+
+    if (!Array.isArray(events)) {
+        return [];
+    }
+
+    const realEvents =
+        events.filter(function (event) {
+
+            return (
+                event &&
+                normalizeAnalyticsEventType(
+                    event.event_type
+                ) !== "test_page_view"
+            );
+
+        });
+
+    const selectedRange =
+        String(
+            range ||
+            window.__trabzonAnalyticsSelectedRange ||
+            "30"
+        );
+
+    if (selectedRange === "all") {
+        return realEvents;
+    }
+
+    const days =
+        Number(selectedRange);
+
+    if (!Number.isFinite(days)) {
+        return realEvents;
+    }
+
+    const now =
+        new Date();
+
+    const todayStart =
+        new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            0,
+            0,
+            0,
+            0
+        );
+
+    let startDate;
+
+    if (days === 1) {
+
+        startDate =
+            todayStart;
+
+    } else {
+
+        startDate =
+            new Date(todayStart);
+
+        startDate.setDate(
+            startDate.getDate() -
+            (days - 1)
+        );
+    }
+
+    return realEvents.filter(function (event) {
+
+        if (!event.created_at) {
+            return false;
+        }
+
+        const eventDate =
+            new Date(
+                event.created_at
+            );
+
+        if (
+            Number.isNaN(
+                eventDate.getTime()
+            )
+        ) {
+
+            return false;
+        }
+
+        return eventDate >= startDate;
+    });
+}
+
+// ============================================================
+// ANALYTICS İSTATİSTİKLERİNİ HESAPLA
+// ============================================================
+
+function calculateAnalyticsStats(events) {
+
+    const productionEvents =
+        Array.isArray(events)
+            ? events.filter(function (event) {
+
+                return (
+                    event &&
+                    normalizeAnalyticsEventType(
+                        event.event_type
+                    ) !== "test_page_view"
+                );
+
+            })
+            : [];
+
+    const totalEvents =
+        productionEvents.length;
+
+    // --------------------------------------------------------
+    // Siteye giriş
+    // --------------------------------------------------------
+
+    const siteEntries =
+        productionEvents.filter(function (event) {
+
+            return (
+                normalizeAnalyticsEventType(
+                    event.event_type
+                ) === "page_view"
+            );
+
+        }).length;
+
+    // --------------------------------------------------------
+    // İşletme görüntülenmesi
+    // --------------------------------------------------------
+
+    const businessViews =
+        productionEvents.filter(function (event) {
+
+            return (
+                normalizeAnalyticsEventType(
+                    event.event_type
+                ) === "business_view" &&
+
+                event.business_id !== null &&
+                event.business_id !== undefined &&
+                event.business_id !== ""
+            );
+
+        }).length;
+
+    // --------------------------------------------------------
+    // Tekil ziyaretçi
+    // --------------------------------------------------------
+
+    const visitorIds =
+        productionEvents
+            .map(function (event) {
+
+                return event.visitor_id;
+
+            })
+            .filter(function (visitorId) {
+
+                return (
+                    visitorId !== null &&
+                    visitorId !== undefined &&
+                    visitorId !== ""
+                );
+
+            });
+
+    const uniqueVisitors =
+        new Set(
+            visitorIds.map(function (visitorId) {
+
+                return String(visitorId);
+
+            })
+        ).size;
+
+    // --------------------------------------------------------
+    // Bugün
+    // --------------------------------------------------------
+
+    const now =
+        new Date();
+
+    const todayStart =
+        new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            0,
+            0,
+            0,
+            0
+        );
+
+    const todayEvents =
+        productionEvents.filter(function (event) {
+
+            const date =
+                new Date(
+                    event.created_at
+                );
+
+            return (
+                !Number.isNaN(
+                    date.getTime()
+                ) &&
+                date >= todayStart
+            );
+
+        }).length;
+
+    // --------------------------------------------------------
+    // Son 7 gün
+    // --------------------------------------------------------
+
+    const last7DaysStart =
+        new Date(
+            now.getTime() -
+            7 * 24 * 60 * 60 * 1000
+        );
+
+    const last7Days =
+        productionEvents.filter(function (event) {
+
+            const date =
+                new Date(
+                    event.created_at
+                );
+
+            return (
+                !Number.isNaN(
+                    date.getTime()
+                ) &&
+                date >= last7DaysStart
+            );
+
+        }).length;
+
+    // --------------------------------------------------------
+    // Son 30 gün
+    // --------------------------------------------------------
+
+    const last30DaysStart =
+        new Date(
+            now.getTime() -
+            30 * 24 * 60 * 60 * 1000
+        );
+
+    const last30Days =
+        productionEvents.filter(function (event) {
+
+            const date =
+                new Date(
+                    event.created_at
+                );
+
+            return (
+                !Number.isNaN(
+                    date.getTime()
+                ) &&
+                date >= last30DaysStart
+            );
+
+        }).length;
+
+    return {
+
+        totalEvents:
+            totalEvents,
+
+        siteEntries:
+            siteEntries,
+
+        businessViews:
+            businessViews,
+
+        uniqueVisitors:
+            uniqueVisitors,
+
+        todayEvents:
+            todayEvents,
+
+        last7Days:
+            last7Days,
+
+        last30Days:
+            last30Days
+    };
+}
+
+// ============================================================
+// ÜST İSTATİSTİKLERİ GÜNCELLE
+// ============================================================
+
+function updateAnalyticsDashboardStats(events) {
+
+    const stats =
+        calculateAnalyticsStats(events);
+
+    setText(
+        "statAnalyticsEvents",
+        stats.totalEvents
+    );
+
+    setText(
+        "statUniqueVisitors",
+        stats.uniqueVisitors
+    );
+
+    setText(
+        "statBusinessViews",
+        stats.businessViews
+    );
+
+    setText(
+        "statLast7Days",
+        stats.last7Days
+    );
+
+    return stats;
+}
+
+// ============================================================
+// ANALYTICS FİLTRESİNİ UYGULA
+// ============================================================
+
+async function applyAnalyticsDateFilter(
+    range
+) {
+
+    const allEvents =
+        Array.isArray(
+            window.__trabzonAnalyticsAllEvents
+        )
+            ? window.__trabzonAnalyticsAllEvents
+            : [];
+
+    window.__trabzonAnalyticsSelectedRange =
+        String(range || "30");
+
+    const filteredEvents =
+        getAnalyticsFilteredEvents(
+            allEvents,
+            window.__trabzonAnalyticsSelectedRange
+        );
+
+    window.__trabzonAnalyticsFilteredEvents =
+        filteredEvents;
+
+    // Eski sistemle uyumluluk
+    window.allAnalyticsEvents =
+        filteredEvents;
+
+    // Üst istatistikleri anında değiştir
+    updateAnalyticsDashboardStats(
+        filteredEvents
+    );
+
+    // Ana analytics kutusunu yeniden çiz
+    await renderAnalyticsBox(
+        filteredEvents
+    );
+
+    // Grafik de aynı filtrelenmiş veriyi kullansın
+    if (
+        typeof window.renderAnalyticsChart ===
+        "function"
+    ) {
+
+        setTimeout(function () {
+
+            try {
+
+                window.renderAnalyticsChart(
+                    filteredEvents
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Analytics grafik güncelleme hatası:",
+                    error
+                );
+            }
+
+        }, 0);
+    }
+
+    // Yeni chart sistemlerinde kullanılmak üzere
+    window.__trabzonAnalyticsChartEvents =
+        filteredEvents;
+
+    return filteredEvents;
+}
+
+// Global erişim
+window.applyAnalyticsDateFilter =
+    applyAnalyticsDateFilter;
+
+window.getAnalyticsFilteredEvents =
+    getAnalyticsFilteredEvents;
+
+window.updateAnalyticsDashboardStats =
+    updateAnalyticsDashboardStats;
+
+// ============================================================
 // ANALYTICS VERİLERİNİ YÜKLE
 // ============================================================
 
 async function loadAnalytics() {
-    if (analyticsLoading) return;
+
+    if (analyticsLoading) {
+        return;
+    }
 
     analyticsLoading = true;
 
     try {
+
         const events =
             await fetchAllAnalyticsEvents();
 
-        // Test kayıtlarını gerçek istatistiklerden çıkar
+        // --------------------------------------------------------
+        // Test kayıtlarını çıkar
+        // --------------------------------------------------------
+
         const productionEvents =
             events.filter(function (event) {
+
                 return (
                     normalizeAnalyticsEventType(
                         event.event_type
                     ) !== "test_page_view"
                 );
+
             });
 
-        allAnalyticsEvents =
-            productionEvents;
+        // ========================================================
+        // ÇOK ÖNEMLİ:
+        // TÜM GERÇEK VERİYİ FİLTRESİZ ŞEKİLDE SAKLA
+        // ========================================================
+
+        window.__trabzonAnalyticsAllEvents =
+            productionEvents.slice();
+
+        window.allAnalyticsEvents =
+            productionEvents.slice();
+
+        // İlk açılışta mevcut seçili filtre
+        const selectedRange =
+            window.__trabzonAnalyticsSelectedRange ||
+            "30";
+
+        const filteredEvents =
+            getAnalyticsFilteredEvents(
+                productionEvents,
+                selectedRange
+            );
+
+        window.__trabzonAnalyticsFilteredEvents =
+            filteredEvents;
 
         // İşletme isimlerini önceden yükle
         await loadAnalyticsBusinessNames(
             productionEvents
         );
 
-        const totalEvents =
-            productionEvents.length;
-
         // --------------------------------------------------------
-        // Siteye giriş = sadece page_view
+        // ÜST İSTATİSTİKLER
         // --------------------------------------------------------
 
-        const siteEntries =
-            productionEvents.filter(function (event) {
-                return (
-                    normalizeAnalyticsEventType(
-                        event.event_type
-                    ) === "page_view"
-                );
-            }).length;
-
-        // --------------------------------------------------------
-        // İşletme görüntülenmesi
-        // --------------------------------------------------------
-
-        const businessViews =
-            productionEvents.filter(function (event) {
-                return (
-                    normalizeAnalyticsEventType(
-                        event.event_type
-                    ) === "business_view" &&
-                    event.business_id !== null &&
-                    event.business_id !== undefined &&
-                    event.business_id !== ""
-                );
-            }).length;
-
-        // --------------------------------------------------------
-        // Tekil ziyaretçi
-        // --------------------------------------------------------
-
-        const visitorIds =
-            productionEvents
-                .map(function (event) {
-                    return event.visitor_id;
-                })
-                .filter(function (visitorId) {
-                    return (
-                        visitorId !== null &&
-                        visitorId !== undefined &&
-                        visitorId !== ""
-                    );
-                });
-
-        const uniqueVisitors =
-            new Set(
-                visitorIds.map(function (visitorId) {
-                    return String(visitorId);
-                })
-            ).size;
-
-        // --------------------------------------------------------
-        // Tarih sınırları
-        // --------------------------------------------------------
-
-        const now =
-            new Date();
-
-        const todayStart =
-            new Date(
-                now.getFullYear(),
-                now.getMonth(),
-                now.getDate()
-            );
-
-        const last7DaysStart =
-            new Date(
-                now.getTime() -
-                7 * 24 * 60 * 60 * 1000
-            );
-
-        const last30DaysStart =
-            new Date(
-                now.getTime() -
-                30 * 24 * 60 * 60 * 1000
-            );
-
-        // --------------------------------------------------------
-        // Bugün
-        // --------------------------------------------------------
-
-        const todayEvents =
-            productionEvents.filter(function (event) {
-                const date =
-                    new Date(event.created_at);
-
-                return (
-                    !Number.isNaN(
-                        date.getTime()
-                    ) &&
-                    date >= todayStart
-                );
-            }).length;
-
-        // --------------------------------------------------------
-        // Son 7 gün
-        // --------------------------------------------------------
-
-        const last7Days =
-            productionEvents.filter(function (event) {
-                const date =
-                    new Date(event.created_at);
-
-                return (
-                    !Number.isNaN(
-                        date.getTime()
-                    ) &&
-                    date >= last7DaysStart
-                );
-            }).length;
-
-        // --------------------------------------------------------
-        // Son 30 gün
-        // --------------------------------------------------------
-
-        const last30Days =
-            productionEvents.filter(function (event) {
-                const date =
-                    new Date(event.created_at);
-
-                return (
-                    !Number.isNaN(
-                        date.getTime()
-                    ) &&
-                    date >= last30DaysStart
-                );
-            }).length;
-
-        // --------------------------------------------------------
-        // DASHBOARD ALANLARI
-        // --------------------------------------------------------
-
-        setText(
-            "statAnalyticsEvents",
-            totalEvents
-        );
-
-        setText(
-            "statUniqueVisitors",
-            uniqueVisitors
-        );
-
-        setText(
-            "statBusinessViews",
-            businessViews
-        );
-
-        setText(
-            "statLast7Days",
-            last7Days
+        updateAnalyticsDashboardStats(
+            filteredEvents
         );
 
         // --------------------------------------------------------
-        // ANALYTICS KUTUSU
+        // ANA ANALYTICS KUTUSU
         // --------------------------------------------------------
 
-        renderAnalyticsBox(
-            productionEvents
+        await renderAnalyticsBox(
+            filteredEvents
         );
 
     } catch (error) {
+
         console.error(
             "Analytics yükleme hatası:",
             error
@@ -478,13 +831,16 @@ async function loadAnalytics() {
             typeof renderAnalyticsError ===
             "function"
         ) {
+
             renderAnalyticsError(
                 error
             );
         }
 
     } finally {
-        analyticsLoading = false;
+
+        analyticsLoading =
+            false;
     }
 }
 
@@ -493,6 +849,7 @@ async function loadAnalytics() {
 // ============================================================
 
 async function renderAnalyticsBox(events) {
+
     const dashboardSection =
         document.getElementById(
             "section-dashboard"
@@ -517,15 +874,17 @@ async function renderAnalyticsBox(events) {
                 ? events
                 : []
         ).filter(function (event) {
+
             return (
                 normalizeAnalyticsEventType(
                     event.event_type
                 ) !== "test_page_view"
             );
+
         });
 
     // --------------------------------------------------------
-    // İşletme isimlerini hazırla
+    // İşletme isimleri
     // --------------------------------------------------------
 
     await loadAnalyticsBusinessNames(
@@ -536,114 +895,31 @@ async function renderAnalyticsBox(events) {
     // TEMEL İSTATİSTİKLER
     // --------------------------------------------------------
 
+    const stats =
+        calculateAnalyticsStats(
+            productionEvents
+        );
+
     const totalEvents =
-        productionEvents.length;
+        stats.totalEvents;
 
     const siteEntries =
-        productionEvents.filter(function (event) {
-            return (
-                normalizeAnalyticsEventType(
-                    event.event_type
-                ) === "page_view"
-            );
-        }).length;
+        stats.siteEntries;
 
     const businessViews =
-        productionEvents.filter(function (event) {
-            return (
-                normalizeAnalyticsEventType(
-                    event.event_type
-                ) === "business_view" &&
-                event.business_id !== null &&
-                event.business_id !== undefined &&
-                event.business_id !== ""
-            );
-        }).length;
-
-    const visitorIds =
-        productionEvents
-            .map(function (event) {
-                return event.visitor_id;
-            })
-            .filter(function (visitorId) {
-                return (
-                    visitorId !== null &&
-                    visitorId !== undefined &&
-                    visitorId !== ""
-                );
-            });
+        stats.businessViews;
 
     const uniqueVisitors =
-        new Set(
-            visitorIds.map(function (visitorId) {
-                return String(visitorId);
-            })
-        ).size;
-
-    // --------------------------------------------------------
-    // TARİH İSTATİSTİKLERİ
-    // --------------------------------------------------------
-
-    const now =
-        new Date();
-
-    const todayStart =
-        new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate()
-        );
-
-    const last7DaysStart =
-        new Date(
-            now.getTime() -
-            7 * 24 * 60 * 60 * 1000
-        );
-
-    const last30DaysStart =
-        new Date(
-            now.getTime() -
-            30 * 24 * 60 * 60 * 1000
-        );
+        stats.uniqueVisitors;
 
     const todayEvents =
-        productionEvents.filter(function (event) {
-            const date =
-                new Date(event.created_at);
-
-            return (
-                !Number.isNaN(
-                    date.getTime()
-                ) &&
-                date >= todayStart
-            );
-        }).length;
+        stats.todayEvents;
 
     const last7Days =
-        productionEvents.filter(function (event) {
-            const date =
-                new Date(event.created_at);
-
-            return (
-                !Number.isNaN(
-                    date.getTime()
-                ) &&
-                date >= last7DaysStart
-            );
-        }).length;
+        stats.last7Days;
 
     const last30Days =
-        productionEvents.filter(function (event) {
-            const date =
-                new Date(event.created_at);
-
-            return (
-                !Number.isNaN(
-                    date.getTime()
-                ) &&
-                date >= last30DaysStart
-            );
-        }).length;
+        stats.last30Days;
 
     // ========================================================
     // OLAY TÜRLERİ
@@ -652,6 +928,7 @@ async function renderAnalyticsBox(events) {
     const eventTypeCounts = {};
 
     productionEvents.forEach(function (event) {
+
         const type =
             normalizeAnalyticsEventType(
                 event.event_type
@@ -665,13 +942,16 @@ async function renderAnalyticsBox(events) {
             (
                 eventTypeCounts[type] || 0
             ) + 1;
+
     });
 
     const eventTypeEntries =
         Object.entries(
             eventTypeCounts
         ).sort(function (a, b) {
+
             return b[1] - a[1];
+
         });
 
     // ========================================================
@@ -681,6 +961,7 @@ async function renderAnalyticsBox(events) {
     const businessCounts = {};
 
     productionEvents.forEach(function (event) {
+
         const type =
             normalizeAnalyticsEventType(
                 event.event_type
@@ -692,16 +973,20 @@ async function renderAnalyticsBox(events) {
             event.business_id === undefined ||
             event.business_id === ""
         ) {
+
             return;
         }
 
         const businessId =
-            String(event.business_id);
+            String(
+                event.business_id
+            );
 
         businessCounts[businessId] =
             (
                 businessCounts[businessId] || 0
             ) + 1;
+
     });
 
     const businessEntries =
@@ -709,7 +994,9 @@ async function renderAnalyticsBox(events) {
             businessCounts
         )
         .sort(function (a, b) {
+
             return b[1] - a[1];
+
         })
         .slice(0, 10);
 
@@ -721,6 +1008,7 @@ async function renderAnalyticsBox(events) {
         productionEvents
             .slice()
             .sort(function (a, b) {
+
                 return (
                     new Date(
                         b.created_at
@@ -729,11 +1017,12 @@ async function renderAnalyticsBox(events) {
                         a.created_at
                     )
                 );
+
             })
             .slice(0, 10);
 
     // ========================================================
-    // HTML
+    // HTML KUTUSU
     // ========================================================
 
     const box =
@@ -745,12 +1034,12 @@ async function renderAnalyticsBox(events) {
         "adminAnalyticsBox";
 
     box.style.cssText = `
-        margin-top: 28px;
-        background: #ffffff;
-        border: 1px solid #e7e9ee;
-        border-radius: 18px;
-        padding: 24px;
-        box-shadow: 0 8px 30px rgba(16, 28, 53, 0.06);
+        margin-top:28px;
+        background:#ffffff;
+        border:1px solid #e7e9ee;
+        border-radius:18px;
+        padding:24px;
+        box-shadow:0 8px 30px rgba(16,28,53,0.06);
     `;
 
     // ========================================================
@@ -758,14 +1047,17 @@ async function renderAnalyticsBox(events) {
     // ========================================================
 
     const statsHtml = `
+
         <div style="
             display:grid;
-            grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+            grid-template-columns:
+                repeat(auto-fit,minmax(150px,1fr));
             gap:14px;
             margin-top:20px;
         ">
 
             <div class="analytics-stat-card">
+
                 <div class="analytics-stat-label">
                     Toplam Gerçek Olay
                 </div>
@@ -773,19 +1065,26 @@ async function renderAnalyticsBox(events) {
                 <div class="analytics-stat-number">
                     ${totalEvents}
                 </div>
+
             </div>
 
             <div class="analytics-stat-card">
+
                 <div class="analytics-stat-label">
                     Siteye Giriş
                 </div>
 
-                <div class="analytics-stat-number analytics-stat-burgundy">
+                <div class="
+                    analytics-stat-number
+                    analytics-stat-burgundy
+                ">
                     ${siteEntries}
                 </div>
+
             </div>
 
             <div class="analytics-stat-card">
+
                 <div class="analytics-stat-label">
                     İşletme Görüntülenmesi
                 </div>
@@ -793,9 +1092,11 @@ async function renderAnalyticsBox(events) {
                 <div class="analytics-stat-number">
                     ${businessViews}
                 </div>
+
             </div>
 
             <div class="analytics-stat-card">
+
                 <div class="analytics-stat-label">
                     Tekil Ziyaretçi
                 </div>
@@ -803,9 +1104,11 @@ async function renderAnalyticsBox(events) {
                 <div class="analytics-stat-number">
                     ${uniqueVisitors}
                 </div>
+
             </div>
 
             <div class="analytics-stat-card">
+
                 <div class="analytics-stat-label">
                     Bugün
                 </div>
@@ -813,9 +1116,11 @@ async function renderAnalyticsBox(events) {
                 <div class="analytics-stat-number">
                     ${todayEvents}
                 </div>
+
             </div>
 
             <div class="analytics-stat-card">
+
                 <div class="analytics-stat-label">
                     Son 7 Gün
                 </div>
@@ -823,9 +1128,11 @@ async function renderAnalyticsBox(events) {
                 <div class="analytics-stat-number">
                     ${last7Days}
                 </div>
+
             </div>
 
             <div class="analytics-stat-card">
+
                 <div class="analytics-stat-label">
                     Son 30 Gün
                 </div>
@@ -833,6 +1140,7 @@ async function renderAnalyticsBox(events) {
                 <div class="analytics-stat-number">
                     ${last30Days}
                 </div>
+
             </div>
 
         </div>
@@ -844,17 +1152,21 @@ async function renderAnalyticsBox(events) {
 
     const eventTypesHtml =
         eventTypeEntries.length
+
             ? eventTypeEntries.map(
                 function ([type, count]) {
 
                     return `
+
                         <div style="
                             display:flex;
-                            justify-content:space-between;
+                            justify-content:
+                                space-between;
                             align-items:center;
                             gap:12px;
                             padding:11px 0;
-                            border-bottom:1px solid #eef0f4;
+                            border-bottom:
+                                1px solid #eef0f4;
                         ">
 
                             <span style="
@@ -878,12 +1190,15 @@ async function renderAnalyticsBox(events) {
                     `;
                 }
             ).join("")
+
             : `
+
                 <div style="
                     color:#70798b;
                     padding:12px 0;
                 ">
-                    Henüz gerçek analytics olayı bulunmuyor.
+                    Henüz gerçek analytics olayı
+                    bulunmuyor.
                 </div>
             `;
 
@@ -893,6 +1208,7 @@ async function renderAnalyticsBox(events) {
 
     const topBusinessesHtml =
         businessEntries.length
+
             ? businessEntries.map(
                 function (
                     [businessId, count],
@@ -905,13 +1221,16 @@ async function renderAnalyticsBox(events) {
                         );
 
                     return `
+
                         <div style="
                             display:flex;
                             align-items:center;
-                            justify-content:space-between;
+                            justify-content:
+                                space-between;
                             gap:12px;
                             padding:13px 0;
-                            border-bottom:1px solid #eef0f4;
+                            border-bottom:
+                                1px solid #eef0f4;
                         ">
 
                             <div style="
@@ -941,7 +1260,8 @@ async function renderAnalyticsBox(events) {
                                     font-size:13px;
                                     font-weight:700;
                                     overflow:hidden;
-                                    text-overflow:ellipsis;
+                                    text-overflow:
+                                        ellipsis;
                                     white-space:nowrap;
                                 ">
                                     ${analyticsEscapeHtml(
@@ -956,19 +1276,23 @@ async function renderAnalyticsBox(events) {
                                 white-space:nowrap;
                                 font-size:12px;
                             ">
-                                ${count} görüntülenme
+                                ${count}
+                                görüntülenme
                             </strong>
 
                         </div>
                     `;
                 }
             ).join("")
+
             : `
+
                 <div style="
                     color:#70798b;
                     padding:12px 0;
                 ">
-                    Henüz işletme görüntülenmesi bulunmuyor.
+                    Henüz işletme görüntülenmesi
+                    bulunmuyor.
                 </div>
             `;
 
@@ -978,6 +1302,7 @@ async function renderAnalyticsBox(events) {
 
     const recentEventsHtml =
         recentEvents.length
+
             ? recentEvents.map(
                 function (event) {
 
@@ -1010,12 +1335,17 @@ async function renderAnalyticsBox(events) {
                             : "-";
 
                     return `
+
                         <div style="
                             display:grid;
-                            grid-template-columns:minmax(140px,1fr) minmax(150px,1.5fr) minmax(130px,1fr);
+                            grid-template-columns:
+                                minmax(140px,1fr)
+                                minmax(150px,1.5fr)
+                                minmax(130px,1fr);
                             gap:12px;
                             padding:12px 0;
-                            border-bottom:1px solid #eef0f4;
+                            border-bottom:
+                                1px solid #eef0f4;
                             font-size:13px;
                         ">
 
@@ -1032,7 +1362,8 @@ async function renderAnalyticsBox(events) {
                             <span style="
                                 color:#70798b;
                                 overflow:hidden;
-                                text-overflow:ellipsis;
+                                text-overflow:
+                                    ellipsis;
                                 white-space:nowrap;
                             ">
                                 ${analyticsEscapeHtml(
@@ -1053,7 +1384,9 @@ async function renderAnalyticsBox(events) {
                     `;
                 }
             ).join("")
+
             : `
+
                 <div style="
                     color:#70798b;
                     padding:12px 0;
@@ -1061,6 +1394,33 @@ async function renderAnalyticsBox(events) {
                     Henüz kayıt bulunmuyor.
                 </div>
             `;
+
+    // ========================================================
+    // AKTİF FİLTRE METNİ
+    // ========================================================
+
+    const activeRange =
+        String(
+            window.__trabzonAnalyticsSelectedRange ||
+            "30"
+        );
+
+    let activeRangeText =
+        "Son 30 Gün";
+
+    if (activeRange === "1") {
+        activeRangeText =
+            "Bugün";
+    } else if (activeRange === "7") {
+        activeRangeText =
+            "Son 7 Gün";
+    } else if (activeRange === "90") {
+        activeRangeText =
+            "Son 90 Gün";
+    } else if (activeRange === "all") {
+        activeRangeText =
+            "Tüm Zamanlar";
+    }
 
     // ========================================================
     // ANA HTML
@@ -1097,15 +1457,36 @@ async function renderAnalyticsBox(events) {
             </div>
 
             <div style="
-                background:#f6f7f9;
-                color:#101c35;
-                border:1px solid #e7e9ee;
-                border-radius:999px;
-                padding:7px 12px;
-                font-size:12px;
-                font-weight:700;
+                display:flex;
+                align-items:center;
+                gap:8px;
+                flex-wrap:wrap;
             ">
-                ${totalEvents} gerçek olay
+
+                <div style="
+                    background:#f6f7f9;
+                    color:#101c35;
+                    border:1px solid #e7e9ee;
+                    border-radius:999px;
+                    padding:7px 12px;
+                    font-size:12px;
+                    font-weight:700;
+                ">
+                    ${activeRangeText}
+                </div>
+
+                <div style="
+                    background:#f6f7f9;
+                    color:#101c35;
+                    border:1px solid #e7e9ee;
+                    border-radius:999px;
+                    padding:7px 12px;
+                    font-size:12px;
+                    font-weight:700;
+                ">
+                    ${totalEvents} gerçek olay
+                </div>
+
             </div>
 
         </div>
@@ -1114,7 +1495,8 @@ async function renderAnalyticsBox(events) {
 
         <div style="
             display:grid;
-            grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+            grid-template-columns:
+                repeat(auto-fit,minmax(260px,1fr));
             gap:24px;
             margin-top:28px;
         ">
@@ -1179,12 +1561,12 @@ async function renderAnalyticsBox(events) {
     );
 
     // ========================================================
-    // İSİMLERİ SON KEZ YENİLE
-    // Supabase'den isimler geç geldiyse ekranı yenile
+    // İSİMLER SONRADAN GELİRSE TEKRAR RENDER
     // ========================================================
 
     setTimeout(
         function () {
+
             const currentBox =
                 document.getElementById(
                     "adminAnalyticsBox"
@@ -1194,17 +1576,42 @@ async function renderAnalyticsBox(events) {
                 return;
             }
 
-            const stillLoading =
-                Object.keys(
-                    analyticsBusinessNames
-                ).length === 0 &&
-                businessEntries.length > 0;
+            if (
+                businessEntries.length > 0
+            ) {
 
-            if (stillLoading) {
-                renderAnalyticsBox(
-                    productionEvents
-                );
+                const hasLoadingName =
+                    businessEntries.some(
+                        function (
+                            [businessId]
+                        ) {
+
+                            return (
+                                getAnalyticsBusinessName(
+                                    businessId
+                                ) ===
+                                "İşletme adı yükleniyor"
+                            );
+
+                        }
+                    );
+
+                if (hasLoadingName) {
+
+                    loadAnalyticsBusinessNames(
+                        productionEvents
+                    ).then(function () {
+
+                        renderAnalyticsBox(
+                            productionEvents
+                        );
+
+                    });
+
+                }
+
             }
+
         },
         500
     );
@@ -1218,6 +1625,9 @@ const analyticsResponsiveStyle =
     document.createElement(
         "style"
     );
+
+analyticsResponsiveStyle.id =
+    "trabzonAnalyticsResponsiveStyle";
 
 analyticsResponsiveStyle.textContent = `
 
@@ -1255,11 +1665,13 @@ analyticsResponsiveStyle.textContent = `
             font-size:16px !important;
         }
 
-        #adminAnalyticsBox [style*="grid-template-columns:minmax(140px"] {
+        #adminAnalyticsBox
+        [style*="grid-template-columns:minmax(140px"] {
             grid-template-columns:1fr !important;
         }
 
-        #adminAnalyticsBox [style*="text-align:right"] {
+        #adminAnalyticsBox
+        [style*="text-align:right"] {
             text-align:left !important;
         }
 
@@ -1267,6 +1679,32 @@ analyticsResponsiveStyle.textContent = `
 
 `;
 
-document.head.appendChild(
-    analyticsResponsiveStyle
-);
+if (
+    !document.getElementById(
+        "trabzonAnalyticsResponsiveStyle"
+    )
+) {
+
+    document.head.appendChild(
+        analyticsResponsiveStyle
+    );
+}
+
+// ============================================================
+// GLOBAL FONKSİYONLAR
+// ============================================================
+
+window.loadAnalytics =
+    loadAnalytics;
+
+window.renderAnalyticsBox =
+    renderAnalyticsBox;
+
+window.getAnalyticsEventLabel =
+    getAnalyticsEventLabel;
+
+window.getAnalyticsBusinessName =
+    getAnalyticsBusinessName;
+
+window.calculateAnalyticsStats =
+    calculateAnalyticsStats;
