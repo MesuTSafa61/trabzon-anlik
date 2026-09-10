@@ -1,21 +1,19 @@
 // ============================================================
 // TRABZON ANLIK - İŞLETME ANALYTICS
-// TARİH FİLTRESİYLE UYUMLU SÜRÜM
+// STABİL SÜRÜM
 // ============================================================
 
 (function () {
     "use strict";
 
-    let allBusinessAnalyticsEvents = [];
+    let analyticsEvents = [];
 
     // ------------------------------------------------------------
     // GERÇEK OLAYLAR
     // ------------------------------------------------------------
 
-    function getRealEvents(events) {
-        if (!Array.isArray(events)) {
-            return [];
-        }
+    function realEvents(events) {
+        if (!Array.isArray(events)) return [];
 
         return events.filter(function (event) {
             return event &&
@@ -24,45 +22,41 @@
     }
 
     // ------------------------------------------------------------
-    // SEÇİLİ TARİH ARALIĞINI OKU
+    // SEÇİLİ FİLTREYİ BUL
     // ------------------------------------------------------------
 
-    function getSelectedRange() {
-        const activeButton =
-            document.querySelector(
-                "#adminAnalyticsFilterBox .analytics-filter-btn.active"
-            );
+    function selectedRange() {
+        const button = document.querySelector(
+            "#adminAnalyticsFilterBox .analytics-filter-btn.active"
+        );
 
-        if (!activeButton) {
-            return "30";
-        }
+        if (!button) return "30";
 
-        return activeButton.getAttribute("data-range") || "30";
+        return button.getAttribute("data-range") || "30";
     }
 
     // ------------------------------------------------------------
-    // TARİHE GÖRE FİLTRELE
+    // TARİH FİLTRESİ
     // ------------------------------------------------------------
 
-    function filterEventsByDate(events) {
+    function filterByDate(events) {
 
-        const realEvents = getRealEvents(events);
-
-        const range = getSelectedRange();
+        const source = realEvents(events);
+        const range = selectedRange();
 
         if (range === "all") {
-            return realEvents;
+            return source;
         }
 
-        const days = Number(range);
+        const days = parseInt(range, 10);
 
         if (!Number.isFinite(days)) {
-            return realEvents;
+            return source;
         }
 
         const now = new Date();
 
-        const todayStart = new Date(
+        const startOfToday = new Date(
             now.getFullYear(),
             now.getMonth(),
             now.getDate(),
@@ -72,36 +66,27 @@
             0
         );
 
-        let startDate;
+        let startDate = new Date(startOfToday);
 
-        if (days === 1) {
-            startDate = todayStart;
-        } else {
-            startDate = new Date(todayStart);
-
+        if (days > 1) {
             startDate.setDate(
                 startDate.getDate() - (days - 1)
             );
         }
 
-        return realEvents.filter(function (event) {
+        return source.filter(function (event) {
 
             if (!event.created_at) {
                 return false;
             }
 
-            const eventDate =
-                new Date(event.created_at);
+            const date = new Date(event.created_at);
 
-            if (
-                Number.isNaN(
-                    eventDate.getTime()
-                )
-            ) {
+            if (Number.isNaN(date.getTime())) {
                 return false;
             }
 
-            return eventDate >= startDate;
+            return date >= startDate;
         });
     }
 
@@ -109,93 +94,68 @@
     // SADECE BUSINESS_VIEW
     // ------------------------------------------------------------
 
-    function calculateBusinessStats(events) {
+    function calculate(events) {
 
-        const stats = {};
+        const result = {};
 
         events.forEach(function (event) {
 
             if (
                 event.event_type !== "business_view" ||
-                !event.business_id
+                event.business_id === null ||
+                event.business_id === undefined
             ) {
                 return;
             }
 
-            const businessId =
-                String(event.business_id);
+            const id = String(event.business_id);
 
-            if (!stats[businessId]) {
-
-                stats[businessId] = {
-                    businessId: businessId,
-                    views: 0,
-                    lastView: event.created_at || null
+            if (!result[id]) {
+                result[id] = {
+                    id: id,
+                    views: 0
                 };
             }
 
-            stats[businessId].views++;
-
-            if (
-                event.created_at &&
-                (
-                    !stats[businessId].lastView ||
-                    new Date(event.created_at) >
-                    new Date(stats[businessId].lastView)
-                )
-            ) {
-                stats[businessId].lastView =
-                    event.created_at;
-            }
+            result[id].views++;
         });
 
-        return Object.values(stats)
-            .sort(function (a, b) {
+        return Object.values(result).sort(
+            function (a, b) {
                 return b.views - a.views;
-            });
+            }
+        );
     }
 
     // ------------------------------------------------------------
-    // İŞLETME ADI
+    // İŞLETME ADINI BUL
     // ------------------------------------------------------------
 
-    function getBusinessName(businessId) {
+    function businessName(id) {
 
-        const possibleLists = [
+        const sources = [
             window.allBusinesses,
             window.businesses
         ];
 
-        for (
-            let i = 0;
-            i < possibleLists.length;
-            i++
-        ) {
+        for (let i = 0; i < sources.length; i++) {
 
-            const list =
-                possibleLists[i];
+            const list = sources[i];
 
-            if (!Array.isArray(list)) {
-                continue;
-            }
+            if (!Array.isArray(list)) continue;
 
-            const business =
-                list.find(function (item) {
+            const found = list.find(
+                function (business) {
+                    return String(business.id) === String(id);
+                }
+            );
 
-                    return String(item.id) ===
-                        String(businessId);
-
-                });
-
-            if (
-                business &&
-                business.name
-            ) {
-                return business.name;
+            if (found && found.name) {
+                return found.name;
             }
         }
 
-        return "İşletme #" + businessId;
+        return "İşletme #" + id;
     }
 
     // ------------------------------------------------------------
@@ -213,15 +173,14 @@
     }
 
     // ------------------------------------------------------------
-    // SEÇİLİ DÖNEM ADI
+    // DÖNEM ADI
     // ------------------------------------------------------------
 
-    function getRangeLabel() {
+    function rangeName() {
 
-        const range =
-            getSelectedRange();
+        const range = selectedRange();
 
-        const labels = {
+        const names = {
             "1": "Bugün",
             "7": "Son 7 Gün",
             "30": "Son 30 Gün",
@@ -229,30 +188,24 @@
             "all": "Tüm Zamanlar"
         };
 
-        return labels[range] ||
-            "Son 30 Gün";
+        return names[range] || "Son 30 Gün";
     }
 
     // ------------------------------------------------------------
-    // RENDER
+    // GÖSTER
     // ------------------------------------------------------------
 
-    function renderBusinessAnalytics() {
+    function render() {
 
-        const filteredEvents =
-            filterEventsByDate(
-                allBusinessAnalyticsEvents
-            );
+        const filtered =
+            filterByDate(analyticsEvents);
 
-        const stats =
-            calculateBusinessStats(
-                filteredEvents
-            );
+        const businesses =
+            calculate(filtered);
 
-        let box =
-            document.getElementById(
-                "adminAnalyticsBusinessesBox"
-            );
+        let box = document.getElementById(
+            "adminAnalyticsBusinessesBox"
+        );
 
         if (!box) {
 
@@ -261,12 +214,9 @@
                     "section-dashboard"
                 );
 
-            if (!dashboard) {
-                return;
-            }
+            if (!dashboard) return;
 
-            box =
-                document.createElement("div");
+            box = document.createElement("div");
 
             box.id =
                 "adminAnalyticsBusinessesBox";
@@ -275,24 +225,24 @@
         }
 
         const totalViews =
-            stats.reduce(function (
-                total,
-                item
-            ) {
-                return total + item.views;
-            }, 0);
+            businesses.reduce(
+                function (sum, item) {
+                    return sum + item.views;
+                },
+                0
+            );
 
-        const uniqueBusinesses =
-            stats.length;
+        const businessCount =
+            businesses.length;
 
-        const topBusiness =
-            stats.length > 0
-                ? stats[0]
+        const first =
+            businesses.length
+                ? businesses[0]
                 : null;
 
         let rows = "";
 
-        if (stats.length === 0) {
+        if (!businesses.length) {
 
             rows = `
                 <div class="analytics-business-empty">
@@ -302,86 +252,66 @@
 
         } else {
 
-            rows =
-                stats
-                    .slice(0, 20)
-                    .map(function (
-                        item,
-                        index
-                    ) {
+            rows = businesses
+                .slice(0, 20)
+                .map(function (item, index) {
 
-                        const name =
-                            getBusinessName(
-                                item.businessId
-                            );
+                    let rank = index + 1;
 
-                        let rank;
+                    if (index === 0) rank = "🥇";
+                    if (index === 1) rank = "🥈";
+                    if (index === 2) rank = "🥉";
 
-                        if (index === 0) {
-                            rank = "🥇";
-                        } else if (index === 1) {
-                            rank = "🥈";
-                        } else if (index === 2) {
-                            rank = "🥉";
-                        } else {
-                            rank =
-                                String(index + 1);
-                        }
+                    return `
+                        <div class="analytics-business-row">
 
-                        return `
-                            <div class="analytics-business-row">
+                            <div class="analytics-business-rank">
+                                ${rank}
+                            </div>
 
-                                <div class="analytics-business-rank">
-                                    ${rank}
+                            <div class="analytics-business-info">
+
+                                <div class="analytics-business-name">
+                                    ${escapeHtml(
+                                        businessName(item.id)
+                                    )}
                                 </div>
 
-                                <div class="analytics-business-info">
-
-                                    <div class="analytics-business-name">
-                                        ${escapeHtml(name)}
-                                    </div>
-
-                                    <div class="analytics-business-id">
-                                        İşletme #${escapeHtml(item.businessId)}
-                                    </div>
-
-                                </div>
-
-                                <div class="analytics-business-views">
-
-                                    <strong>
-                                        ${item.views}
-                                    </strong>
-
-                                    <span>
-                                        görüntülenme
-                                    </span>
-
+                                <div class="analytics-business-id">
+                                    İşletme #${escapeHtml(item.id)}
                                 </div>
 
                             </div>
-                        `;
-                    })
-                    .join("");
+
+                            <div class="analytics-business-views">
+
+                                <strong>
+                                    ${item.views}
+                                </strong>
+
+                                <span>
+                                    görüntülenme
+                                </span>
+
+                            </div>
+
+                        </div>
+                    `;
+                })
+                .join("");
         }
 
         box.innerHTML = `
 
             <div class="analytics-business-header">
 
-                <div>
+                <div class="analytics-business-title">
+                    🏆 En Çok Görüntülenen İşletmeler
+                </div>
 
-                    <div class="analytics-business-title">
-                        🏆 En Çok Görüntülenen İşletmeler
-                    </div>
-
-                    <div class="analytics-business-subtitle">
-                        <strong>
-                            ${escapeHtml(getRangeLabel())}
-                        </strong>
-                        dönemindeki gerçek işletme görüntülenmeleri
-                    </div>
-
+                <div class="analytics-business-subtitle">
+                    ${escapeHtml(rangeName())}
+                    dönemindeki gerçek işletme görüntülenmeleri
                 </div>
 
             </div>
@@ -407,7 +337,7 @@
                     </span>
 
                     <strong>
-                        ${uniqueBusinesses}
+                        ${businessCount}
                     </strong>
 
                 </div>
@@ -420,11 +350,9 @@
 
                     <strong>
                         ${
-                            topBusiness
+                            first
                                 ? escapeHtml(
-                                    getBusinessName(
-                                        topBusiness.businessId
-                                    )
+                                    businessName(first.id)
                                 )
                                 : "-"
                         }
@@ -435,9 +363,7 @@
             </div>
 
             <div class="analytics-business-list">
-
                 ${rows}
-
             </div>
         `;
 
@@ -467,14 +393,14 @@
         style.textContent = `
 
             #adminAnalyticsBusinessesBox {
-                background: #ffffff;
+                background: #fff;
                 border: 1px solid #e7e9ee;
                 border-radius: 18px;
                 padding: 22px;
                 margin: 20px 0;
                 box-shadow:
                     0 6px 20px
-                    rgba(16, 28, 53, 0.05);
+                    rgba(16, 28, 53, .05);
             }
 
             .analytics-business-title {
@@ -487,10 +413,6 @@
                 color: #70798b;
                 font-size: 13px;
                 margin-top: 5px;
-            }
-
-            .analytics-business-subtitle strong {
-                color: #7b1830;
             }
 
             .analytics-business-summary {
@@ -542,7 +464,7 @@
                 padding: 13px 14px;
                 border: 1px solid #e7e9ee;
                 border-radius: 13px;
-                background: #ffffff;
+                background: #fff;
             }
 
             .analytics-business-rank {
@@ -602,28 +524,11 @@
 
                 #adminAnalyticsBusinessesBox {
                     padding: 16px;
-                    border-radius: 15px;
-                }
-
-                .analytics-business-title {
-                    font-size: 16px;
-                }
-
-                .analytics-business-subtitle {
-                    font-size: 11px;
                 }
 
                 .analytics-business-summary {
                     grid-template-columns: 1fr;
                     gap: 8px;
-                }
-
-                .analytics-business-summary-card {
-                    padding: 12px;
-                }
-
-                .analytics-business-summary-card strong {
-                    font-size: 17px;
                 }
 
                 .analytics-business-row {
@@ -633,21 +538,12 @@
                     padding: 11px;
                 }
 
-                .analytics-business-rank {
-                    width: 28px;
-                    font-size: 15px;
-                }
-
                 .analytics-business-name {
                     font-size: 13px;
                 }
 
                 .analytics-business-views {
                     min-width: 65px;
-                }
-
-                .analytics-business-views strong {
-                    font-size: 15px;
                 }
             }
         `;
@@ -656,10 +552,10 @@
     }
 
     // ------------------------------------------------------------
-    // ANALYTICS BOX'A BAĞLAN
+    // ANA ANALYTICS FONKSİYONUNU YAKALA
     // ------------------------------------------------------------
 
-    function installAnalyticsHook() {
+    function installHook() {
 
         if (
             typeof window.renderAnalyticsBox !==
@@ -670,68 +566,63 @@
 
         if (
             window.renderAnalyticsBox
-                .__businessDateAnalyticsWrapped
+                .__businessAnalyticsStable
         ) {
             return;
         }
 
-        const originalRender =
+        const original =
             window.renderAnalyticsBox;
 
-        function wrappedRender(events) {
+        function wrapped(events) {
 
-            allBusinessAnalyticsEvents =
+            // BURASI ÇOK ÖNEMLİ:
+            // Analytics kutusundan gelen HAM listeyi saklıyoruz.
+            analyticsEvents =
                 Array.isArray(events)
                     ? events.slice()
                     : [];
 
             const result =
-                originalRender.apply(
+                original.apply(
                     this,
                     arguments
                 );
 
             setTimeout(
-                renderBusinessAnalytics,
+                render,
                 0
             );
 
             return result;
         }
 
-        wrappedRender
-            .__businessDateAnalyticsWrapped = true;
+        wrapped.__businessAnalyticsStable = true;
 
         window.renderAnalyticsBox =
-            wrappedRender;
+            wrapped;
     }
 
     // ------------------------------------------------------------
-    // FİLTRE BUTONLARINI DİNLE
+    // FİLTRE DEĞİŞİKLİĞİNİ TAKİP ET
     // ------------------------------------------------------------
 
-    function installFilterListener() {
+    function installFilterWatcher() {
 
-        const filterBox =
+        const filter =
             document.getElementById(
                 "adminAnalyticsFilterBox"
             );
 
-        if (!filterBox) {
+        if (!filter) return;
+
+        if (filter.__businessWatcher) {
             return;
         }
 
-        if (
-            filterBox
-                .__businessAnalyticsListener
-        ) {
-            return;
-        }
+        filter.__businessWatcher = true;
 
-        filterBox
-            .__businessAnalyticsListener = true;
-
-        filterBox.addEventListener(
+        filter.addEventListener(
             "click",
             function (event) {
 
@@ -740,13 +631,11 @@
                         ".analytics-filter-btn"
                     );
 
-                if (!button) {
-                    return;
-                }
+                if (!button) return;
 
                 setTimeout(
-                    renderBusinessAnalytics,
-                    20
+                    render,
+                    50
                 );
             }
         );
@@ -760,32 +649,17 @@
 
         addStyles();
 
-        installAnalyticsHook();
-
-        installFilterListener();
-
-        setTimeout(function () {
-
-            installAnalyticsHook();
-            installFilterListener();
-
-        }, 300);
+        installHook();
+        installFilterWatcher();
 
         setTimeout(function () {
-
-            installAnalyticsHook();
-            installFilterListener();
-
-        }, 1000);
+            installHook();
+            installFilterWatcher();
+        }, 500);
 
         setTimeout(function () {
-
-            if (
-                allBusinessAnalyticsEvents.length
-            ) {
-                renderBusinessAnalytics();
-            }
-
+            installHook();
+            installFilterWatcher();
         }, 1500);
     }
 
