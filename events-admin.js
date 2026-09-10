@@ -1,52 +1,61 @@
 // ============================================================
 // TRABZON ANLIK - ETKİNLİK YÖNETİMİ
 // ============================================================
+// events-admin.js
+// ============================================================
 
 (function () {
     "use strict";
-
-    const EVENTS_TABLE = "events";
-
-    let eventsData = [];
-    let editingEventId = null;
 
     // ============================================================
     // SUPABASE
     // ============================================================
 
+    const SUPABASE_URL =
+        "https://yhunhkzsecppbnhjewrt.supabase.co";
+
+    const SUPABASE_PUBLISHABLE_KEY =
+        "sb_publishable_0h5ycfDBJjgdf6bXlZ9OEg_K45u2b2v";
+
+    let eventsSupabase = null;
+
     function getSupabase() {
+        if (eventsSupabase) {
+            return eventsSupabase;
+        }
+
         if (typeof supabaseClient !== "undefined" && supabaseClient) {
-            return supabaseClient;
+            eventsSupabase = supabaseClient;
+            return eventsSupabase;
         }
 
         if (
-            typeof window.supabaseClient !== "undefined" &&
-            window.supabaseClient
+            window.supabaseClient &&
+            typeof window.supabaseClient.from === "function"
         ) {
-            return window.supabaseClient;
+            eventsSupabase = window.supabaseClient;
+            return eventsSupabase;
         }
 
         if (
             typeof supabase !== "undefined" &&
-            supabase.createClient
+            supabase &&
+            typeof supabase.createClient === "function"
         ) {
-            const SUPABASE_URL =
-                "https://yhunhkzsecppbnhjewrt.supabase.co";
-
-            const SUPABASE_PUBLISHABLE_KEY =
-                "sb_publishable_0h5ycfDBJjgdf6bXlZ9OEg_K45u2b2v";
-
-            return supabase.createClient(
+            eventsSupabase = supabase.createClient(
                 SUPABASE_URL,
                 SUPABASE_PUBLISHABLE_KEY
             );
+
+            return eventsSupabase;
         }
 
+        console.error("Supabase bağlantısı bulunamadı.");
         return null;
     }
 
     // ============================================================
-    // YARDIMCI
+    // GENEL YARDIMCILAR
     // ============================================================
 
     function escapeHtml(value) {
@@ -62,89 +71,126 @@
             .replace(/'/g, "&#039;");
     }
 
-    function formatDate(dateString) {
-        if (!dateString) {
+    function formatDate(dateValue) {
+        if (!dateValue) {
             return "-";
         }
 
-        const date = new Date(
-            dateString + "T00:00:00"
-        );
+        const date = new Date(dateValue + "T00:00:00");
 
-        if (isNaN(date.getTime())) {
-            return dateString;
+        if (Number.isNaN(date.getTime())) {
+            return dateValue;
         }
 
-        return date.toLocaleDateString(
-            "tr-TR",
-            {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric"
-            }
-        );
+        return date.toLocaleDateString("tr-TR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        });
     }
 
-    function formatTime(timeString) {
-        if (!timeString) {
+    function formatTime(timeValue) {
+        if (!timeValue) {
             return "";
         }
 
-        return String(timeString).slice(0, 5);
+        return String(timeValue).slice(0, 5);
     }
 
-    function isPastEvent(eventDate) {
-        if (!eventDate) {
+    function isPastEvent(event) {
+        if (!event || !event.event_date) {
             return false;
         }
 
-        const today =
-            new Date().toISOString().split("T")[0];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const eventDate = new Date(
+            event.event_date + "T00:00:00"
+        );
 
         return eventDate < today;
     }
 
     function showMessage(message, type) {
-        const box =
-            document.getElementById(
-                "eventsAdminMessage"
-            );
+        const existing = document.getElementById(
+            "eventsAdminMessage"
+        );
 
-        if (!box) {
+        if (!existing) {
             return;
         }
 
-        box.textContent = message;
+        existing.textContent = message;
+        existing.className =
+            "events-admin-message " +
+            (type || "info");
 
-        box.style.display = "block";
+        clearTimeout(
+            showMessage.timeout
+        );
 
-        if (type === "success") {
-            box.style.background = "#dcfce7";
-            box.style.color = "#166534";
-        } else if (type === "error") {
-            box.style.background = "#fee2e2";
-            box.style.color = "#991b1b";
-        } else {
-            box.style.background = "#dbeafe";
-            box.style.color = "#1e40af";
+        showMessage.timeout = setTimeout(function () {
+            existing.textContent = "";
+            existing.className =
+                "events-admin-message";
+        }, 3500);
+    }
+
+    // ============================================================
+    // SAYFA BAŞLIĞI
+    // ============================================================
+
+    function updateTopbarTitle() {
+        const possibleSelectors = [
+            "#topbarTitle",
+            "#pageTitle",
+            ".topbar-title",
+            ".page-title"
+        ];
+
+        for (const selector of possibleSelectors) {
+            const element =
+                document.querySelector(selector);
+
+            if (element) {
+                element.textContent = "Etkinlikler";
+                return;
+            }
         }
 
-        setTimeout(function () {
-            box.style.display = "none";
-        }, 4000);
+        const headings =
+            document.querySelectorAll(
+                "header h1, header h2, .topbar h1, .topbar h2"
+            );
+
+        headings.forEach(function (heading) {
+            const text =
+                heading.textContent.trim();
+
+            if (
+                text === "Dashboard" ||
+                text === "Yönetim Paneli"
+            ) {
+                heading.textContent = "Etkinlikler";
+            }
+        });
     }
 
     // ============================================================
     // HTML
     // ============================================================
 
-    function createEventsInterface() {
+    function renderPage() {
         const section =
             document.getElementById(
                 "section-events"
             );
 
         if (!section) {
+            console.warn(
+                "section-events bulunamadı."
+            );
             return;
         }
 
@@ -156,560 +202,148 @@
                         Trabzon'daki etkinlikleri buradan yönetebilirsin.
                     </p>
                 </div>
+            </div>
 
-                <button
-                    type="button"
-                    class="refresh-btn"
-                    id="eventsRefreshBtn"
-                >
-                    🔄 Yenile
-                </button>
+            <div class="events-admin-toolbar">
+
+                <div class="events-admin-search">
+                    <input
+                        type="text"
+                        id="eventsSearch"
+                        placeholder="Etkinlik ara..."
+                    >
+                </div>
+
+                <div class="events-admin-filters">
+
+                    <select id="eventsStatusFilter">
+                        <option value="all">
+                            Tüm durumlar
+                        </option>
+
+                        <option value="approved">
+                            Yayında
+                        </option>
+
+                        <option value="pending">
+                            Bekliyor
+                        </option>
+                    </select>
+
+                    <select id="eventsDateFilter">
+                        <option value="all">
+                            Tüm tarihler
+                        </option>
+
+                        <option value="upcoming">
+                            Yaklaşan
+                        </option>
+
+                        <option value="past">
+                            Geçmiş
+                        </option>
+                    </select>
+
+                    <button
+                        type="button"
+                        class="refresh-btn"
+                        id="eventsAddButton"
+                    >
+                        + Yeni Etkinlik
+                    </button>
+
+                </div>
             </div>
 
             <div
                 id="eventsAdminMessage"
-                style="
-                    display:none;
-                    padding:12px 15px;
-                    border-radius:10px;
-                    margin-bottom:18px;
-                    font-size:14px;
-                    font-weight:700;
-                "
+                class="events-admin-message"
             ></div>
 
             <div
-                style="
-                    background:#fff;
-                    border:1px solid #e5e7eb;
-                    border-radius:15px;
-                    padding:20px;
-                    margin-bottom:20px;
-                "
-            >
-                <div
-                    style="
-                        display:flex;
-                        justify-content:space-between;
-                        align-items:center;
-                        gap:15px;
-                        flex-wrap:wrap;
-                        margin-bottom:15px;
-                    "
-                >
-                    <div>
-                        <strong style="font-size:18px;">
-                            Etkinlik Yönetimi
-                        </strong>
-
-                        <div
-                            style="
-                                color:#6b7280;
-                                font-size:13px;
-                                margin-top:4px;
-                            "
-                        >
-                            Yeni etkinlik oluştur, düzenle ve yayın durumunu yönet.
-                        </div>
-                    </div>
-
-                    <button
-                        type="button"
-                        class="action-btn btn-blue"
-                        id="newEventBtn"
-                    >
-                        ➕ Yeni Etkinlik
-                    </button>
-                </div>
-
-                <div
-                    style="
-                        display:grid;
-                        grid-template-columns:2fr 1fr 1fr;
-                        gap:12px;
-                    "
-                    class="events-filter-grid"
-                >
-                    <input
-                        id="eventsSearch"
-                        class="form-control"
-                        type="text"
-                        placeholder="🔍 Etkinlik ara..."
-                    >
-
-                    <select
-                        id="eventsStatusFilter"
-                        class="form-control"
-                    >
-                        <option value="">
-                            Tüm Durumlar
-                        </option>
-                        <option value="approved">
-                            🟢 Yayında
-                        </option>
-                        <option value="pending">
-                            🟡 Bekliyor
-                        </option>
-                    </select>
-
-                    <select
-                        id="eventsDateFilter"
-                        class="form-control"
-                    >
-                        <option value="">
-                            Tüm Tarihler
-                        </option>
-                        <option value="upcoming">
-                            📅 Yaklaşan
-                        </option>
-                        <option value="past">
-                            🕘 Geçmiş
-                        </option>
-                    </select>
-                </div>
-            </div>
-
-            <div id="eventsList">
-                <div class="loading">
-                    Etkinlikler yükleniyor...
-                </div>
-            </div>
+                id="eventsList"
+                class="events-admin-list"
+            ></div>
         `;
 
-        createEventModal();
-
-        bindEventsInterface();
+        attachEvents();
 
         loadEvents();
     }
 
     // ============================================================
-    // MODAL
+    // EVENT LISTENER
     // ============================================================
 
-    function createEventModal() {
-        if (
-            document.getElementById(
-                "eventAdminModal"
-            )
-        ) {
-            return;
-        }
-
-        const modal =
-            document.createElement("div");
-
-        modal.id = "eventAdminModal";
-
-        modal.className = "modal-overlay";
-
-        modal.innerHTML = `
-            <div class="edit-modal">
-
-                <div class="modal-header">
-                    <h3 id="eventModalTitle">
-                        🎉 Yeni Etkinlik
-                    </h3>
-
-                    <button
-                        type="button"
-                        class="modal-close"
-                        id="closeEventModal"
-                    >
-                        ×
-                    </button>
-                </div>
-
-                <form id="eventForm">
-
-                    <div class="modal-body">
-
-                        <div class="edit-form-grid">
-
-                            <div class="form-group full-width">
-                                <label>
-                                    Etkinlik Adı *
-                                </label>
-
-                                <input
-                                    id="eventTitle"
-                                    class="form-control"
-                                    required
-                                    maxlength="200"
-                                    placeholder="Örn. Trabzon Konser Gecesi"
-                                >
-                            </div>
-
-                            <div class="form-group">
-                                <label>
-                                    Kategori
-                                </label>
-
-                                <select
-                                    id="eventCategory"
-                                    class="form-control"
-                                >
-                                    <option value="">
-                                        Kategori seç
-                                    </option>
-                                    <option value="Konser">
-                                        🎵 Konser
-                                    </option>
-                                    <option value="Tiyatro">
-                                        🎭 Tiyatro
-                                    </option>
-                                    <option value="Spor">
-                                        ⚽ Spor
-                                    </option>
-                                    <option value="Festival">
-                                        🎪 Festival
-                                    </option>
-                                    <option value="Sergi">
-                                        🖼️ Sergi
-                                    </option>
-                                    <option value="Seminer">
-                                        🎓 Seminer
-                                    </option>
-                                    <option value="Çocuk">
-                                        🧒 Çocuk
-                                    </option>
-                                    <option value="Diğer">
-                                        📌 Diğer
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>
-                                    İlçe
-                                </label>
-
-                                <input
-                                    id="eventDistrict"
-                                    class="form-control"
-                                    placeholder="Örn. Ortahisar"
-                                >
-                            </div>
-
-                            <div class="form-group">
-                                <label>
-                                    Etkinlik Tarihi *
-                                </label>
-
-                                <input
-                                    id="eventDate"
-                                    class="form-control"
-                                    type="date"
-                                    required
-                                >
-                            </div>
-
-                            <div class="form-group">
-                                <label>
-                                    Başlangıç Saati
-                                </label>
-
-                                <input
-                                    id="eventTime"
-                                    class="form-control"
-                                    type="time"
-                                >
-                            </div>
-
-                            <div class="form-group">
-                                <label>
-                                    Bitiş Saati
-                                </label>
-
-                                <input
-                                    id="eventEndTime"
-                                    class="form-control"
-                                    type="time"
-                                >
-                            </div>
-
-                            <div class="form-group">
-                                <label>
-                                    Mekân
-                                </label>
-
-                                <input
-                                    id="eventVenue"
-                                    class="form-control"
-                                    placeholder="Örn. Trabzon Meydan Parkı"
-                                >
-                            </div>
-
-                            <div class="form-group full-width">
-                                <label>
-                                    Adres
-                                </label>
-
-                                <input
-                                    id="eventAddress"
-                                    class="form-control"
-                                    placeholder="Etkinliğin açık adresi"
-                                >
-                            </div>
-
-                            <div class="form-group">
-                                <label>
-                                    İletişim Telefonu
-                                </label>
-
-                                <input
-                                    id="eventPhone"
-                                    class="form-control"
-                                    type="tel"
-                                    placeholder="0462..."
-                                >
-                            </div>
-
-                            <div class="form-group">
-                                <label>
-                                    Bilet / Kayıt Linki
-                                </label>
-
-                                <input
-                                    id="eventTicketUrl"
-                                    class="form-control"
-                                    type="url"
-                                    placeholder="https://..."
-                                >
-                            </div>
-
-                            <div class="form-group full-width">
-                                <label>
-                                    Kapak Fotoğrafı URL
-                                </label>
-
-                                <input
-                                    id="eventImageUrl"
-                                    class="form-control"
-                                    type="url"
-                                    placeholder="Fotoğraf bağlantısı"
-                                >
-
-                                <small
-                                    style="
-                                        display:block;
-                                        color:#6b7280;
-                                        margin-top:6px;
-                                    "
-                                >
-                                    Fotoğraf yükleme sistemini sonraki aşamada ayrı
-                                    olarak bağlayacağız.
-                                </small>
-                            </div>
-
-                            <div class="form-group full-width">
-                                <label>
-                                    Açıklama
-                                </label>
-
-                                <textarea
-                                    id="eventDescription"
-                                    class="form-control"
-                                    rows="6"
-                                    maxlength="10000"
-                                    placeholder="Etkinlik hakkında detaylı bilgi..."
-                                ></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label>
-                                    Yayın Durumu
-                                </label>
-
-                                <select
-                                    id="eventApproved"
-                                    class="form-control"
-                                >
-                                    <option value="false">
-                                        🟡 Bekliyor
-                                    </option>
-
-                                    <option value="true">
-                                        🟢 Yayında
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>
-                                    Öne Çıkarma
-                                </label>
-
-                                <select
-                                    id="eventFeatured"
-                                    class="form-control"
-                                >
-                                    <option value="false">
-                                        Normal
-                                    </option>
-
-                                    <option value="true">
-                                        ⭐ Öne Çıkar
-                                    </option>
-                                </select>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    <div class="modal-footer">
-
-                        <button
-                            type="button"
-                            class="modal-btn cancel-btn"
-                            id="cancelEventBtn"
-                        >
-                            Vazgeç
-                        </button>
-
-                        <button
-                            type="submit"
-                            class="modal-btn save-btn"
-                            id="saveEventBtn"
-                        >
-                            💾 Etkinliği Kaydet
-                        </button>
-
-                    </div>
-
-                </form>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-    }
-
-    // ============================================================
-    // EVENT BINDINGS
-    // ============================================================
-
-    function bindEventsInterface() {
-        const refresh =
-            document.getElementById(
-                "eventsRefreshBtn"
-            );
-
-        if (refresh) {
-            refresh.addEventListener(
-                "click",
-                loadEvents
-            );
-        }
-
-        const newButton =
-            document.getElementById(
-                "newEventBtn"
-            );
-
-        if (newButton) {
-            newButton.addEventListener(
-                "click",
-                openNewEventModal
-            );
-        }
-
+    function attachEvents() {
         const search =
             document.getElementById(
                 "eventsSearch"
             );
-
-        if (search) {
-            search.addEventListener(
-                "input",
-                renderEvents
-            );
-        }
 
         const status =
             document.getElementById(
                 "eventsStatusFilter"
             );
 
-        if (status) {
-            status.addEventListener(
-                "change",
-                renderEvents
-            );
-        }
-
-        const dateFilter =
+        const date =
             document.getElementById(
                 "eventsDateFilter"
             );
 
-        if (dateFilter) {
-            dateFilter.addEventListener(
+        const addButton =
+            document.getElementById(
+                "eventsAddButton"
+            );
+
+        if (search) {
+            search.addEventListener(
+                "input",
+                renderFilteredEvents
+            );
+        }
+
+        if (status) {
+            status.addEventListener(
                 "change",
-                renderEvents
+                renderFilteredEvents
             );
         }
 
-        const close =
-            document.getElementById(
-                "closeEventModal"
+        if (date) {
+            date.addEventListener(
+                "change",
+                renderFilteredEvents
             );
+        }
 
-        if (close) {
-            close.addEventListener(
+        if (addButton) {
+            addButton.addEventListener(
                 "click",
-                closeEventModal
-            );
-        }
-
-        const cancel =
-            document.getElementById(
-                "cancelEventBtn"
-            );
-
-        if (cancel) {
-            cancel.addEventListener(
-                "click",
-                closeEventModal
-            );
-        }
-
-        const form =
-            document.getElementById(
-                "eventForm"
-            );
-
-        if (form) {
-            form.addEventListener(
-                "submit",
-                saveEvent
-            );
-        }
-
-        const modal =
-            document.getElementById(
-                "eventAdminModal"
-            );
-
-        if (modal) {
-            modal.addEventListener(
-                "click",
-                function (event) {
-                    if (
-                        event.target === modal
-                    ) {
-                        closeEventModal();
-                    }
+                function () {
+                    openEventModal();
                 }
             );
         }
     }
 
     // ============================================================
-    // EVENTS LOAD
+    // VERİ
     // ============================================================
 
+    let allEvents = [];
+
     async function loadEvents() {
+        const client = getSupabase();
+
+        if (!client) {
+            showMessage(
+                "Supabase bağlantısı bulunamadı.",
+                "error"
+            );
+            return;
+        }
+
         const list =
             document.getElementById(
                 "eventsList"
@@ -717,30 +351,16 @@
 
         if (list) {
             list.innerHTML = `
-                <div class="loading">
+                <div class="events-loading">
                     Etkinlikler yükleniyor...
                 </div>
             `;
         }
 
-        const client = getSupabase();
-
-        if (!client) {
-            if (list) {
-                list.innerHTML = `
-                    <div class="empty">
-                        Supabase bağlantısı bulunamadı.
-                    </div>
-                `;
-            }
-
-            return;
-        }
-
         try {
             const result =
                 await client
-                    .from(EVENTS_TABLE)
+                    .from("events")
                     .select("*")
                     .order(
                         "event_date",
@@ -756,42 +376,57 @@
                     );
 
             if (result.error) {
+                console.error(
+                    "Etkinlik yükleme hatası:",
+                    result.error
+                );
+
                 throw result.error;
             }
 
-            eventsData =
-                result.data || [];
+            allEvents =
+                Array.isArray(result.data)
+                    ? result.data
+                    : [];
 
-            renderEvents();
+            renderFilteredEvents();
 
         } catch (error) {
-            console.error(
-                "Etkinlikler yüklenemedi:",
-                error
-            );
+            console.error(error);
 
             if (list) {
                 list.innerHTML = `
-                    <div class="empty">
-                        ❌ Etkinlikler yüklenirken hata oluştu.<br><br>
-                        ${escapeHtml(error.message)}
+                    <div class="events-empty">
+                        <strong>Etkinlikler yüklenemedi.</strong>
+                        <br>
+                        <span>
+                            ${escapeHtml(
+                                error.message ||
+                                "Bilinmeyen hata"
+                            )}
+                        </span>
                     </div>
                 `;
             }
+
+            showMessage(
+                "Etkinlikler yüklenirken hata oluştu.",
+                "error"
+            );
         }
     }
 
     // ============================================================
-    // FILTER
+    // FİLTRE
     // ============================================================
 
-    function getFilteredEvents() {
-        const search =
+    function renderFilteredEvents() {
+        const searchInput =
             document.getElementById(
                 "eventsSearch"
             );
 
-        const status =
+        const statusFilter =
             document.getElementById(
                 "eventsStatusFilter"
             );
@@ -801,83 +436,86 @@
                 "eventsDateFilter"
             );
 
-        const searchValue =
-            search
-                ? search.value
+        const searchText =
+            searchInput
+                ? searchInput.value
                     .trim()
                     .toLocaleLowerCase("tr-TR")
                 : "";
 
-        const statusValue =
-            status
-                ? status.value
-                : "";
+        const status =
+            statusFilter
+                ? statusFilter.value
+                : "all";
 
-        const dateValue =
+        const date =
             dateFilter
                 ? dateFilter.value
-                : "";
+                : "all";
 
-        return eventsData.filter(
-            function (event) {
+        const filtered =
+            allEvents.filter(function (event) {
+
+                const searchableText = [
+                    event.title,
+                    event.category,
+                    event.venue,
+                    event.district,
+                    event.address,
+                    event.description
+                ]
+                    .filter(Boolean)
+                    .join(" ")
+                    .toLocaleLowerCase("tr-TR");
 
                 if (
-                    searchValue &&
-                    !(
-                        String(event.title || "")
-                            .toLocaleLowerCase("tr-TR")
-                            .includes(searchValue)
-                        ||
-                        String(event.venue || "")
-                            .toLocaleLowerCase("tr-TR")
-                            .includes(searchValue)
-                        ||
-                        String(event.district || "")
-                            .toLocaleLowerCase("tr-TR")
-                            .includes(searchValue)
+                    searchText &&
+                    !searchableText.includes(
+                        searchText
                     )
                 ) {
                     return false;
                 }
 
                 if (
-                    statusValue === "approved" &&
+                    status === "approved" &&
                     event.is_approved !== true
                 ) {
                     return false;
                 }
 
                 if (
-                    statusValue === "pending" &&
+                    status === "pending" &&
                     event.is_approved !== false
                 ) {
                     return false;
                 }
 
                 if (
-                    dateValue === "upcoming" &&
-                    isPastEvent(event.event_date)
+                    date === "upcoming" &&
+                    isPastEvent(event)
                 ) {
                     return false;
                 }
 
                 if (
-                    dateValue === "past" &&
-                    !isPastEvent(event.event_date)
+                    date === "past" &&
+                    !isPastEvent(event)
                 ) {
                     return false;
                 }
 
                 return true;
-            }
-        );
+            });
+
+        renderEvents(filtered);
     }
 
     // ============================================================
-    // RENDER
+    // LİSTE
     // ============================================================
 
-    function renderEvents() {
+    function renderEvents(events) {
         const list =
             document.getElementById(
                 "eventsList"
@@ -887,13 +525,10 @@
             return;
         }
 
-        const filtered =
-            getFilteredEvents();
-
-        if (!filtered.length) {
+        if (!events.length) {
             list.innerHTML = `
-                <div class="empty">
-                    🎉 Henüz etkinlik bulunmuyor.
+                <div class="events-empty">
+                    Henüz etkinlik bulunmuyor.
                 </div>
             `;
 
@@ -901,115 +536,156 @@
         }
 
         list.innerHTML =
-            filtered
-                .map(
-                    renderEventCard
-                )
-                .join("");
+            events.map(
+                renderEventCard
+            ).join("");
     }
 
     function renderEventCard(event) {
-        const approved =
-            event.is_approved === true;
-
-        const featured =
-            event.is_featured === true;
-
         const past =
-            isPastEvent(
-                event.event_date
-            );
+            isPastEvent(event);
 
-        const time =
+        const statusBadge =
+            event.is_approved
+                ? `
+                    <span class="badge badge-green">
+                        ✓ Yayında
+                    </span>
+                `
+                : `
+                    <span class="badge badge-yellow">
+                        ⏳ Bekliyor
+                    </span>
+                `;
+
+        const featuredBadge =
+            event.is_featured
+                ? `
+                    <span class="badge badge-blue">
+                        ⭐ Öne Çıkan
+                    </span>
+                `
+                : "";
+
+        const pastBadge =
+            past
+                ? `
+                    <span class="badge badge-red">
+                        Geçmiş
+                    </span>
+                `
+                : "";
+
+        const imageHtml =
+            event.image_url
+                ? `
+                    <div class="event-admin-image">
+                        <img
+                            src="${escapeHtml(
+                                event.image_url
+                            )}"
+                            alt="${escapeHtml(
+                                event.title
+                            )}"
+                            loading="lazy"
+                            onerror="this.style.display='none';"
+                        >
+                    </div>
+                `
+                : "";
+
+        const timeText = [
             formatTime(
                 event.event_time
-            );
-
-        const endTime =
+            ),
             formatTime(
                 event.end_time
-            );
+            )
+                ? " - " +
+                  formatTime(
+                      event.end_time
+                  )
+                : ""
+        ].join("");
 
-        let timeText =
-            time || "";
+        const locationParts = [
+            event.venue,
+            event.district
+        ].filter(Boolean);
 
-        if (
-            time &&
-            endTime
-        ) {
-            timeText =
-                time +
-                " - " +
-                endTime;
-        }
+        const ticketHtml =
+            event.ticket_url
+                ? `
+                    <a
+                        href="${escapeHtml(
+                            event.ticket_url
+                        )}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="event-ticket-link"
+                    >
+                        🎟 Bilet / Kayıt
+                    </a>
+                `
+                : "";
+
+        const phoneHtml =
+            event.contact_phone
+                ? `
+                    <div>
+                        📞
+                        ${escapeHtml(
+                            event.contact_phone
+                        )}
+                    </div>
+                `
+                : "";
+
+        const description =
+            event.description
+                ? `
+                    <div class="event-admin-description">
+                        ${escapeHtml(
+                            event.description
+                        )}
+                    </div>
+                `
+                : "";
 
         return `
-            <div
-                class="business-card"
-                data-event-id="${escapeHtml(event.id)}"
+            <article
+                class="business-card event-admin-card"
+                data-event-id="${escapeHtml(
+                    event.id
+                )}"
             >
+
+                ${imageHtml}
 
                 <div class="business-top">
 
                     <div>
                         <div class="business-title">
-                            ${escapeHtml(event.title)}
+                            ${escapeHtml(
+                                event.title
+                            )}
                         </div>
 
                         <div class="business-meta">
                             ${
                                 event.category
-                                    ? escapeHtml(event.category) + " • "
-                                    : ""
-                            }
-                            ${
-                                event.venue
-                                    ? escapeHtml(event.venue)
-                                    : "Mekân belirtilmemiş"
+                                    ? escapeHtml(
+                                        event.category
+                                    )
+                                    : "Etkinlik"
                             }
                         </div>
                     </div>
 
                     <div class="badges">
-
-                        ${
-                            approved
-                                ? `
-                                    <span class="badge badge-green">
-                                        ✓ Yayında
-                                    </span>
-                                `
-                                : `
-                                    <span class="badge badge-yellow">
-                                        ⏳ Bekliyor
-                                    </span>
-                                `
-                        }
-
-                        ${
-                            featured
-                                ? `
-                                    <span class="badge badge-blue">
-                                        ⭐ Öne Çıkan
-                                    </span>
-                                `
-                                : ""
-                        }
-
-                        ${
-                            past
-                                ? `
-                                    <span class="badge badge-red">
-                                        Geçmiş
-                                    </span>
-                                `
-                                : `
-                                    <span class="badge badge-green">
-                                        📅 Yaklaşan
-                                    </span>
-                                `
-                        }
-
+                        ${statusBadge}
+                        ${featuredBadge}
+                        ${pastBadge}
                     </div>
 
                 </div>
@@ -1017,91 +693,64 @@
                 <div class="business-info">
 
                     <div>
-                        <strong>📅 Tarih:</strong>
-                        ${formatDate(event.event_date)}
-                    </div>
-
-                    <div>
-                        <strong>🕐 Saat:</strong>
-                        ${escapeHtml(timeText || "-")}
-                    </div>
-
-                    <div>
-                        <strong>📍 İlçe:</strong>
-                        ${escapeHtml(event.district || "-")}
-                    </div>
-
-                    <div>
-                        <strong>🏛️ Mekân:</strong>
-                        ${escapeHtml(event.venue || "-")}
+                        📅
+                        ${formatDate(
+                            event.event_date
+                        )}
+                        ${
+                            timeText
+                                ? " • 🕐 " +
+                                  escapeHtml(
+                                      timeText
+                                  )
+                                : ""
+                        }
                     </div>
 
                     ${
-                        event.phone
+                        locationParts.length
                             ? `
                                 <div>
-                                    <strong>📞 Telefon:</strong>
-                                    ${escapeHtml(event.phone)}
+                                    📍
+                                    ${escapeHtml(
+                                        locationParts.join(
+                                            " • "
+                                        )
+                                    )}
                                 </div>
                             `
                             : ""
                     }
 
                     ${
-                        event.ticket_url
+                        event.address
                             ? `
                                 <div>
-                                    <strong>🎟️ Bilet:</strong>
-                                    Var
+                                    🏠
+                                    ${escapeHtml(
+                                        event.address
+                                    )}
                                 </div>
                             `
                             : ""
                     }
+
+                    ${phoneHtml}
+
+                    ${ticketHtml}
+
+                    ${description}
 
                 </div>
-
-                ${
-                    event.description
-                        ? `
-                            <div class="description">
-                                ${escapeHtml(event.description)}
-                            </div>
-                        `
-                        : ""
-                }
-
-                ${
-                    event.image_url
-                        ? `
-                            <div
-                                style="
-                                    margin-bottom:15px;
-                                    border-radius:12px;
-                                    overflow:hidden;
-                                    height:220px;
-                                    background:#f3f4f6;
-                                "
-                            >
-                                <img
-                                    src="${escapeHtml(event.image_url)}"
-                                    alt="${escapeHtml(event.title)}"
-                                    style="
-                                        width:100%;
-                                        height:100%;
-                                        object-fit:cover;
-                                    "
-                                >
-                            </div>
-                        `
-                        : ""
-                }
 
                 <div class="business-actions">
 
                     <button
                         type="button"
                         class="action-btn btn-blue"
-                        onclick="window.editEvent('${escapeHtml(event.id)}')"
+                        onclick="editEvent('${escapeHtml(
+                            event.id
+                        )}')"
                     >
                         ✏️ Düzenle
                     </button>
@@ -1109,18 +758,20 @@
                     <button
                         type="button"
                         class="action-btn ${
-                            approved
+                            event.is_approved
                                 ? "btn-yellow"
                                 : "btn-green"
                         }"
-                        onclick="window.toggleEventApproval(
-                            '${escapeHtml(event.id)}',
-                            ${approved ? "false" : "true"}
+                        onclick="toggleEventApproval(
+                            '${escapeHtml(
+                                event.id
+                            )}',
+                            ${event.is_approved ? "false" : "true"}
                         )"
                     >
                         ${
-                            approved
-                                ? "⏳ Yayından Kaldır"
+                            event.is_approved
+                                ? "⏸ Yayından Kaldır"
                                 : "✓ Yayına Al"
                         }
                     </button>
@@ -1128,18 +779,20 @@
                     <button
                         type="button"
                         class="action-btn ${
-                            featured
-                                ? "btn-gray"
-                                : "btn-yellow"
+                            event.is_featured
+                                ? "btn-yellow"
+                                : "btn-blue"
                         }"
-                        onclick="window.toggleEventFeatured(
-                            '${escapeHtml(event.id)}',
-                            ${featured ? "false" : "true"}
+                        onclick="toggleEventFeatured(
+                            '${escapeHtml(
+                                event.id
+                            )}',
+                            ${event.is_featured ? "false" : "true"}
                         )"
                     >
                         ${
-                            featured
-                                ? "☆ Öne Çıkarmayı Kaldır"
+                            event.is_featured
+                                ? "⭐ Öne Çıkanı Kaldır"
                                 : "⭐ Öne Çıkar"
                         }
                     </button>
@@ -1147,156 +800,547 @@
                     <button
                         type="button"
                         class="action-btn btn-red"
-                        onclick="window.deleteEvent('${escapeHtml(event.id)}')"
+                        onclick="deleteEvent(
+                            '${escapeHtml(
+                                event.id
+                            )}'
+                        )"
                     >
-                        🗑️ Sil
+                        🗑 Sil
+                    </button>
+
+                </div>
+
+            </article>
+        `;
+    }
+
+    // ============================================================
+    // MODAL
+    // ============================================================
+
+    let editingEventId = null;
+
+    function createModal() {
+        let modal =
+            document.getElementById(
+                "eventAdminModal"
+            );
+
+        if (modal) {
+            return modal;
+        }
+
+        modal =
+            document.createElement("div");
+
+        modal.id =
+            "eventAdminModal";
+
+        modal.className =
+            "modal-overlay";
+
+        modal.innerHTML = `
+            <div class="edit-modal event-admin-modal">
+
+                <div class="modal-header">
+
+                    <div>
+                        <h3 id="eventModalTitle">
+                            Yeni Etkinlik
+                        </h3>
+
+                        <p>
+                            Etkinlik bilgilerini doldur.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="modal-close"
+                        id="eventModalClose"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="edit-form-grid">
+
+                        <div>
+                            <label>
+                                Etkinlik adı *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="eventTitle"
+                                required
+                                placeholder="Örn. Trabzon Konser Akşamı"
+                            >
+                        </div>
+
+                        <div>
+                            <label>
+                                Kategori
+                            </label>
+
+                            <select id="eventCategory">
+
+                                <option value="">
+                                    Kategori seç
+                                </option>
+
+                                <option value="Konser">
+                                    Konser
+                                </option>
+
+                                <option value="Tiyatro">
+                                    Tiyatro
+                                </option>
+
+                                <option value="Spor">
+                                    Spor
+                                </option>
+
+                                <option value="Festival">
+                                    Festival
+                                </option>
+
+                                <option value="Sergi">
+                                    Sergi
+                                </option>
+
+                                <option value="Seminer">
+                                    Seminer
+                                </option>
+
+                                <option value="Çocuk">
+                                    Çocuk
+                                </option>
+
+                                <option value="Diğer">
+                                    Diğer
+                                </option>
+
+                            </select>
+                        </div>
+
+                        <div>
+                            <label>
+                                İlçe
+                            </label>
+
+                            <input
+                                type="text"
+                                id="eventDistrict"
+                                placeholder="Örn. Ortahisar"
+                            >
+                        </div>
+
+                        <div>
+                            <label>
+                                Tarih *
+                            </label>
+
+                            <input
+                                type="date"
+                                id="eventDate"
+                                required
+                            >
+                        </div>
+
+                        <div>
+                            <label>
+                                Başlangıç saati
+                            </label>
+
+                            <input
+                                type="time"
+                                id="eventTime"
+                            >
+                        </div>
+
+                        <div>
+                            <label>
+                                Bitiş saati
+                            </label>
+
+                            <input
+                                type="time"
+                                id="eventEndTime"
+                            >
+                        </div>
+
+                        <div>
+                            <label>
+                                Mekân
+                            </label>
+
+                            <input
+                                type="text"
+                                id="eventVenue"
+                                placeholder="Örn. Trabzon Meydan"
+                            >
+                        </div>
+
+                        <div>
+                            <label>
+                                Adres
+                            </label>
+
+                            <input
+                                type="text"
+                                id="eventAddress"
+                                placeholder="Açık adres"
+                            >
+                        </div>
+
+                        <div>
+                            <label>
+                                İletişim telefonu
+                            </label>
+
+                            <input
+                                type="tel"
+                                id="eventPhone"
+                                placeholder="0462..."
+                            >
+                        </div>
+
+                        <div>
+                            <label>
+                                Bilet / kayıt linki
+                            </label>
+
+                            <input
+                                type="url"
+                                id="eventTicketUrl"
+                                placeholder="https://..."
+                            >
+                        </div>
+
+                        <div class="full-width">
+                            <label>
+                                Görsel URL
+                            </label>
+
+                            <input
+                                type="url"
+                                id="eventImageUrl"
+                                placeholder="https://..."
+                            >
+
+                            <small>
+                                Görsel yükleme sistemi sonraki aşamada
+                                ayrı etkinlik görsel alanı olarak eklenecek.
+                            </small>
+                        </div>
+
+                        <div class="full-width">
+                            <label>
+                                Açıklama
+                            </label>
+
+                            <textarea
+                                id="eventDescription"
+                                rows="6"
+                                placeholder="Etkinlik hakkında bilgi..."
+                            ></textarea>
+                        </div>
+
+                        <div class="event-modal-checks">
+
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    id="eventApproved"
+                                >
+                                Yayında
+                            </label>
+
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    id="eventFeatured"
+                                >
+                                Öne çıkar
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="modal-btn cancel-btn"
+                        id="eventModalCancel"
+                    >
+                        İptal
+                    </button>
+
+                    <button
+                        type="button"
+                        class="modal-btn save-btn"
+                        id="eventModalSave"
+                    >
+                        Kaydet
                     </button>
 
                 </div>
 
             </div>
         `;
-    }
 
-    // ============================================================
-    // NEW
-    // ============================================================
+        document.body.appendChild(modal);
 
-    function openNewEventModal() {
-        editingEventId = null;
+        document
+            .getElementById(
+                "eventModalClose"
+            )
+            .addEventListener(
+                "click",
+                closeEventModal
+            );
 
-        document.getElementById(
-            "eventModalTitle"
-        ).textContent =
-            "🎉 Yeni Etkinlik";
+        document
+            .getElementById(
+                "eventModalCancel"
+            )
+            .addEventListener(
+                "click",
+                closeEventModal
+            );
 
-        document.getElementById(
-            "eventForm"
-        ).reset();
+        document
+            .getElementById(
+                "eventModalSave"
+            )
+            .addEventListener(
+                "click",
+                saveEvent
+            );
 
-        document.getElementById(
-            "eventApproved"
-        ).value = "false";
-
-        document.getElementById(
-            "eventFeatured"
-        ).value = "false";
-
-        openEventModal();
-    }
-
-    // ============================================================
-    // EDIT
-    // ============================================================
-
-    function editEvent(id) {
-        const event =
-            eventsData.find(
-                function (item) {
-                    return item.id === id;
+        modal.addEventListener(
+            "click",
+            function (e) {
+                if (
+                    e.target === modal
+                ) {
+                    closeEventModal();
                 }
+            }
+        );
+
+        return modal;
+    }
+
+    function openEventModal(event) {
+        const modal =
+            createModal();
+
+        editingEventId =
+            event && event.id
+                ? event.id
+                : null;
+
+        const title =
+            document.getElementById(
+                "eventModalTitle"
             );
 
-        if (!event) {
-            showMessage(
-                "Etkinlik bulunamadı.",
-                "error"
-            );
-
-            return;
+        if (title) {
+            title.textContent =
+                editingEventId
+                    ? "Etkinliği Düzenle"
+                    : "Yeni Etkinlik";
         }
 
-        editingEventId = id;
+        setInputValue(
+            "eventTitle",
+            event
+                ? event.title
+                : ""
+        );
 
-        document.getElementById(
-            "eventModalTitle"
-        ).textContent =
-            "✏️ Etkinliği Düzenle";
+        setInputValue(
+            "eventCategory",
+            event
+                ? event.category
+                : ""
+        );
 
-        document.getElementById(
-            "eventTitle"
-        ).value =
-            event.title || "";
+        setInputValue(
+            "eventDistrict",
+            event
+                ? event.district
+                : ""
+        );
 
-        document.getElementById(
-            "eventCategory"
-        ).value =
-            event.category || "";
+        setInputValue(
+            "eventDate",
+            event
+                ? event.event_date
+                : ""
+        );
 
-        document.getElementById(
-            "eventDistrict"
-        ).value =
-            event.district || "";
+        setInputValue(
+            "eventTime",
+            event
+                ? formatTime(
+                    event.event_time
+                )
+                : ""
+        );
 
-        document.getElementById(
-            "eventDate"
-        ).value =
-            event.event_date || "";
+        setInputValue(
+            "eventEndTime",
+            event
+                ? formatTime(
+                    event.end_time
+                )
+                : ""
+        );
 
-        document.getElementById(
-            "eventTime"
-        ).value =
-            formatTime(event.event_time);
+        setInputValue(
+            "eventVenue",
+            event
+                ? event.venue
+                : ""
+        );
 
-        document.getElementById(
-            "eventEndTime"
-        ).value =
-            formatTime(event.end_time);
+        setInputValue(
+            "eventAddress",
+            event
+                ? event.address
+                : ""
+        );
 
-        document.getElementById(
-            "eventVenue"
-        ).value =
-            event.venue || "";
+        setInputValue(
+            "eventPhone",
+            event
+                ? event.contact_phone
+                : ""
+        );
 
-        document.getElementById(
-            "eventAddress"
-        ).value =
-            event.address || "";
+        setInputValue(
+            "eventTicketUrl",
+            event
+                ? event.ticket_url
+                : ""
+        );
 
-        document.getElementById(
-            "eventPhone"
-        ).value =
-            event.contact_phone || "";
+        setInputValue(
+            "eventImageUrl",
+            event
+                ? event.image_url
+                : ""
+        );
 
-        document.getElementById(
-            "eventTicketUrl"
-        ).value =
-            event.ticket_url || "";
+        setInputValue(
+            "eventDescription",
+            event
+                ? event.description
+                : ""
+        );
 
-        document.getElementById(
-            "eventImageUrl"
-        ).value =
-            event.image_url || "";
+        setCheckboxValue(
+            "eventApproved",
+            event
+                ? event.is_approved === true
+                : false
+        );
 
-        document.getElementById(
-            "eventDescription"
-        ).value =
-            event.description || "";
+        setCheckboxValue(
+            "eventFeatured",
+            event
+                ? event.is_featured === true
+                : false
+        );
 
-        document.getElementById(
-            "eventApproved"
-        ).value =
-            event.is_approved
-                ? "true"
-                : "false";
+        modal.classList.add(
+            "open"
+        );
 
-        document.getElementById(
-            "eventFeatured"
-        ).value =
-            event.is_featured
-                ? "true"
-                : "false";
+        document.body.classList.add(
+            "modal-open"
+        );
+    }
 
-        openEventModal();
+    function closeEventModal() {
+        const modal =
+            document.getElementById(
+                "eventAdminModal"
+            );
+
+        if (modal) {
+            modal.classList.remove(
+                "open"
+            );
+        }
+
+        document.body.classList.remove(
+            "modal-open"
+        );
+
+        editingEventId = null;
+    }
+
+    function setInputValue(
+        id,
+        value
+    ) {
+        const element =
+            document.getElementById(id);
+
+        if (element) {
+            element.value =
+                value || "";
+        }
+    }
+
+    function setCheckboxValue(
+        id,
+        value
+    ) {
+        const element =
+            document.getElementById(id);
+
+        if (element) {
+            element.checked =
+                Boolean(value);
+        }
+    }
+
+    function getInputValue(id) {
+        const element =
+            document.getElementById(id);
+
+        return element
+            ? element.value.trim()
+            : "";
+    }
+
+    function getCheckboxValue(id) {
+        const element =
+            document.getElementById(id);
+
+        return element
+            ? element.checked
+            : false;
     }
 
     // ============================================================
-    // SAVE
+    // KAYDET
     // ============================================================
 
-    async function saveEvent(event) {
-        event.preventDefault();
-
+    async function saveEvent() {
         const client =
             getSupabase();
 
@@ -1305,113 +1349,129 @@
                 "Supabase bağlantısı bulunamadı.",
                 "error"
             );
-
             return;
         }
 
+        const title =
+            getInputValue(
+                "eventTitle"
+            );
+
+        const eventDate =
+            getInputValue(
+                "eventDate"
+            );
+
+        if (!title) {
+            alert(
+                "Lütfen etkinlik adını gir."
+            );
+            return;
+        }
+
+        if (!eventDate) {
+            alert(
+                "Lütfen etkinlik tarihini seç."
+            );
+            return;
+        }
+
+        const payload = {
+            title: title,
+            description:
+                getInputValue(
+                    "eventDescription"
+                ) || null,
+
+            category:
+                getInputValue(
+                    "eventCategory"
+                ) || null,
+
+            event_date:
+                eventDate,
+
+            event_time:
+                getInputValue(
+                    "eventTime"
+                ) || null,
+
+            end_time:
+                getInputValue(
+                    "eventEndTime"
+                ) || null,
+
+            venue:
+                getInputValue(
+                    "eventVenue"
+                ) || null,
+
+            district:
+                getInputValue(
+                    "eventDistrict"
+                ) || null,
+
+            address:
+                getInputValue(
+                    "eventAddress"
+                ) || null,
+
+            image_url:
+                getInputValue(
+                    "eventImageUrl"
+                ) || null,
+
+            ticket_url:
+                getInputValue(
+                    "eventTicketUrl"
+                ) || null,
+
+            contact_phone:
+                getInputValue(
+                    "eventPhone"
+                ) || null,
+
+            is_approved:
+                getCheckboxValue(
+                    "eventApproved"
+                ),
+
+            is_featured:
+                getCheckboxValue(
+                    "eventFeatured"
+                )
+        };
+
         const saveButton =
             document.getElementById(
-                "saveEventBtn"
+                "eventModalSave"
             );
 
         if (saveButton) {
             saveButton.disabled = true;
             saveButton.textContent =
-                "⏳ Kaydediliyor...";
+                "Kaydediliyor...";
         }
-
-        const data = {
-            title:
-                document.getElementById(
-                    "eventTitle"
-                ).value.trim(),
-
-            category:
-                document.getElementById(
-                    "eventCategory"
-                ).value.trim() || null,
-
-            district:
-                document.getElementById(
-                    "eventDistrict"
-                ).value.trim() || null,
-
-            event_date:
-                document.getElementById(
-                    "eventDate"
-                ).value,
-
-            event_time:
-                document.getElementById(
-                    "eventTime"
-                ).value || null,
-
-            end_time:
-                document.getElementById(
-                    "eventEndTime"
-                ).value || null,
-
-            venue:
-                document.getElementById(
-                    "eventVenue"
-                ).value.trim() || null,
-
-            address:
-                document.getElementById(
-                    "eventAddress"
-                ).value.trim() || null,
-
-            contact_phone:
-                document.getElementById(
-                    "eventPhone"
-                ).value.trim() || null,
-
-            ticket_url:
-                document.getElementById(
-                    "eventTicketUrl"
-                ).value.trim() || null,
-
-            image_url:
-                document.getElementById(
-                    "eventImageUrl"
-                ).value.trim() || null,
-
-            description:
-                document.getElementById(
-                    "eventDescription"
-                ).value.trim() || null,
-
-            is_approved:
-                document.getElementById(
-                    "eventApproved"
-                ).value === "true",
-
-            is_featured:
-                document.getElementById(
-                    "eventFeatured"
-                ).value === "true"
-        };
 
         try {
             let result;
 
             if (editingEventId) {
-
                 result =
                     await client
-                        .from(EVENTS_TABLE)
-                        .update(data)
+                        .from("events")
+                        .update(payload)
                         .eq(
                             "id",
                             editingEventId
                         );
-
             } else {
-
                 result =
                     await client
-                        .from(EVENTS_TABLE)
-                        .insert(data);
+                        .from("events")
+                        .insert(
+                            payload
+                        );
             }
 
             if (result.error) {
@@ -1422,278 +1482,516 @@
 
             showMessage(
                 editingEventId
-                    ? "Etkinlik başarıyla güncellendi."
-                    : "Etkinlik başarıyla oluşturuldu.",
+                    ? "Etkinlik güncellendi."
+                    : "Etkinlik oluşturuldu.",
                 "success"
             );
 
             await loadEvents();
 
         } catch (error) {
-
             console.error(
-                "Etkinlik kaydetme hatası:",
+                "Etkinlik kayıt hatası:",
                 error
             );
 
             showMessage(
-                "Etkinlik kaydedilemedi: " +
-                error.message,
+                error.message ||
+                "Etkinlik kaydedilemedi.",
                 "error"
             );
 
         } finally {
-
             if (saveButton) {
-                saveButton.disabled = false;
+                saveButton.disabled =
+                    false;
+
                 saveButton.textContent =
-                    "💾 Etkinliği Kaydet";
+                    "Kaydet";
             }
         }
     }
 
     // ============================================================
-    // APPROVAL
-    // ============================================================
-
-    async function toggleEventApproval(
-        id,
-        value
-    ) {
-        const client =
-            getSupabase();
-
-        if (!client) {
-            return;
-        }
-
-        try {
-
-            const result =
-                await client
-                    .from(EVENTS_TABLE)
-                    .update({
-                        is_approved:
-                            value === true ||
-                            value === "true"
-                    })
-                    .eq(
-                        "id",
-                        id
-                    );
-
-            if (result.error) {
-                throw result.error;
-            }
-
-            showMessage(
-                value === true ||
-                value === "true"
-                    ? "Etkinlik yayına alındı."
-                    : "Etkinlik yayından kaldırıldı.",
-                "success"
-            );
-
-            await loadEvents();
-
-        } catch (error) {
-
-            console.error(error);
-
-            showMessage(
-                "İşlem başarısız: " +
-                error.message,
-                "error"
-            );
-        }
-    }
-
-    // ============================================================
-    // FEATURED
-    // ============================================================
-
-    async function toggleEventFeatured(
-        id,
-        value
-    ) {
-        const client =
-            getSupabase();
-
-        if (!client) {
-            return;
-        }
-
-        try {
-
-            const result =
-                await client
-                    .from(EVENTS_TABLE)
-                    .update({
-                        is_featured:
-                            value === true ||
-                            value === "true"
-                    })
-                    .eq(
-                        "id",
-                        id
-                    );
-
-            if (result.error) {
-                throw result.error;
-            }
-
-            showMessage(
-                value === true ||
-                value === "true"
-                    ? "Etkinlik öne çıkarıldı."
-                    : "Etkinlik öne çıkarmadan kaldırıldı.",
-                "success"
-            );
-
-            await loadEvents();
-
-        } catch (error) {
-
-            console.error(error);
-
-            showMessage(
-                "İşlem başarısız: " +
-                error.message,
-                "error"
-            );
-        }
-    }
-
-    // ============================================================
-    // DELETE
-    // ============================================================
-
-    async function deleteEvent(id) {
-        const event =
-            eventsData.find(
-                function (item) {
-                    return item.id === id;
-                }
-            );
-
-        if (!event) {
-            return;
-        }
-
-        const confirmed =
-            confirm(
-                '"' +
-                event.title +
-                '" etkinliğini silmek istediğine emin misin?'
-            );
-
-        if (!confirmed) {
-            return;
-        }
-
-        const client =
-            getSupabase();
-
-        if (!client) {
-            return;
-        }
-
-        try {
-
-            const result =
-                await client
-                    .from(EVENTS_TABLE)
-                    .delete()
-                    .eq(
-                        "id",
-                        id
-                    );
-
-            if (result.error) {
-                throw result.error;
-            }
-
-            showMessage(
-                "Etkinlik silindi.",
-                "success"
-            );
-
-            await loadEvents();
-
-        } catch (error) {
-
-            console.error(error);
-
-            showMessage(
-                "Etkinlik silinemedi: " +
-                error.message,
-                "error"
-            );
-        }
-    }
-
-    // ============================================================
-    // MODAL OPEN / CLOSE
-    // ============================================================
-
-    function openEventModal() {
-        const modal =
-            document.getElementById(
-                "eventAdminModal"
-            );
-
-        if (!modal) {
-            return;
-        }
-
-        modal.classList.add(
-            "open"
-        );
-    }
-
-    function closeEventModal() {
-        const modal =
-            document.getElementById(
-                "eventAdminModal"
-            );
-
-        if (!modal) {
-            return;
-        }
-
-        modal.classList.remove(
-            "open"
-        );
-
-        editingEventId = null;
-    }
-
-    // ============================================================
-    // GLOBAL
+    // DÜZENLE
     // ============================================================
 
     window.editEvent =
-        editEvent;
+        function (id) {
+            const event =
+                allEvents.find(
+                    function (item) {
+                        return (
+                            String(
+                                item.id
+                            ) ===
+                            String(id)
+                        );
+                    }
+                );
 
-    window.toggleEventApproval =
-        toggleEventApproval;
+            if (!event) {
+                alert(
+                    "Etkinlik bulunamadı."
+                );
+                return;
+            }
 
-    window.toggleEventFeatured =
-        toggleEventFeatured;
-
-    window.deleteEvent =
-        deleteEvent;
+            openEventModal(
+                event
+            );
+        };
 
     // ============================================================
-    // INIT
+    // YAYIN DURUMU
+    // ============================================================
+
+    window.toggleEventApproval =
+        async function (
+            id,
+            newValue
+        ) {
+            const client =
+                getSupabase();
+
+            if (!client) {
+                return;
+            }
+
+            const approved =
+                newValue === true ||
+                newValue === "true";
+
+            try {
+                const result =
+                    await client
+                        .from("events")
+                        .update({
+                            is_approved:
+                                approved
+                        })
+                        .eq(
+                            "id",
+                            id
+                        );
+
+                if (result.error) {
+                    throw result.error;
+                }
+
+                showMessage(
+                    approved
+                        ? "Etkinlik yayına alındı."
+                        : "Etkinlik yayından kaldırıldı.",
+                    "success"
+                );
+
+                await loadEvents();
+
+            } catch (error) {
+                console.error(
+                    error
+                );
+
+                showMessage(
+                    error.message ||
+                    "İşlem başarısız.",
+                    "error"
+                );
+            }
+        };
+
+    // ============================================================
+    // ÖNE ÇIKAR
+    // ============================================================
+
+    window.toggleEventFeatured =
+        async function (
+            id,
+            newValue
+        ) {
+            const client =
+                getSupabase();
+
+            if (!client) {
+                return;
+            }
+
+            const featured =
+                newValue === true ||
+                newValue === "true";
+
+            try {
+                const result =
+                    await client
+                        .from("events")
+                        .update({
+                            is_featured:
+                                featured
+                        })
+                        .eq(
+                            "id",
+                            id
+                        );
+
+                if (result.error) {
+                    throw result.error;
+                }
+
+                showMessage(
+                    featured
+                        ? "Etkinlik öne çıkarıldı."
+                        : "Etkinlik öne çıkanlardan kaldırıldı.",
+                    "success"
+                );
+
+                await loadEvents();
+
+            } catch (error) {
+                console.error(
+                    error
+                );
+
+                showMessage(
+                    error.message ||
+                    "İşlem başarısız.",
+                    "error"
+                );
+            }
+        };
+
+    // ============================================================
+    // SİL
+    // ============================================================
+
+    window.deleteEvent =
+        async function (id) {
+            const event =
+                allEvents.find(
+                    function (item) {
+                        return (
+                            String(
+                                item.id
+                            ) ===
+                            String(id)
+                        );
+                    }
+                );
+
+            const eventName =
+                event &&
+                event.title
+                    ? event.title
+                    : "Bu etkinlik";
+
+            const confirmed =
+                confirm(
+                    `"${eventName}" etkinliğini silmek istediğine emin misin?`
+                );
+
+            if (!confirmed) {
+                return;
+            }
+
+            const client =
+                getSupabase();
+
+            if (!client) {
+                return;
+            }
+
+            try {
+                const result =
+                    await client
+                        .from("events")
+                        .delete()
+                        .eq(
+                            "id",
+                            id
+                        );
+
+                if (result.error) {
+                    throw result.error;
+                }
+
+                showMessage(
+                    "Etkinlik silindi.",
+                    "success"
+                );
+
+                await loadEvents();
+
+            } catch (error) {
+                console.error(
+                    "Etkinlik silme hatası:",
+                    error
+                );
+
+                showMessage(
+                    error.message ||
+                    "Etkinlik silinemedi.",
+                    "error"
+                );
+            }
+        };
+
+    // ============================================================
+    // CSS
+    // ============================================================
+
+    function injectStyles() {
+        if (
+            document.getElementById(
+                "eventsAdminStyles"
+            )
+        ) {
+            return;
+        }
+
+        const style =
+            document.createElement(
+                "style"
+            );
+
+        style.id =
+            "eventsAdminStyles";
+
+        style.textContent = `
+            .events-admin-toolbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 15px;
+                margin: 20px 0;
+                flex-wrap: wrap;
+            }
+
+            .events-admin-search {
+                flex: 1;
+                min-width: 220px;
+            }
+
+            .events-admin-search input {
+                width: 100%;
+                box-sizing: border-box;
+                padding: 12px 15px;
+                border: 1px solid #e7e9ee;
+                border-radius: 12px;
+                font-size: 14px;
+                background: #fff;
+            }
+
+            .events-admin-filters {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .events-admin-filters select {
+                padding: 11px 13px;
+                border: 1px solid #e7e9ee;
+                border-radius: 12px;
+                background: #fff;
+                font-size: 14px;
+            }
+
+            .events-admin-message {
+                min-height: 20px;
+                margin: 8px 0 15px;
+                font-size: 14px;
+            }
+
+            .events-admin-message.success {
+                color: #167c45;
+            }
+
+            .events-admin-message.error {
+                color: #b42318;
+            }
+
+            .events-admin-message.info {
+                color: #536070;
+            }
+
+            .events-admin-list {
+                display: grid;
+                gap: 16px;
+            }
+
+            .event-admin-card {
+                position: relative;
+            }
+
+            .event-admin-image {
+                width: 100%;
+                max-height: 280px;
+                overflow: hidden;
+                border-radius: 14px;
+                margin-bottom: 16px;
+                background: #f3f4f6;
+            }
+
+            .event-admin-image img {
+                width: 100%;
+                height: 280px;
+                object-fit: cover;
+                display: block;
+            }
+
+            .event-admin-description {
+                margin-top: 12px;
+                padding: 12px;
+                background: #f7f8fa;
+                border-radius: 10px;
+                line-height: 1.6;
+                white-space: pre-line;
+            }
+
+            .event-ticket-link {
+                display: inline-block;
+                margin-top: 8px;
+                color: #7b1830;
+                font-weight: 700;
+                text-decoration: none;
+            }
+
+            .events-loading,
+            .events-empty {
+                padding: 35px 20px;
+                text-align: center;
+                background: #fff;
+                border: 1px solid #e7e9ee;
+                border-radius: 16px;
+                color: #70798b;
+            }
+
+            .event-modal-checks {
+                grid-column: 1 / -1;
+                display: flex;
+                gap: 25px;
+                flex-wrap: wrap;
+                padding-top: 5px;
+            }
+
+            .event-modal-checks label {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 600;
+            }
+
+            .event-modal-checks input {
+                width: 18px;
+                height: 18px;
+            }
+
+            .event-admin-modal {
+                max-width: 850px;
+                width: calc(100% - 30px);
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+
+            body.modal-open {
+                overflow: hidden;
+            }
+
+            @media (max-width: 700px) {
+                .events-admin-toolbar {
+                    align-items: stretch;
+                }
+
+                .events-admin-search {
+                    min-width: 100%;
+                }
+
+                .events-admin-filters {
+                    width: 100%;
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                }
+
+                .events-admin-filters select {
+                    width: 100%;
+                }
+
+                .events-admin-filters .refresh-btn {
+                    grid-column: 1 / -1;
+                    width: 100%;
+                }
+
+                .event-admin-image img {
+                    height: 210px;
+                }
+
+                .business-actions {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                }
+
+                .business-actions .action-btn {
+                    width: 100%;
+                }
+            }
+        `;
+
+        document.head.appendChild(
+            style
+        );
+    }
+
+    // ============================================================
+    // MENÜ
+    // ============================================================
+
+    function setupMenuTitle() {
+        const menuButton =
+            document.querySelector(
+                '[data-section="events"]'
+            );
+
+        if (!menuButton) {
+            return;
+        }
+
+        menuButton.addEventListener(
+            "click",
+            function () {
+                setTimeout(
+                    updateTopbarTitle,
+                    50
+                );
+            }
+        );
+    }
+
+    // ============================================================
+    // BAŞLAT
     // ============================================================
 
     function initEventsAdmin() {
-        createEventsInterface();
+        const section =
+            document.getElementById(
+                "section-events"
+            );
+
+        if (!section) {
+            return;
+        }
+
+        injectStyles();
+
+        renderPage();
+
+        setupMenuTitle();
+
+        updateTopbarTitle();
     }
 
     if (
-        document.readyState === "loading"
+        document.readyState ===
+        "loading"
     ) {
         document.addEventListener(
             "DOMContentLoaded",
