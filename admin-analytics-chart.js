@@ -1,13 +1,26 @@
 // ============================================================
 // TRABZON ANLIK - ANALYTICS GRAFİĞİ
 // ============================================================
-// Ana Analytics tarih filtresi ile tamamen uyumlu sürüm.
+// TEK PARÇA ANALYTICS SİSTEMİ
 //
-// Grafik artık kendi 7/30/90 filtresini kullanmaz.
-// Ana filtre:
-// Bugün / Son 7 Gün / Son 30 Gün / Son 90 Gün / Tüm Zamanlar
+// Tarih filtreleri:
+// Bugün
+// Son 7 Gün
+// Son 30 Gün
+// Son 90 Gün
+// Tüm Zamanlar
 //
-// Hangisi seçilirse grafik de aynı aralığı gösterir.
+// Filtre değişince:
+// - Üst istatistikler
+// - Analytics istatistikleri
+// - Grafik
+// - İşletme görüntülenmeleri
+// - Olay türleri
+// - Son kayıtlar
+//
+// birlikte güncellenir.
+//
+// Supabase'den filtre değişiminde tekrar veri çekilmez.
 // ============================================================
 
 (function () {
@@ -104,7 +117,7 @@
     }
 
     // ============================================================
-    // AKTİF TARİH ARALIĞINI AL
+    // AKTİF ARALIK
     // ============================================================
 
     function getCurrentRange() {
@@ -119,47 +132,63 @@
 
     }
 
-    // ============================================================
-    // GÜN SAYISINI BELİRLE
-    // ============================================================
+    function setCurrentRange(range) {
 
-    function getRangeDays(range) {
-
-        if (range === "1") {
-
-            return 1;
-
-        }
-
-        if (range === "7") {
-
-            return 7;
-
-        }
-
-        if (range === "30") {
-
-            return 30;
-
-        }
-
-        if (range === "90") {
-
-            return 90;
-
-        }
-
-        // Tüm zamanlar için
-        // gerçek eventlerin gün aralığı
-        return null;
+        window.__trabzonAnalyticsSelectedRange =
+            String(range || "30");
 
     }
 
     // ============================================================
-    // GRAFİK VERİSİNİ HAZIRLA
+    // FİLTRE BUTONLARI
     // ============================================================
 
-    function prepareChartData(events) {
+    function getRangeLabel(range) {
+
+        if (
+            String(range) === "1"
+        ) {
+
+            return "Bugün";
+
+        }
+
+        if (
+            String(range) === "7"
+        ) {
+
+            return "Son 7 Gün";
+
+        }
+
+        if (
+            String(range) === "30"
+        ) {
+
+            return "Son 30 Gün";
+
+        }
+
+        if (
+            String(range) === "90"
+        ) {
+
+            return "Son 90 Gün";
+
+        }
+
+        return "Tüm Zamanlar";
+
+    }
+
+    // ============================================================
+    // EVENTLERİ FİLTRELE
+    // ============================================================
+
+    function filterEvents(
+        events,
+        range
+    ) {
 
         const realEvents = (
 
@@ -169,6 +198,120 @@
 
         ).filter(isRealEvent);
 
+        const selected =
+            String(
+                range ||
+                getCurrentRange()
+            );
+
+        // --------------------------------------------------------
+        // TÜM ZAMANLAR
+        // --------------------------------------------------------
+
+        if (
+            selected === "all"
+        ) {
+
+            return realEvents;
+
+        }
+
+        const days =
+            Number(selected);
+
+        if (
+            !Number.isFinite(days)
+        ) {
+
+            return realEvents;
+
+        }
+
+        const now =
+            new Date();
+
+        const todayStart =
+            startOfDay(now);
+
+        let startDate;
+
+        if (
+            days === 1
+        ) {
+
+            startDate =
+                todayStart;
+
+        } else {
+
+            startDate =
+                new Date(
+                    todayStart
+                );
+
+            startDate.setDate(
+
+                startDate.getDate() -
+                (
+                    days - 1
+                )
+
+            );
+
+        }
+
+        return realEvents.filter(
+            function (event) {
+
+                if (
+                    !event.created_at
+                ) {
+
+                    return false;
+
+                }
+
+                const date =
+                    new Date(
+                        event.created_at
+                    );
+
+                if (
+                    Number.isNaN(
+                        date.getTime()
+                    )
+                ) {
+
+                    return false;
+
+                }
+
+                return (
+                    date >= startDate
+                );
+
+            }
+        );
+
+    }
+
+    // ============================================================
+    // GRAFİK VERİSİ
+    // ============================================================
+
+    function prepareChartData(
+        events
+    ) {
+
+        const realEvents =
+            (
+                Array.isArray(events)
+                    ? events
+                    : []
+            ).filter(
+                isRealEvent
+            );
+
         const range =
             getCurrentRange();
 
@@ -176,9 +319,13 @@
         // TÜM ZAMANLAR
         // ========================================================
 
-        if (range === "all") {
+        if (
+            range === "all"
+        ) {
 
-            if (!realEvents.length) {
+            if (
+                !realEvents.length
+            ) {
 
                 return [];
 
@@ -286,14 +433,14 @@
             realEvents.forEach(
                 function (event) {
 
-                    const eventDate =
+                    const date =
                         new Date(
                             event.created_at
                         );
 
                     if (
                         Number.isNaN(
-                            eventDate.getTime()
+                            date.getTime()
                         )
                     ) {
 
@@ -302,7 +449,7 @@
                     }
 
                     const key =
-                        dateKey(eventDate);
+                        dateKey(date);
 
                     if (
                         !key ||
@@ -322,7 +469,9 @@
                         type === "page_view"
                     ) {
 
-                        dailyData[key].visits++;
+                        dailyData[
+                            key
+                        ].visits++;
 
                     }
 
@@ -357,14 +506,14 @@
         }
 
         // ========================================================
-        // BELİRLİ GÜN ARALIĞI
+        // BELİRLİ ARALIK
         // ========================================================
 
         const days =
-            getRangeDays(range);
+            Number(range);
 
         if (
-            !days
+            !Number.isFinite(days)
         ) {
 
             return [];
@@ -374,25 +523,25 @@
         const now =
             new Date();
 
+        const todayStart =
+            startOfDay(now);
+
         const startDate =
-            startOfDay(
-
-                new Date(
-
-                    now.getFullYear(),
-
-                    now.getMonth(),
-
-                    now.getDate() -
-                        (days - 1)
-
-                )
-
+            new Date(
+                todayStart
             );
+
+        startDate.setDate(
+
+            startDate.getDate() -
+            (
+                days - 1
+            )
+
+        );
 
         const dailyData = {};
 
-        // Günleri oluştur
         for (
             let i = 0;
             i < days;
@@ -425,7 +574,6 @@
 
         }
 
-        // Eventleri günlere dağıt
         realEvents.forEach(
             function (event) {
 
@@ -462,7 +610,9 @@
                 }
 
                 const key =
-                    dateKey(eventDate);
+                    dateKey(
+                        eventDate
+                    );
 
                 if (
                     !key ||
@@ -476,13 +626,17 @@
                 const type =
                     eventType(event);
 
-                dailyData[key].total++;
+                dailyData[
+                    key
+                ].total++;
 
                 if (
                     type === "page_view"
                 ) {
 
-                    dailyData[key].visits++;
+                    dailyData[
+                        key
+                    ].visits++;
 
                 }
 
@@ -520,7 +674,9 @@
     // ÖZET
     // ============================================================
 
-    function calculateSummary(data) {
+    function calculateSummary(
+        data
+    ) {
 
         return data.reduce(
 
@@ -563,7 +719,592 @@
     }
 
     // ============================================================
-    // GRAFİK KUTUSUNU OLUŞTUR
+    // ANA İSTATİSTİKLERİ GÜNCELLE
+    // ============================================================
+
+    function updateTopStats(
+        events
+    ) {
+
+        const realEvents =
+            (
+                Array.isArray(events)
+                    ? events
+                    : []
+            ).filter(
+                isRealEvent
+            );
+
+        const pageViews =
+            realEvents.filter(
+                function (event) {
+
+                    return (
+                        eventType(event) ===
+                        "page_view"
+                    );
+
+                }
+            ).length;
+
+        const businessViews =
+            realEvents.filter(
+                function (event) {
+
+                    return (
+
+                        eventType(event) ===
+                        "business_view" &&
+
+                        event.business_id !==
+                            null &&
+
+                        event.business_id !==
+                            undefined &&
+
+                        event.business_id !== ""
+
+                    );
+
+                }
+            ).length;
+
+        const uniqueVisitorIds =
+            realEvents
+                .map(
+                    function (event) {
+
+                        return event.visitor_id;
+
+                    }
+                )
+                .filter(
+                    function (value) {
+
+                        return (
+
+                            value !==
+                                null &&
+
+                            value !==
+                                undefined &&
+
+                            value !== ""
+
+                        );
+
+                    }
+                )
+                .map(
+                    function (value) {
+
+                        return String(
+                            value
+                        );
+
+                    }
+                );
+
+        const uniqueVisitors =
+            new Set(
+                uniqueVisitorIds
+            ).size;
+
+        const totalEvents =
+            realEvents.length;
+
+        // --------------------------------------------------------
+        // Olası ID'ler
+        // --------------------------------------------------------
+
+        const ids = {
+
+            events: [
+                "statAnalyticsEvents",
+                "statTotalEvents",
+                "analyticsTotalEvents"
+            ],
+
+            visitors: [
+                "statUniqueVisitors",
+                "statVisitors",
+                "analyticsUniqueVisitors"
+            ],
+
+            businessViews: [
+                "statBusinessViews",
+                "statBusinessView",
+                "analyticsBusinessViews"
+            ]
+
+        };
+
+        function setIds(
+            list,
+            value
+        ) {
+
+            list.forEach(
+                function (id) {
+
+                    const element =
+                        document.getElementById(
+                            id
+                        );
+
+                    if (
+                        element
+                    ) {
+
+                        element.textContent =
+                            value;
+
+                    }
+
+                }
+            );
+
+        }
+
+        setIds(
+            ids.events,
+            totalEvents
+        );
+
+        setIds(
+            ids.visitors,
+            uniqueVisitors
+        );
+
+        setIds(
+            ids.businessViews,
+            businessViews
+        );
+
+        // --------------------------------------------------------
+        // Sayfa görüntülenmesi
+        // --------------------------------------------------------
+
+        const pageViewElements =
+            document.querySelectorAll(
+                "[data-analytics-page-views]"
+            );
+
+        pageViewElements.forEach(
+            function (element) {
+
+                element.textContent =
+                    pageViews;
+
+            }
+        );
+
+        return {
+
+            totalEvents:
+                totalEvents,
+
+            pageViews:
+                pageViews,
+
+            businessViews:
+                businessViews,
+
+            uniqueVisitors:
+                uniqueVisitors
+
+        };
+
+    }
+
+    // ============================================================
+    // TARİH FİLTRE KUTUSU
+    // ============================================================
+
+    function renderDateFilter() {
+
+        const dashboard =
+            document.getElementById(
+                "section-dashboard"
+            );
+
+        if (
+            !dashboard
+        ) {
+
+            return;
+
+        }
+
+        let box =
+            document.getElementById(
+                "trabzonAnalyticsDateFilter"
+            );
+
+        if (
+            !box
+        ) {
+
+            box =
+                document.createElement(
+                    "div"
+                );
+
+            box.id =
+                "trabzonAnalyticsDateFilter";
+
+            dashboard.appendChild(
+                box
+            );
+
+        }
+
+        const active =
+            getCurrentRange();
+
+        box.innerHTML = `
+
+            <div style="
+
+                background:#ffffff;
+
+                border:1px solid #e7e9ee;
+
+                border-radius:18px;
+
+                padding:20px;
+
+                margin-top:20px;
+
+                margin-bottom:20px;
+
+                box-shadow:
+                    0 8px 30px
+                    rgba(16,28,53,.05);
+
+            ">
+
+                <div style="
+
+                    color:#101c35;
+
+                    font-size:17px;
+
+                    font-weight:800;
+
+                ">
+
+                    📅 Analytics Dönemi
+
+                </div>
+
+                <div style="
+
+                    color:#70798b;
+
+                    font-size:12px;
+
+                    margin-top:4px;
+
+                ">
+
+                    İstatistikleri istediğin
+                    tarih aralığına göre görüntüle
+
+                </div>
+
+                <div style="
+
+                    display:flex;
+
+                    flex-wrap:wrap;
+
+                    gap:8px;
+
+                    margin-top:16px;
+
+                ">
+
+                    ${createFilterButton(
+                        "1",
+                        "Bugün",
+                        active
+                    )}
+
+                    ${createFilterButton(
+                        "7",
+                        "Son 7 Gün",
+                        active
+                    )}
+
+                    ${createFilterButton(
+                        "30",
+                        "Son 30 Gün",
+                        active
+                    )}
+
+                    ${createFilterButton(
+                        "90",
+                        "Son 90 Gün",
+                        active
+                    )}
+
+                    ${createFilterButton(
+                        "all",
+                        "Tüm Zamanlar",
+                        active
+                    )}
+
+                </div>
+
+            </div>
+
+        `;
+
+        const buttons =
+            box.querySelectorAll(
+                "[data-trabzon-range]"
+            );
+
+        buttons.forEach(
+            function (button) {
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        const range =
+                            this.getAttribute(
+                                "data-trabzon-range"
+                            );
+
+                        changeRange(
+                            range
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+    // ============================================================
+    // BUTON HTML
+    // ============================================================
+
+    function createFilterButton(
+        range,
+        label,
+        active
+    ) {
+
+        const isActive =
+            String(range) ===
+            String(active);
+
+        return `
+
+            <button
+                type="button"
+                data-trabzon-range="${range}"
+                style="
+
+                    appearance:none;
+
+                    border:1px solid
+                        ${isActive
+                            ? "#7b1830"
+                            : "#e1e4ea"};
+
+                    background:
+                        ${isActive
+                            ? "#7b1830"
+                            : "#f6f7f9"};
+
+                    color:
+                        ${isActive
+                            ? "#ffffff"
+                            : "#182033"};
+
+                    border-radius:999px;
+
+                    padding:9px 15px;
+
+                    font-size:12px;
+
+                    font-weight:700;
+
+                    cursor:pointer;
+
+                "
+            >
+
+                ${label}
+
+            </button>
+
+        `;
+
+    }
+
+    // ============================================================
+    // TARİH DEĞİŞTİR
+    // ============================================================
+
+    async function changeRange(
+        range
+    ) {
+
+        const selected =
+            String(
+                range || "30"
+            );
+
+        // --------------------------------------------------------
+        // Aktif aralığı kaydet
+        // --------------------------------------------------------
+
+        setCurrentRange(
+            selected
+        );
+
+        // --------------------------------------------------------
+        // TÜM VERİYİ AL
+        // --------------------------------------------------------
+
+        const allEvents =
+            Array.isArray(
+                window.__trabzonAnalyticsAllEvents
+            )
+                ? window.__trabzonAnalyticsAllEvents
+                : [];
+
+        // --------------------------------------------------------
+        // Henüz veri yüklenmemişse
+        // --------------------------------------------------------
+
+        if (
+            !allEvents.length
+        ) {
+
+            if (
+                typeof window.loadAnalytics ===
+                "function"
+            ) {
+
+                await window.loadAnalytics();
+
+            }
+
+            // loadAnalytics sonrasında tekrar al
+            const loadedEvents =
+                Array.isArray(
+                    window.__trabzonAnalyticsAllEvents
+                )
+                    ? window.__trabzonAnalyticsAllEvents
+                    : [];
+
+            if (
+                !loadedEvents.length
+            ) {
+
+                renderDateFilter();
+
+                return;
+
+            }
+
+            await applyRangeToAll(
+                loadedEvents,
+                selected
+            );
+
+            return;
+
+        }
+
+        await applyRangeToAll(
+            allEvents,
+            selected
+        );
+
+    }
+
+    // ============================================================
+    // FİLTREYİ TÜM SİSTEME UYGULA
+    // ============================================================
+
+    async function applyRangeToAll(
+        allEvents,
+        range
+    ) {
+
+        setCurrentRange(
+            range
+        );
+
+        const filtered =
+            filterEvents(
+                allEvents,
+                range
+            );
+
+        // --------------------------------------------------------
+        // Global veriler
+        // --------------------------------------------------------
+
+        window.__trabzonAnalyticsFilteredEvents =
+            filtered;
+
+        window.__trabzonAnalyticsChartEvents =
+            filtered;
+
+        window.allAnalyticsEvents =
+            filtered;
+
+        // --------------------------------------------------------
+        // ÜST SAYILAR
+        // --------------------------------------------------------
+
+        updateTopStats(
+            filtered
+        );
+
+        // --------------------------------------------------------
+        // ANA ANALYTICS KUTUSU
+        // --------------------------------------------------------
+
+        if (
+            typeof window.renderAnalyticsBox ===
+            "function"
+        ) {
+
+            await window.renderAnalyticsBox(
+                filtered
+            );
+
+        }
+
+        // --------------------------------------------------------
+        // Tarih filtresini tekrar çiz
+        // --------------------------------------------------------
+
+        renderDateFilter();
+
+        // --------------------------------------------------------
+        // Grafik
+        // --------------------------------------------------------
+
+        renderAnalyticsChart(
+            filtered
+        );
+
+    }
+
+    // ============================================================
+    // GRAFİK
     // ============================================================
 
     function renderAnalyticsChart(
@@ -583,10 +1324,7 @@
 
         }
 
-        // --------------------------------------------------------
         // Eski grafik
-        // --------------------------------------------------------
-
         const oldChart =
             document.getElementById(
                 "adminAnalyticsChartBox"
@@ -599,10 +1337,6 @@
             oldChart.remove();
 
         }
-
-        // --------------------------------------------------------
-        // Veri
-        // --------------------------------------------------------
 
         let events;
 
@@ -626,26 +1360,12 @@
             events =
                 window.__trabzonAnalyticsFilteredEvents;
 
-        } else if (
-
-            Array.isArray(
-                window.__trabzonAnalyticsAllEvents
-            )
-
-        ) {
-
-            events =
-                window.__trabzonAnalyticsAllEvents;
-
         } else {
 
-            events = [];
+            events =
+                [];
 
         }
-
-        // --------------------------------------------------------
-        // Grafik verisi
-        // --------------------------------------------------------
 
         const data =
             prepareChartData(
@@ -657,41 +1377,13 @@
                 data
             );
 
-        const activeRange =
+        const range =
             getCurrentRange();
 
-        let rangeText =
-            "Son 30 Gün";
-
-        if (
-            activeRange === "1"
-        ) {
-
-            rangeText =
-                "Bugün";
-
-        } else if (
-            activeRange === "7"
-        ) {
-
-            rangeText =
-                "Son 7 Gün";
-
-        } else if (
-            activeRange === "90"
-        ) {
-
-            rangeText =
-                "Son 90 Gün";
-
-        } else if (
-            activeRange === "all"
-        ) {
-
-            rangeText =
-                "Tüm Zamanlar";
-
-        }
+        const rangeText =
+            getRangeLabel(
+                range
+            );
 
         // ========================================================
         // KUTU
@@ -798,8 +1490,6 @@
                 </div>
 
             </div>
-
-            <!-- ÖZET KARTLARI -->
 
             <div style="
 
@@ -945,8 +1635,6 @@
 
             </div>
 
-            <!-- LEJANT -->
-
             <div style="
 
                 display:flex;
@@ -1033,8 +1721,6 @@
 
             </div>
 
-            <!-- GRAFİK -->
-
             <div style="
 
                 position:relative;
@@ -1059,11 +1745,12 @@
                         position:relative;
 
                         min-width:
-                            ${activeRange === "90"
-                                ? "1100px"
-                                : activeRange === "all"
+                            ${
+                                range === "90" ||
+                                range === "all"
                                     ? "1100px"
-                                    : "760px"};
+                                    : "760px"
+                            };
 
                         height:320px;
 
@@ -1107,10 +1794,6 @@
             box
         );
 
-        // ========================================================
-        // GRAFİĞİ ÇİZ
-        // ========================================================
-
         drawAnalyticsChart(
             data
         );
@@ -1118,7 +1801,7 @@
     }
 
     // ============================================================
-    // CANVAS
+    // CANVAS GRAFİĞİ
     // ============================================================
 
     function drawAnalyticsChart(
@@ -1210,10 +1893,6 @@
             height
         );
 
-        // ========================================================
-        // ÖLÇÜLER
-        // ========================================================
-
         const paddingLeft =
             48;
 
@@ -1237,7 +1916,7 @@
             paddingBottom;
 
         // ========================================================
-        // MAX DEĞER
+        // MAX
         // ========================================================
 
         let maxValue =
@@ -1292,10 +1971,6 @@
                 ) * 10;
 
         }
-
-        // ========================================================
-        // NOKTA KOORDİNATLARI
-        // ========================================================
 
         const pointCount =
             data.length;
@@ -1473,15 +2148,15 @@
             range === "all"
         ) {
 
-            const count =
-                data.length;
-
             labelEvery =
                 Math.max(
+
                     1,
+
                     Math.ceil(
-                        count / 10
+                        data.length / 10
                     )
+
                 );
 
         }
@@ -1592,7 +2267,6 @@
 
             ctx.stroke();
 
-            // Noktalar
             data.forEach(
                 function (
                     item,
@@ -1718,63 +2392,121 @@
     }
 
     // ============================================================
-    // GLOBAL FONKSİYON
+    // GLOBAL FONKSİYONLAR
     // ============================================================
 
     window.renderAnalyticsChart =
         renderAnalyticsChart;
 
-    // ============================================================
-    // ESKİ HOOK YOK
-    // ============================================================
-    // ÖNEMLİ:
-    //
-    // Eski dosyada window.renderAnalyticsBox
-    // sarılıyordu.
-    //
-    // Bu sürümde bunu YAPMIYORUZ.
-    //
-    // Böylece:
-    //
-    // admin-analytics.js
-    //        ↓
-    // admin-analytics-filter.js
-    //        ↓
-    // renderAnalyticsChart()
-    //
-    // şeklinde tek sistem çalışıyor.
-    // ============================================================
+    window.changeAnalyticsRange =
+        changeRange;
 
-    // ============================================================
-    // SAYFA AÇILIŞI
-    // ============================================================
+    window.applyAnalyticsDateFilter =
+        function (range) {
 
-    document.addEventListener(
-        "DOMContentLoaded",
+            const allEvents =
+                Array.isArray(
+                    window.__trabzonAnalyticsAllEvents
+                )
+                    ? window.__trabzonAnalyticsAllEvents
+                    : [];
+
+            if (
+                !allEvents.length
+            ) {
+
+                return changeRange(
+                    range
+                );
+
+            }
+
+            return applyRangeToAll(
+                allEvents,
+                String(
+                    range || "30"
+                )
+            );
+
+        };
+
+    // Eski sistemlerle uyumluluk
+    window.refreshAnalytics =
         function () {
 
-            setTimeout(
-                function () {
+            return changeRange(
+                getCurrentRange()
+            );
 
-                    if (
-                        typeof window
-                            .renderAnalyticsChart ===
-                        "function"
-                    ) {
+        };
 
-                        renderAnalyticsChart();
+    // ============================================================
+    // BAŞLANGIÇ
+    // ============================================================
 
-                    }
+    function initAnalyticsChart() {
 
-                },
-                700
+        // Varsayılan Son 30 Gün
+        if (
+            !window.__trabzonAnalyticsSelectedRange
+        ) {
+
+            setCurrentRange(
+                "30"
             );
 
         }
-    );
+
+        renderDateFilter();
+
+        // Analytics verisi zaten yüklendiyse
+        if (
+            Array.isArray(
+                window.__trabzonAnalyticsFilteredEvents
+            ) &&
+            window.__trabzonAnalyticsFilteredEvents.length
+        ) {
+
+            renderAnalyticsChart(
+                window.__trabzonAnalyticsFilteredEvents
+            );
+
+        }
+
+    }
 
     // ============================================================
-    // PENCERE BOYUTU
+    // DOM HAZIR
+    // ============================================================
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                setTimeout(
+                    initAnalyticsChart,
+                    500
+                );
+
+            }
+        );
+
+    } else {
+
+        setTimeout(
+            initAnalyticsChart,
+            500
+        );
+
+    }
+
+    // ============================================================
+    // RESIZE
     // ============================================================
 
     let resizeTimer =
